@@ -27,7 +27,7 @@ Lần build đầu tiên sẽ tự tải framework espressif32 (~300MB) nên có
 
 ## Cấu trúc
 
-```
+```text
 blink/
 ├── platformio.ini   # Cấu hình: board esp32dev, framework arduino
 ├── src/
