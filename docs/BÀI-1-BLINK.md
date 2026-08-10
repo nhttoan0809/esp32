@@ -111,13 +111,13 @@ dùng ngôn ngữ C++ (họ hàng của JavaScript nhưng kiểu dữ liệu rõ
    #include <Arduino.h>   // nạp các hàm có sẵn của framework Arduino
 
    void setup() {
-     pinMode(LED_BUILTIN, OUTPUT);  // "cấu hình" chân LED thành ngõ ra
+     pinMode(2, OUTPUT);  // "cấu hình" chân LED thành ngõ ra
    }
 
    void loop() {
-     digitalWrite(LED_BUILTIN, HIGH);  // bật LED
+     digitalWrite(2, HIGH);  // bật LED
      delay(1000);                      // chờ 1 giây
-     digitalWrite(LED_BUILTIN, LOW);   // tắt LED
+     digitalWrite(2, LOW);   // tắt LED
      delay(1000);                      // chờ 1 giây
    }
    ```
