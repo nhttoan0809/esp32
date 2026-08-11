@@ -8,9 +8,8 @@
   ],
   "connections": [
     [ "esp:2", "led1:A", "red", [] ],
-    [ "led1:C", "esp:GND.1", "black", [] ]
-  ],
-  "serialMonitor": {
-    "display": "always"
-  }
+    [ "led1:C", "esp:GND.1", "black", [] ],
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ]
+  ]
 }

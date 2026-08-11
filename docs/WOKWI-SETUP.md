@@ -33,6 +33,7 @@
 version = 1
 elf = ".pio/build/esp32dev/firmware.elf"
 firmware = ".pio/build/esp32dev/firmware.bin"
+rfc2217ServerPort = 4000
 ```
 
 | Dòng | Ý nghĩa |
@@ -40,6 +41,7 @@ firmware = ".pio/build/esp32dev/firmware.bin"
 | `version = 1` | Phiên bản định dạng file — cứ để nguyên |
 | `elf = ".pio/build/esp32dev/firmware.elf"` | File chương trình đã build (PlatformIO tạo ra) — Wokwi dùng cái này để mô phỏng |
 | `firmware = ".pio/build/esp32dev/firmware.bin"` | Bản "đóng gói" của chương trình — cùng nơi PlatformIO tạo |
+| `rfc2217ServerPort = 4000` | Mở cổng Serial ảo của Wokwi tại `localhost:4000` để kiểm tra khi cần |
 
 > Đường dẫn có dấu `.` ở đầu = **thư mục ẩn** — giống `node_modules`, do công cụ tạo, đừng sửa tay.
 
@@ -52,11 +54,13 @@ firmware = ".pio/build/esp32dev/firmware.bin"
   "editor": "wokwi",
   "parts": [
     { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
-    { "type": "led", "id": "led1", "top": 0, "left": 150, "attrs": { "color": "red" } }
+    { "type": "wokwi-led", "id": "led1", "top": 100, "left": 300, "attrs": { "color": "red" } }
   ],
   "connections": [
     [ "esp:2", "led1:A", "red", [] ],
-    [ "led1:C", "esp:GND.1", "black", [] ]
+    [ "led1:C", "esp:GND.1", "black", [] ],
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ]
   ]
 }
 ```
@@ -64,7 +68,7 @@ firmware = ".pio/build/esp32dev/firmware.bin"
 | Phần | Ý nghĩa |
 |---|---|
 | `"parts"` | Danh sách linh kiện: board ESP32 DevKit v4 + 1 LED đỏ |
-| `"connections"` | Các dây nối: chân **2** của board → chân **A** (dương) của LED; chân **C** (âm) của LED → chân **GND** (đất) của board |
+| `"connections"` | Nối GPIO 2 → LED → GND và nối UART TX/RX → Serial Monitor ảo |
 | `"esp:2"` / `"esp:GND.1"` | Địa chỉ chân trên board — **phải khớp với code**: code `digitalWrite(2, ...)` ⇔ dây nối chân 2 |
 | `"red"` / `"black"` | Màu dây trong sơ đồ (đỏ = tín hiệu, đen = đất) — chỉ để nhìn cho rõ |
 
@@ -99,14 +103,16 @@ void loop()
 
 1. **Build** như bình thường (`Ctrl+S` lưu → bấm **Build ✓**) — Wokwi cần file firmware đã build.
 2. Bấm icon **▶ Wokwi** (góc dưới phải VS Code, cạnh nút Build).
-3. Tab **Wokwi Simulation** mở ra — bạn sẽ thấy:
+3. Tab **Wokwi Simulator** mở ra — bạn sẽ thấy:
    - **LED đỏ nháy** mỗi 1 giây
-   - Cửa sổ **Serial** in `Hello ESP32!` mỗi 2 giây
+   - Terminal tên **Wokwi Terminal** in `Hello ESP32!` mỗi 2 giây
 
 > Nếu không thấy icon ▶: dùng `Cmd+Shift+P` → gõ `wokwi` → **"Wokwi: Start Simulator"**.
 
 ## 6. Ghi chú
 
 - Wokwi dùng **file đã build** — sửa code xong phải **Build lại** rồi mới bấm ▶ lại.
+- Wokwi for VS Code 3.6 đưa Serial vào terminal riêng của VS Code, không hiện một bảng Serial bên dưới sơ đồ. Nếu panel terminal đang ẩn, mở **View → Terminal**, rồi chọn **Wokwi Terminal** trong danh sách terminal.
+- Không dùng **PlatformIO: Serial Monitor** cho simulator. Lệnh đó tìm cổng USB/Bluetooth của thiết bị thật (ví dụ `/dev/cu.Bluetooth-Incoming-Port`), không phải ESP32 ảo.
 - Đây là *bước chuẩn bị* — khi có board thật, quy trình vẫn y như cũ: Build → Upload → Serial Monitor.
 - Link tham khảo: [Wokwi VS Code getting started](https://docs.wokwi.com/vscode/getting-started) · [Wokwi project config](https://docs.wokwi.com/vscode/project-config)
