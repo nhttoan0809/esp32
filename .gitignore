@@ -2,6 +2,7 @@
 .pio/
 .vscode/
 *.log
+pocs/poc3-web-led/include/secrets.h
 
 # macOS
 .DS_Store
