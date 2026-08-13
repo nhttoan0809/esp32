@@ -212,5 +212,7 @@ Terminal hoặc RFC2217. Nếu kiểm thử board thật, dùng đúng cổng US
 
 ## 10. Trạng thái
 
-Tài liệu thiết kế đã có. Firmware và cấu hình POC chưa được triển khai hoặc xác
-minh runtime.
+Firmware, cấu hình Wokwi và HTTP client đã được triển khai. Build và lint pass;
+runtime trước bản sửa CRLF đã quan sát Wi-Fi connect, HTTP 200 và JSON. Cần chạy
+lại firmware cuối bằng Wokwi CLI và fault injection cho retry trước khi kết luận
+nghiệm thu đầy đủ. Xem `pocs/poc1-wifi-http/STATUS.md`.

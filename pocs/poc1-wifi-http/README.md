@@ -1,5 +1,7 @@
 # POC 1 — ESP32 Wi-Fi Station và HTTP GET
 
+Tiến độ, phần chưa xác minh và bước tiếp theo được ghi tại [STATUS.md](STATUS.md).
+
 POC độc lập này kết nối ESP32 classic vào Wi-Fi ở chế độ Station, nhận IP qua
 DHCP và gọi định kỳ:
 
