@@ -177,7 +177,7 @@ POC chỉ dùng các part và pin sau:
 
 GPIO trong diagram phải khớp tuyệt đối với `LED_PIN = 2` trong source code.
 
-## 9. Truy cập server trong Wokwi
+## 9. Truy cập server qua Wokwi Private IoT Gateway
 
 ESP32 mô phỏng kết nối `Wokwi-GUEST` và lắng nghe port 80. Wokwi Public Gateway
 không cho browser tạo incoming connection vào ESP32. Với Private Gateway, thêm
@@ -195,10 +195,32 @@ Sau khi simulator chạy và tab vẫn hiển thị, mở:
 http://localhost:8180
 ```
 
-Private Gateway hiện yêu cầu gói Wokwi trả phí và không được hỗ trợ trên Safari.
-Nếu không có Private Gateway, Wokwi Public Gateway không thể dùng để nghiệm thu
-browser → ESP32 cho POC này. Trên board thật, mở trực tiếp địa chỉ IP mà ESP32
-in ra Serial, ví dụ `http://192.168.1.50/`.
+Wokwi for VS Code 3.6.0 bundle Private IoT Gateway trong extension. Khi cấu hình
+không có `[net].gateway`, extension tạo gateway WebAssembly cục bộ, bật network
+gateway cho simulator và mở listener `127.0.0.1:8180`. Vì vậy flow này không
+cần gateway executable standalone, port 9011 hoặc lệnh `Enable Private
+Gateway` được mô tả trong một số tài liệu cho Wokwi chạy trong browser.
+
+Luồng dữ liệu thực tế:
+
+```text
+Browser/curl :8180
+  -> listener của Wokwi VS Code
+  -> bundled Private IoT Gateway
+  -> mạng riêng của simulator
+  -> target:80
+  -> ESP32 WebServer
+  -> GPIO2 / LED
+```
+
+`target` là alias của MCU trong simulator, vì vậy không hard-code IP được in ra
+Serial. Nếu restart nóng nhiều lần làm lease mô phỏng chuyển khỏi địa chỉ target
+mặc định và request bị reset, dừng phiên cũ, chạy **Developer: Reload Window**,
+rồi chạy lại **Wokwi: Start Simulator**.
+
+Chi tiết vận hành và chẩn đoán nằm tại
+`pocs/poc3-web-led/docs/PRIVATE-GATEWAY.md`. Trên board thật, mở trực tiếp địa
+chỉ IP mà ESP32 in ra Serial, ví dụ `http://192.168.1.50/`.
 
 Không expose POC server trực tiếp ra Internet: thiết kế cơ bản này chưa có TLS,
 authentication hoặc authorization.
@@ -264,5 +286,6 @@ qua RFC2217.
 
 ## 13. Trạng thái
 
-Tài liệu thiết kế đã có. Frontend, firmware và API chưa được triển khai hoặc xác
-minh runtime.
+Frontend, firmware, API và Private IoT Gateway đã được triển khai. Runtime trên
+Wokwi for VS Code 3.6.0 đã quan sát được `GET false`, `POST on true`, LED sáng,
+`POST off false`, LED tắt và JSON `404`; Wokwi Terminal ghi nhận đủ request.

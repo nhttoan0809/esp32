@@ -32,7 +32,7 @@ String ledStateJson() {
 }
 
 void logRequest(const char *method, int status) {
-  Serial.printf("HTTP_REQUEST method=%s path=%s status=%d led=%s\n", method,
+  Serial.printf("HTTP_REQUEST method=%s path=%s status=%d led=%s\r\n", method,
                 server.uri().c_str(), status, ledWord());
 }
 
@@ -80,7 +80,7 @@ void setup() {
 
   Serial.begin(115200);
   Serial.println();
-  Serial.printf("WIFI_CONNECTING ssid=%s\n", WIFI_SSID);
+  Serial.printf("WIFI_CONNECTING ssid=%s\r\n", WIFI_SSID);
 
   WiFi.mode(WIFI_STA);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
@@ -88,11 +88,12 @@ void setup() {
     delay(250);
   }
 
-  Serial.printf("WIFI_CONNECTED ip=%s\n", WiFi.localIP().toString().c_str());
+  Serial.printf("WIFI_CONNECTED ip=%s\r\n",
+                WiFi.localIP().toString().c_str());
 
   registerRoutes();
   server.begin();
-  Serial.printf("HTTP_SERVER_STARTED port=%u\n", HTTP_PORT);
+  Serial.printf("HTTP_SERVER_STARTED port=%u\r\n", HTTP_PORT);
 }
 
 void loop() {

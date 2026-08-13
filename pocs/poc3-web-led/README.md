@@ -29,9 +29,13 @@ Nếu `pio` không có trong `PATH`, dùng
 **Wokwi: Start Simulator**.
 
 Firmware mặc định dùng access point mở `Wokwi-GUEST`. Private IoT Gateway sẽ
-forward HTTP port 80 của ESP32 tới <http://localhost:8180>. Private Gateway yêu
-cầu gói Wokwi có hỗ trợ tính năng này và không hỗ trợ Safari. Public Gateway
-không nhận kết nối đi vào ESP32, nên không thể dùng để nghiệm thu luồng browser.
+forward HTTP port 80 của ESP32 tới <http://localhost:8180>. Với Wokwi for VS
+Code 3.6.0 đang dùng trong repository, gateway là WebAssembly component được
+bundle trong extension và tự khởi động từ `[[net.forward]]`; không cần chạy
+gateway standalone ở port 9011 hay chọn lệnh `Enable Private Gateway`.
+
+Xem [tài liệu Private Gateway](docs/PRIVATE-GATEWAY.md) để hiểu đường đi của
+request, cấu hình đúng phiên bản, kiểm chứng runtime và chẩn đoán port/target.
 
 Khi simulator và Private Gateway đang chạy:
 
