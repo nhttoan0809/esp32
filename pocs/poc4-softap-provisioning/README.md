@@ -1,5 +1,8 @@
 # POC 4 — ESP32 SoftAP Wi-Fi provisioning
 
+Tiến độ, giới hạn kiểm chứng và bước tiếp theo được ghi tại
+[STATUS.md](STATUS.md).
+
 Project độc lập này biến ESP32 classic thành cổng cấu hình: thiết bị luôn phát
 SoftAP `ESP32-SETUP-<suffix>`, phục vụ form tại `http://192.168.4.1`, đồng thời
 dùng STA để thử Wi-Fi do người dùng nhập. Đây không phải router/repeater: không
