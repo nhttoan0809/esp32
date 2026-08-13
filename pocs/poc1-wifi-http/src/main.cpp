@@ -31,7 +31,7 @@ bool deadlineReached(uint32_t now, uint32_t deadline) {
 }
 
 void startWifiConnection(uint32_t now) {
-  Serial.printf("WIFI_CONNECTING ssid=%s\n", WIFI_SSID);
+  Serial.printf("WIFI_CONNECTING ssid=%s\r\n", WIFI_SSID);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD, WIFI_CHANNEL);
   wifiAttemptStartedAt = now;
   wifiAttemptActive = true;
@@ -44,7 +44,7 @@ void handleWifi(uint32_t now) {
     wifiAttemptActive = false;
     if (!wifiWasConnected) {
       wifiWasConnected = true;
-      Serial.printf("WIFI_CONNECTED ip=%s rssi=%d\n",
+      Serial.printf("WIFI_CONNECTED ip=%s rssi=%d\r\n",
                     WiFi.localIP().toString().c_str(), WiFi.RSSI());
       nextHttpRequestAt = now;
     }
@@ -55,18 +55,18 @@ void handleWifi(uint32_t now) {
     wifiWasConnected = false;
     wifiAttemptActive = false;
     nextWifiAttemptAt = now + RETRY_INTERVAL_MS;
-    Serial.printf("WIFI_DISCONNECTED status=%d\n", WiFi.status());
-    Serial.printf("WIFI_RETRY_IN_MS %lu\n",
+    Serial.printf("WIFI_DISCONNECTED status=%d\r\n", WiFi.status());
+    Serial.printf("WIFI_RETRY_IN_MS %lu\r\n",
                   static_cast<unsigned long>(RETRY_INTERVAL_MS));
   }
 
   if (wifiAttemptActive) {
     if (now - wifiAttemptStartedAt >= WIFI_CONNECT_TIMEOUT_MS) {
-      Serial.printf("WIFI_CONNECT_TIMEOUT status=%d\n", WiFi.status());
+      Serial.printf("WIFI_CONNECT_TIMEOUT status=%d\r\n", WiFi.status());
       WiFi.disconnect();
       wifiAttemptActive = false;
       nextWifiAttemptAt = now + RETRY_INTERVAL_MS;
-      Serial.printf("WIFI_RETRY_IN_MS %lu\n",
+      Serial.printf("WIFI_RETRY_IN_MS %lu\r\n",
                     static_cast<unsigned long>(RETRY_INTERVAL_MS));
     }
     return;
@@ -74,6 +74,34 @@ void handleWifi(uint32_t now) {
 
   if (deadlineReached(now, nextWifiAttemptAt)) {
     startWifiConnection(now);
+  }
+}
+
+void printHttpBody(const String &body) {
+  Serial.print("HTTP_BODY ");
+
+  char previous = '\0';
+  for (size_t index = 0; index < body.length(); ++index) {
+    const char current = body[index];
+    if (current == '\r') {
+      Serial.write('\r');
+      if (index + 1 >= body.length() || body[index + 1] != '\n') {
+        Serial.write('\n');
+      }
+    } else if (current == '\n') {
+      if (previous != '\r') {
+        Serial.write('\r');
+      }
+      Serial.write('\n');
+    } else {
+      Serial.write(current);
+    }
+    previous = current;
+  }
+
+  if (body.isEmpty() ||
+      (body[body.length() - 1] != '\r' && body[body.length() - 1] != '\n')) {
+    Serial.println();
   }
 }
 
@@ -86,7 +114,7 @@ bool performHttpGet() {
   http.setTimeout(HTTP_TIMEOUT_MS);
   http.collectHeaders(responseHeaders, 1);
 
-  Serial.printf("HTTP_REQUEST method=GET url=%s\n", API_URL);
+  Serial.printf("HTTP_REQUEST method=GET url=%s\r\n", API_URL);
   if (!http.begin(client, API_URL)) {
     Serial.println("HTTP_ERROR code=-1000 message=begin failed");
     http.end();
@@ -98,12 +126,12 @@ bool performHttpGet() {
   bool succeeded = false;
 
   if (status > 0) {
-    Serial.printf("HTTP_RESPONSE status=%d content_type=%s\n", status,
+    Serial.printf("HTTP_RESPONSE status=%d content_type=%s\r\n", status,
                   http.header("Content-Type").c_str());
-    Serial.printf("HTTP_BODY %s\n", http.getString().c_str());
+    printHttpBody(http.getString());
     succeeded = status == HTTP_CODE_OK;
   } else {
-    Serial.printf("HTTP_ERROR code=%d message=%s\n", status,
+    Serial.printf("HTTP_ERROR code=%d message=%s\r\n", status,
                   HTTPClient::errorToString(status).c_str());
   }
 
@@ -129,8 +157,8 @@ void loop() {
     const uint32_t interval =
         succeeded ? REQUEST_INTERVAL_MS : RETRY_INTERVAL_MS;
     nextHttpRequestAt = millis() + interval;
-    Serial.printf(succeeded ? "HTTP_NEXT_IN_MS %lu\n"
-                            : "HTTP_RETRY_IN_MS %lu\n",
+    Serial.printf(succeeded ? "HTTP_NEXT_IN_MS %lu\r\n"
+                            : "HTTP_RETRY_IN_MS %lu\r\n",
                   static_cast<unsigned long>(interval));
   }
 
