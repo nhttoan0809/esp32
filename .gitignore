@@ -5,6 +5,7 @@
 __pycache__/
 *.pyc
 *.log
+pocs/poc3-web-led/include/secrets.h
 
 # Local credentials (never commit real Wi-Fi secrets)
 pocs/poc1-wifi-http/include/secrets.h
