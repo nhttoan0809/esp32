@@ -505,5 +505,7 @@ tự xây đã chứng minh được luồng sản phẩm.
 
 ## 20. Trạng thái
 
-Tài liệu thiết kế đã có. Firmware, frontend và cấu hình POC chưa được triển khai.
-Chưa có bằng chứng runtime từ board ESP32 thật, nên chưa xác minh end-to-end.
+Firmware, frontend, API, NVS state machine và cấu hình Wokwi đã được triển khai;
+build/lint pass. Chưa có bằng chứng runtime trên firmware cuối hoặc board ESP32
+thật, nên chưa xác minh end-to-end. Xem
+`pocs/poc4-softap-provisioning/STATUS.md`.
