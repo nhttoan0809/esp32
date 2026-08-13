@@ -215,5 +215,6 @@ Trong lúc monitor đang mở:
 
 ## 12. Trạng thái
 
-Tài liệu thiết kế đã có. Firmware chưa được triển khai. Repository hiện chưa có
-bằng chứng runtime từ board ESP32 thật, nên POC Bluetooth chưa được xác minh.
+Firmware BLE GATT server đã được triển khai và build pass. Wokwi không hỗ trợ
+Bluetooth, còn máy kiểm chứng chưa có ESP32 qua USB, nên chưa có bằng chứng
+runtime từ radio thật. Xem `pocs/poc2-bluetooth/STATUS.md`.
