@@ -1,5 +1,7 @@
 # POC 2 — ESP32 BLE: phát hiện client kết nối
 
+Tiến độ, blocker runtime và bước tiếp theo được ghi tại [STATUS.md](STATUS.md).
+
 Project độc lập này biến ESP32 classic thành BLE GATT server. Firmware quảng
 bá một service, ghi session connect/disconnect ra UART0 và cung cấp một
 characteristic chỉ đọc có giá trị `ready`.
