@@ -1,5 +1,8 @@
 # Hướng dẫn Giả lập Wokwi — ESP32 trên VS Code (không cần board)
 
+> Để build, lint và chạy các POC từ terminal mà không đổi workspace trong VS
+> Code, xem [workflow dành cho POC](POC-TERMINAL-WORKFLOW.md).
+
 > **Mục đích của file này:** ghi lại *ý định* cài extension Wokwi (giả lập ESP32
 > ngay trong VS Code) và *cấu hình cụ thể* của 2 file `wokwi.toml` + `diagram.json`
 > với code hoàn chỉnh — để lần sau không phải tìm lại từ đầu.

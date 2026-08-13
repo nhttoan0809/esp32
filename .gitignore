@@ -1,6 +1,9 @@
 # PlatformIO
 .pio/
+.venv/
 .vscode/
+__pycache__/
+*.pyc
 *.log
 
 # macOS
