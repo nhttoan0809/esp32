@@ -1,5 +1,7 @@
 # POC 3 — Điều khiển LED qua ESP32 HTTP server
 
+Tiến độ, phần đã xác minh và bước tiếp theo được ghi tại [STATUS.md](STATUS.md).
+
 Project PlatformIO độc lập này phục vụ frontend HTML/CSS/JavaScript trực tiếp
 từ flash (`PROGMEM`). Frontend đọc trạng thái GPIO2 bằng API trước khi hiển thị
 và chỉ cập nhật sau response thành công.
