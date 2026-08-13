@@ -6,5 +6,8 @@ __pycache__/
 *.pyc
 *.log
 
+# Local credentials (never commit real Wi-Fi secrets)
+pocs/poc1-wifi-http/include/secrets.h
+
 # macOS
 .DS_Store
