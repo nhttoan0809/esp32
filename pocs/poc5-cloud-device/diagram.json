@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "author": "toannguyen",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 10, "left": 10, "attrs": {} },
+    { "type": "wokwi-led", "id": "ledSetup", "top": -120, "left": 330, "attrs": { "color": "yellow" } },
+    { "type": "wokwi-led", "id": "ledClient", "top": -55, "left": 330, "attrs": { "color": "blue" } },
+    { "type": "wokwi-led", "id": "ledWifi", "top": 10, "left": 330, "attrs": { "color": "green" } },
+    { "type": "wokwi-led", "id": "ledServer", "top": 75, "left": 330, "attrs": { "color": "white" } },
+    { "type": "wokwi-led", "id": "realDevice", "top": 140, "left": 330, "attrs": { "color": "red" } },
+    { "type": "wokwi-pushbutton", "id": "setupButton", "top": 215, "left": 310, "attrs": { "color": "black", "label": "SETUP", "key": "S" } }
+  ],
+  "connections": [
+    [ "esp:18", "ledSetup:A", "yellow", [] ],
+    [ "ledSetup:C", "esp:GND.1", "black", [] ],
+    [ "esp:19", "ledClient:A", "blue", [] ],
+    [ "ledClient:C", "esp:GND.1", "black", [] ],
+    [ "esp:21", "ledWifi:A", "green", [] ],
+    [ "ledWifi:C", "esp:GND.1", "black", [] ],
+    [ "esp:22", "ledServer:A", "white", [] ],
+    [ "ledServer:C", "esp:GND.1", "black", [] ],
+    [ "esp:23", "realDevice:A", "red", [] ],
+    [ "realDevice:C", "esp:GND.1", "black", [] ],
+    [ "esp:25", "setupButton:1.l", "orange", [] ],
+    [ "setupButton:2.l", "esp:GND.1", "black", [] ],
+    [ "esp:TX", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX", "$serialMonitor:TX", "", [] ]
+  ]
+}
