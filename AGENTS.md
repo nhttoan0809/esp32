@@ -24,6 +24,15 @@ Serial Monitor.
    trạng thái phần cứng mô phỏng theo mục "Cổng kiểm chứng" bên dưới.
 6. Khi tài liệu web và hành vi extension khác nhau, ưu tiên hành vi/schema/
    changelog của đúng phiên bản extension đang cài, đồng thời ghi rõ khác biệt.
+7. Mọi search web và lấy nội dung web hãy ưu tiên dùng Tavily CLI (`tvly`). Chi
+   tiết trong mục "Search web — Tavily".
+
+## Search web — Tavily
+
+Khi cần tìm kiếm thông tin, tra tài liệu hoặc lấy nội dung web, ưu tiên dùng
+Tavily CLI (`tvly`), không dùng web tool tích hợp của agent hay duyệt web
+thủ công. Kiểm tra `tvly --status` trước; nếu CLI chưa cài hoặc chưa xác thực
+được, làm theo hướng dẫn cài đặt/xác thực của CLI trước khi chạy search.
 
 ## Khảo sát trước khi thay đổi
 
@@ -225,6 +234,31 @@ Không dùng task `PlatformIO: Serial Monitor` mặc định để quan sát ESP
 task báo `/dev/cu.*`, `/dev/tty*` hoặc `COM*`, đó là cổng thiết bị của hệ điều
 hành. Dùng `Wokwi Terminal`, hoặc RFC2217 tại `localhost:4000` khi cần kiểm tra
 tự động.
+
+## Kiểm thử bằng Wokwi CLI
+
+Các tác vụ kiểm thử/mô phỏng — chạy simulator, thu Serial, xác nhận LED/GPIO,
+chứng minh hành vi firmware — đều dùng `wokwi-cli` (headless), không dùng cách
+mở browser/tab VS Code rồi bấm "Run" và quan sát bằng mắt.
+
+- Lint sơ đồ: `wokwi-cli lint`.
+- Chạy simulator headless và kiểm tra hành vi:
+  `wokwi-cli --expect-text "<mốc-định>" --fail-text "<triệu-chứng-sai>" --timeout 30000 .`
+  hoặc `./scripts/poc.sh <n> simulate ...` khi POC có script.
+- Kết luận "firmware đúng/sai" phải dựa trên output Serial / `--expect-text`
+  của CLI, không phải trạng thái UI.
+
+### Token Wokwi
+
+`wokwi-cli` chỉ chạy mô phỏng khi có biến `WOKWI_CLI_TOKEN`. Để có thể chạy các lệnh lệnh
+mô phỏng, yêu cầu người dùng cấp token:
+
+1. Người dùng mở <https://wokwi.com/dashboard/ci> (Wokwi dashboard → CI).
+2. Tạo và copy **API/CI token** (chuỗi dạng `wok_...`).
+3. Xuất token vào shell trước khi chạy: `export WOKWI_CLI_TOKEN='<token>'`.
+
+Không tự tạo, đoán, hard-code hay commit token. Nếu thiếu token, dừng lại
+và hỏi người dùng.
 
 ## Cổng kiểm chứng bắt buộc
 
