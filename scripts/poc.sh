@@ -5,12 +5,13 @@ REPO_ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 
 usage() {
   cat <<'EOF'
-Usage: ./scripts/poc.sh <1|2|3|4> <build|artifacts|lint|verify|simulate|serial> [options]
+Usage: ./scripts/poc.sh <1|2|3|4|5> <build|artifacts|lint|verify|simulate|serial> [options]
 
 Examples:
   ./scripts/poc.sh 1 verify
   ./scripts/poc.sh 3 simulate --expect-text HTTP_SERVER_STARTED
   ./scripts/poc.sh 3 serial --lines 10
+  ./scripts/poc.sh 5 verify
 
 Environment:
   PIO_BIN             Override PlatformIO executable
@@ -61,6 +62,10 @@ case "${POC_NUMBER}" in
   4)
     PROJECT="${REPO_ROOT}/pocs/poc4-softap-provisioning"
     RFC2217_PORT=4004
+    ;;
+  5)
+    PROJECT="${REPO_ROOT}/pocs/poc5-cloud-device"
+    RFC2217_PORT=4005
     ;;
   *)
     echo "Unknown POC: ${POC_NUMBER}" >&2

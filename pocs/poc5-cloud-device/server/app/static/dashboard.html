@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ESP32 Device Dashboard</title>
+    <style>
+      :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+      body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #111827; color: #f9fafb; }
+      main { width: min(92vw, 420px); padding: 24px; border-radius: 16px; background: #1f2937; box-shadow: 0 16px 40px #0008; }
+      h1 { margin-top: 0; font-size: 1.4rem; }
+      label { display: block; margin: 14px 0 6px; color: #d1d5db; }
+      input, button { box-sizing: border-box; width: 100%; min-height: 44px; border-radius: 8px; border: 1px solid #4b5563; padding: 10px 12px; font: inherit; }
+      input { background: #111827; color: #f9fafb; }
+      .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
+      button { cursor: pointer; border: 0; font-weight: 700; }
+      #turnOn { background: #22c55e; color: #052e16; }
+      #turnOff { background: #ef4444; color: white; }
+      button:disabled { opacity: .55; cursor: wait; }
+      #status { margin-top: 18px; padding: 12px; border-radius: 8px; background: #111827; white-space: pre-wrap; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>ESP32 Real Device</h1>
+      <label for="deviceId">Device ID</label>
+      <input id="deviceId" value="esp32-poc5" autocomplete="off">
+      <label for="apiKey">Dashboard API key</label>
+      <input id="apiKey" type="password" autocomplete="off">
+      <div class="actions">
+        <button id="turnOn" type="button">Bật</button>
+        <button id="turnOff" type="button">Tắt</button>
+      </div>
+      <div id="status">Chưa tải trạng thái.</div>
+    </main>
+    <script>
+      const statusNode = document.querySelector('#status');
+      const buttons = [...document.querySelectorAll('button')];
+
+      function headers() {
+        return {
+          'Content-Type': 'application/json',
+          'X-API-Key': document.querySelector('#apiKey').value,
+        };
+      }
+
+      function deviceUrl(suffix = '') {
+        const id = encodeURIComponent(document.querySelector('#deviceId').value);
+        return `/api/devices/${id}${suffix}`;
+      }
+
+      async function readBody(response) {
+        const body = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(body.detail || `HTTP ${response.status}`);
+        return body;
+      }
+
+      function render(body) {
+        statusNode.textContent = [
+          `Online: ${body.online ?? true}`,
+          `Real_Device: ${body.on === null ? 'unknown' : body.on ? 'ON' : 'OFF'}`,
+          body.last_seen ? `Last seen: ${body.last_seen}` : '',
+          body.command_id ? `Command: ${body.command_id}` : '',
+        ].filter(Boolean).join('\n');
+      }
+
+      async function refresh() {
+        try {
+          render(await readBody(await fetch(deviceUrl(), { headers: headers() })));
+        } catch (error) {
+          statusNode.textContent = `Lỗi: ${error.message}`;
+        }
+      }
+
+      async function setState(on) {
+        buttons.forEach(button => button.disabled = true);
+        statusNode.textContent = 'Đang chờ ESP32 xác nhận...';
+        try {
+          const response = await fetch(deviceUrl('/state'), {
+            method: 'PUT', headers: headers(), body: JSON.stringify({ on }),
+          });
+          render(await readBody(response));
+        } catch (error) {
+          statusNode.textContent = `Lỗi: ${error.message}`;
+        } finally {
+          buttons.forEach(button => button.disabled = false);
+        }
+      }
+
+      document.querySelector('#turnOn').addEventListener('click', () => setState(true));
+      document.querySelector('#turnOff').addEventListener('click', () => setState(false));
+      document.querySelector('#apiKey').addEventListener('change', refresh);
+    </script>
+  </body>
+</html>
