@@ -59,7 +59,7 @@ hard-code hay commit token vào repo**, AGENTS.md "Token Wokwi").
 - Consumes: danh sách pin hợp lệ của `board-esp32-devkit-v1` (đã kiểm chứng ở trên)
 - Produces: diagram POC5 mô phỏng đúng form board thật (30 chân), cùng 6 GPIO 18/19/21/22/23/25
 
-- [ ] **Step 1: Đổi phần tử**
+- [x] **Step 1: Đổi phần tử**
 
 Thay trong `parts`:
 
@@ -68,7 +68,7 @@ Thay trong `parts`:
 +    { "type": "board-esp32-devkit-v1", "id": "esp", "top": 10, "left": 10, "attrs": {} },
 ```
 
-- [ ] **Step 2: Đổi tên pin trong `connections`**
+- [x] **Step 2: Đổi tên pin trong `connections`**
 
 Bảng ánh xạ (chỉ các prefix `esp:`, các id linh kiện khác giữ nguyên):
 
@@ -103,7 +103,7 @@ Kết quả mong đợi (block `connections`):
 [ "esp:RX0", "$serialMonitor:TX", "", [] ]
 ```
 
-- [ ] **Step 3: Xác thực JSON**
+- [x] **Step 3: Xác thực JSON**
 
 Run:
 
@@ -113,7 +113,7 @@ node -e 'JSON.parse(require("fs").readFileSync("pocs/poc5-cloud-device/diagram.j
 
 Expected: không throw.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add pocs/poc5-cloud-device/diagram.json
@@ -132,14 +132,14 @@ git commit -m "feat(poc5): switch Wokwi diagram to 30-pin ESP32 DevKit V1 part"
 - Produces: bằng chứng lint (1 info `unsupported-part`, 0 error/warning) để
   ghi nhận lại vào STATUS.md
 
-- [ ] **Step 1: Export token**
+- [x] **Step 1: Export token**
 
 ```bash
 export WOKWI_CLI_TOKEN='<token-đã-cấp>'
 # Token không được ghi vào file, commit hay log (AGENTS.md: Token Wokwi).
 ```
 
-- [ ] **Step 2: Lint diagram POC5**
+- [x] **Step 2: Lint diagram POC5**
 
 Run:
 
@@ -160,7 +160,7 @@ Nếu xuất hiện `error` hoặc `warning` (đặc biệt `invalid-pin`) → d
 danh sách pin hợp lệ trong mục "Đã xác minh" ở đầu file này, sửa lại
 `diagram.json` rồi lint lại.
 
-- [ ] **Step 3: Smoke test Serial sau khi đổi phần tử**
+- [x] **Step 3: Smoke test Serial sau khi đổi phần tử**
 
 Chân `TX`/`RX` (DevKitC v4) đổi thành `TX0`/`RX0` (DevKit V1). Source element
 DevKit V1 khai báo `TX0`/`RX0` mang signal `usart(0)` — tức vẫn là UART0,
@@ -182,13 +182,13 @@ chân TX/RX với source element trước khi sửa tiếp).
 > AGENTS.md "Token Wokwi"). Chỉ chạy simulate, không chạy lại full TLS/ngrok
 > (out of scope — xem "Không trong phạm vi").
 
-- [ ] **Step 4: Cập nhật ghi nhận lint trong STATUS.md**
+- [x] **Step 4: Cập nhật ghi nhận lint trong STATUS.md**
 
 Sửa mục "Wokwi lint info còn lại" trong `pocs/poc5-cloud-device/STATUS.md`:
 identifier đổi từ `board-esp32-devkit-c-v4` sang `board-esp32-devkit-v1`
 (cùng lý do giữ: schema/docs Wokwi chấp nhận, không có warning/error).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add pocs/poc5-cloud-device/STATUS.md
@@ -209,7 +209,7 @@ git commit -m "docs(poc5): record DevKit V1 lint + simulate result in STATUS"
 - Produces: docs nhất quán: board thật = DevKit V1 30 chân; phần tử Wokwi POC5
   = `board-esp32-devkit-v1` (30 chân, khớp form thật)
 
-- [ ] **Step 1: `docs/hardware/KIT-COMPONENTS.md`**
+- [x] **Step 1: `docs/hardware/KIT-COMPONENTS.md`**
 
 Dòng 17 (mục 1.1), đổi:
 
@@ -231,7 +231,7 @@ Thêm vào mục 5 (Trạng thái xác minh): board đã về, model xác nhận
 (2026-08-27); 6 GPIO POC5 có trên board (D25 hàng trái; D18/D19/D21/D22/D23
 hàng phải — đã đối chiếu với layout chuẩn + phần tử Wokwi).
 
-- [ ] **Step 2: `docs/hardware/HARDWARE-SETUP-POC5.md`**
+- [x] **Step 2: `docs/hardware/HARDWARE-SETUP-POC5.md`**
 
 - Note pin map (gần dòng 223, "Lưu ý pin map: POC5 khóa theo ESP32 DevKitC"):
   đổi thành "POC5 khóa theo số GPIO; phần tử Wokwi là
@@ -242,7 +242,7 @@ hàng phải — đã đối chiếu với layout chuẩn + phần tử Wokwi).
   "chờ kit về" sang "đã đối chiếu với layout chuẩn + phần tử Wokwi; xác nhận
   lại hàng phải khi nối dây".
 
-- [ ] **Step 3: `docs/pocs/POC-05-CLOUD-WEBSOCKET-DEVICE.md`**
+- [x] **Step 3: `docs/pocs/POC-05-CLOUD-WEBSOCKET-DEVICE.md`**
 
 - Mục 5 (gần dòng 139): "Pin map mục tiêu cho ESP32 DevKitC V4" →
   "Pin map mục tiêu cho ESP32 DevKit V1 (30 chân; phần tử Wokwi
@@ -252,7 +252,7 @@ hàng phải — đã đối chiếu với layout chuẩn + phần tử Wokwi).
 - Link tham khảo (dòng 468) có thể bổ sung trang DevKit V1 bên cạnh link
   DevKitC V4 (tuỳ chọn, giữ link cũ).
 
-- [ ] **Step 4: Verify không còn reference cũ sai nghĩa**
+- [x] **Step 4: Verify không còn reference cũ sai nghĩa**
 
 Run:
 
@@ -263,7 +263,7 @@ grep -rn "devkit-c-v4" docs/hardware/ docs/pocs/ pocs/poc5-cloud-device/ || echo
 Expected: `clean` (nếu còn hit trong STATUS.md là phần "baseline cũ" được
 cố ý giữ làm lịch sử thì chấp nhận, ghi chú rõ).
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs/hardware/KIT-COMPONENTS.md docs/hardware/HARDWARE-SETUP-POC5.md \
@@ -284,9 +284,9 @@ git commit -m "docs: record kit board as ESP32 DevKit V1 30-pin, align POC5 Wokw
 
 ## Self-Review Checklist
 
-- [ ] **Mỗi "vấn đề" là 1 Task riêng** (1: diagram, 2: lint, 3: docs) — khớp 3
+- [x] **Mỗi "vấn đề" là 1 Task riêng** (1: diagram, 2: lint, 3: docs) — khớp 3
   thay đổi đã nêu với user, mỗi task có Files/Steps/Expected/Commit riêng.
-- [ ] **Không placeholder**: pin mapping, danh sách pin hợp lệ, output lint
+- [x] **Không placeholder**: pin mapping, danh sách pin hợp lệ, output lint
   mong đợi đều cụ thể (từ kết quả đã chạy 2026-08-30).
-- [ ] **Token không lọt vào repo**: chỉ reference cách export, không ghi giá trị.
-- [ ] **Không sửa firmware/root diagram**: phạm vi gói gọn POC5 + 3 docs phần cứng.
+- [x] **Token không lọt vào repo**: chỉ reference cách export, không ghi giá trị.
+- [x] **Không sửa firmware/root diagram**: phạm vi gói gọn POC5 + 3 docs phần cứng.
