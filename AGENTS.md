@@ -1,344 +1,127 @@
 # AGENTS.md
 
-## Phạm vi
+## Phạm vi & Triết lý
 
-Các chỉ dẫn này áp dụng cho toàn bộ repository. Mục tiêu là giữ cấu hình
-PlatformIO + ESP32 + Wokwi có thể build và mô phỏng lặp lại được, đồng thời
-không suy đoán tên board, part, chân kết nối, đường dẫn firmware hoặc vị trí
-Serial Monitor.
+Tài liệu này là quy chuẩn bắt buộc cho mọi tác vụ phát triển, lập trình và kiểm thử trong repository `esp32-learning`.
+- **Triết lý:** **CLI-First & Agent-Friendly**. Không sử dụng hoặc phụ thuộc vào giao diện đồ hoạ (UI/Extensions) trên IDE. Mọi thao tác build, flash, lint, simulate, test phải thực hiện qua các lệnh CLI chính thức.
+- **Nền tảng mục tiêu:** Vi điều khiển **ESP32 DevKit V1 (30 chân)** trên nền tảng **PlatformIO Core CLI (`pio`)** + **Arduino Framework** + **Wokwi Simulator CLI (`wokwi-cli`)**.
 
-## Nguyên tắc bắt buộc
+---
 
-1. Trước khi sửa cấu hình board, framework hoặc extension, phải xác định phiên
-   bản đang dùng và đọc tài liệu chính thức tương ứng trong cùng lượt làm việc.
-2. Chỉ dùng nguồn sơ cấp theo thứ tự ưu tiên:
-   - tài liệu của nhà sản xuất chip/board;
-   - tài liệu chính thức của framework;
-   - tài liệu chính thức của PlatformIO/Wokwi;
-   - Marketplace, changelog và schema đi kèm đúng phiên bản extension đã cài.
-3. Không lấy blog, video, gist, Stack Overflow hoặc snippet do AI tạo làm nguồn
-   quyết định cấu hình. Chỉ dùng chúng để tìm từ khóa, sau đó xác minh lại bằng
-   nguồn chính thức.
-4. Không tự đoán identifier. Ví dụ, Wokwi dùng `wokwi-led`, không phải `led`.
-5. Không báo thành công chỉ vì code build được. Phải quan sát được output hoặc
-   trạng thái phần cứng mô phỏng theo mục "Cổng kiểm chứng" bên dưới.
-6. Khi tài liệu web và hành vi extension khác nhau, ưu tiên hành vi/schema/
-   changelog của đúng phiên bản extension đang cài, đồng thời ghi rõ khác biệt.
-7. Mọi search web và lấy nội dung web hãy ưu tiên dùng Tavily CLI (`tvly`). Chi
-   tiết trong mục "Search web — Tavily".
+## 1. Nguyên tắc Bắt buộc
 
-## Search web — Tavily
+1. **Nguồn tài liệu sơ cấp:** Khi tra cứu API, chỉ sử dụng tài liệu chính thức:
+   - Arduino-ESP32 Core: <https://docs.espressif.com/projects/arduino-esp32/en/latest/>
+   - ESP32 Technical Reference Manual: <https://www.espressif.com/en/support/documents/technical-documents>
+   - PlatformIO Core: <https://docs.platformio.org/en/latest/core/index.html>
+   - Wokwi Docs & CLI: <https://docs.wokwi.com/>
+2. **Không tự đoán identifier / part name:**
+   - Mã board Wokwi: `board-esp32-devkit-v1` hoặc `board-esp32-devkit-c-v4`.
+   - Mã linh kiện Wokwi: luôn có tiền tố `wokwi-` (ví dụ: `wokwi-led`, `wokwi-pushbutton`, `wokwi-resistor`).
+3. **Cổng kiểm chứng (Verification Gate):** Không bao giờ báo thành công chỉ vì code biên dịch không lỗi (`pio run` pass). Luôn phải quan sát được log Serial thực tế qua `wokwi-cli --expect-text` hoặc `pio device monitor`.
+4. **Tìm kiếm thông tin:** Khi cần search web hoặc tra cứu tài liệu ngoài, ưu tiên sử dụng Tavily CLI (`tvly`).
 
-Khi cần tìm kiếm thông tin, tra tài liệu hoặc lấy nội dung web, ưu tiên dùng
-Tavily CLI (`tvly`), không dùng web tool tích hợp của agent hay duyệt web
-thủ công. Kiểm tra `tvly --status` trước; nếu CLI chưa cài hoặc chưa xác thực
-được, làm theo hướng dẫn cài đặt/xác thực của CLI trước khi chạy search.
+---
 
-## Khảo sát trước khi thay đổi
+## 2. Phần cứng Chuẩn: ESP32 DevKit V1 (30 Chân)
 
-Đọc tối thiểu các file sau nếu chúng tồn tại:
+Mọi thiết kế mạch, pin map và code phải tuân thủ nghiêm ngặt đặc tính vật lý của board 30 chân:
+- **Input-Only Pins (GPIO 34, 35, 36/VP, 39/VN):** Chỉ dùng làm ngõ vào (Input / ADC1); **không** có điện trở kéo nội bộ (`INPUT_PULLUP` không hoạt động); **không thể** cấu hình làm Output.
+- **Strapping Pins (GPIO 0, 2, 12, 15):** Quyết định chế độ bootloader/voltage của chip khi khởi động. Tránh dùng cho tải ngoài có thể kéo áp sai mức logic khi boot.
+- **Kênh ADC khi bật Wi-Fi:** Khi Wi-Fi hoạt động, các kênh **ADC2 (GPIO 4, 0, 2, 15, 13, 12, 14, 27, 25, 26) bị vô hiệu hoá**. Bắt buộc dùng **ADC1 (GPIO 32, 33, 34, 35, 36, 39)** để đọc cảm biến Analog.
+- **Cấm sử dụng GPIO 6 – 11:** Đây là các chân kết nối trực tiếp với bộ nhớ SPI Flash nội bộ; can thiệp vào sẽ gây crash ngay lập tức.
+- **LED & Điện trở:** Luôn mắc nối tiếp điện trở hạn dòng **220Ω** với mỗi LED rời nối vào GPIO 3.3V.
 
-```text
-platformio.ini
-wokwi.toml
-diagram.json
-src/main.cpp
-docs/WOKWI-SETUP.md
-```
+---
 
-Xác định cấu hình thực tế bằng các lệnh đọc-only phù hợp:
+## 3. Giới hạn Wokwi Simulator cần ghi nhớ
 
+1. **Wokwi Free Tier:** Không hỗ trợ Private IoT Gateway. Không thể truy cập incoming connection (như web portal trong ESP32) từ trình duyệt máy host qua `localhost`.
+2. **TLS Outbound Handshake (Issue #721):** Bắt tay HTTPS/WSS qua Wokwi Public Gateway có thể không hoàn tất. Kiểm tra luồng Wi-Fi/NTP trên Wokwi và nghiệm thu WSS/TLS cuối cùng trên **Board thật**.
+3. **Wi-Fi ảo (`Wokwi-GUEST`):** Wokwi chỉ mô phỏng kết nối station ảo ra internet. Sóng vô tuyến SoftAP phát ra từ ESP32 ảo không thể nhận thấy bởi điện thoại thật.
+4. **Bluetooth / BLE:** Wokwi hiện chưa hỗ trợ mô phỏng Bluetooth.
+
+---
+
+## 4. Danh mục Lệnh CLI Tiêu chuẩn
+
+### 4.1 Biên dịch & Kiểm tra Tĩnh (PlatformIO)
 ```bash
-code --list-extensions --show-versions | rg -i 'wokwi|platformio'
-pio --version
-pio run --list-targets
-pio pkg list
+# 1. Build firmware tại thư mục hiện tại
+pio run -e esp32dev
+
+# 2. Build firmware tại thư mục con (ví dụ POC5)
+pio run -d pocs/poc5-cloud-device -e esp32dev
+
+# 3. Xác nhận artifact tồn tại
+test -f .pio/build/esp32dev/firmware.bin && echo "Firmware BIN OK"
+test -f .pio/build/esp32dev/firmware.elf && echo "Firmware ELF OK"
+
+# 4. Clean build
+pio run -t clean
 ```
 
-Nếu `pio` không có trong `PATH`, kiểm tra CLI do PlatformIO IDE cài tại
-`${HOME}/.platformio/penv/bin/pio`.
+### 4.2 Nạp code & Theo dõi Serial trên Board thật
+```bash
+# 1. Liệt kê cổng serial trên macOS
+pio device list
 
-Với Wokwi, kiểm tra đúng package đang cài thay vì dựa vào ảnh chụp của phiên bản
-cũ. Các file hữu ích thường gồm:
+# 2. Nạp code (Nếu lỗi, đưa board vào Bootloader: giữ BOOT, nhấn RST/EN, thả BOOT)
+pio run -t upload --upload-port /dev/cu.usbserial-XXXX
 
-```text
-package.json
-changelog.md
-schemas/diagram.schema.json
+# 3. Theo dõi Serial Monitor (115200 baud)
+pio device monitor -p /dev/cu.usbserial-XXXX -b 115200
+# Thoát: Ctrl + ]
+
+# 4. Xoá trắng Flash / NVS
+pio run -t erase --upload-port /dev/cu.usbserial-XXXX
 ```
 
-Tìm package trong thư mục extension của editor đang dùng, ví dụ VS Code,
-VS Code Insiders hoặc Cursor. Không hard-code phiên bản extension vào script.
+### 4.3 Kiểm thử & Mô phỏng Tự động (Wokwi CLI)
+```bash
+# 1. Lint cú pháp diagram.json
+wokwi-cli lint
+wokwi-cli lint pocs/poc5-cloud-device
 
-## Chọn tài liệu theo lớp cấu hình
-
-### 1. PlatformIO và board target
-
-`platformio.ini` là nguồn sự thật cho environment, platform, board và framework.
-
-- PlatformIO Espressif32:
-  <https://docs.platformio.org/en/latest/platforms/espressif32.html>
-- ESP32 Dev Module (`board = esp32dev`):
-  <https://docs.platformio.org/en/latest/boards/espressif32/esp32dev.html>
-- Cấu hình PlatformIO project:
-  <https://docs.platformio.org/en/latest/projectconf/index.html>
-- PlatformIO IDE for VS Code và Serial Monitor:
-  <https://docs.platformio.org/en/latest/integration/ide/vscode.html>
-- `pio device monitor`:
-  <https://docs.platformio.org/en/stable/core/userguide/device/cmd_monitor.html>
-
-Khi đổi `board`, phải mở trang board chính thức tương ứng trong PlatformIO
-Boards catalog. Không suy ra chip, flash size, upload protocol hoặc pin map chỉ
-từ tên thương mại in trên board.
-
-Tên environment trong `[env:NAME]` phải khớp với thư mục build mà Wokwi đọc:
-
-```text
-.pio/build/NAME/firmware.elf
-.pio/build/NAME/firmware.bin
+# 2. Kiểm thử tự động với chuỗi Serial mong đợi (Yêu cầu WOKWI_CLI_TOKEN)
+wokwi-cli --expect-text "Hello ESP32!" --timeout 15000 .
+wokwi-cli --expect-text "WIFI_CONNECTED" --fail-text "AUTH_FAILED" --timeout 30000 pocs/poc5-cloud-device
 ```
 
-Nếu đổi tên environment hoặc board, phải cập nhật `wokwi.toml` trong cùng thay
-đổi và build lại để xác nhận artifact thực sự tồn tại.
+---
 
-### 2. Framework và chip
+## 5. Quy trình Kiểm chứng Bắt buộc (Verification Pipeline)
 
-Chọn tài liệu theo giá trị `framework` trong `platformio.ini`:
+Mỗi thay đổi đối với codebase hoặc sơ đồ mạch phải vượt qua lần lượt các bước sau:
 
-| Framework | Nguồn chính thức bắt buộc |
-|---|---|
-| Arduino trên ESP32 | <https://docs.espressif.com/projects/arduino-esp32/en/latest/getting_started.html> |
-| Arduino GPIO | <https://docs.espressif.com/projects/arduino-esp32/en/latest/api/gpio.html> |
-| Arduino Serial/UART | <https://docs.espressif.com/projects/arduino-esp32/en/latest/api/serial.html> |
-| ESP-IDF | <https://docs.espressif.com/projects/esp-idf/en/stable/esp32/index.html> |
-| ESP-IDF trong PlatformIO | <https://docs.platformio.org/en/latest/frameworks/espidf.html> |
-| MicroPython trên Wokwi VS Code | <https://docs.wokwi.com/vscode/vscode-micropython> |
-
-Với chip khác ESP32 classic, phải chọn đúng biến thể tài liệu (ESP32-C3, S2,
-S3, C6...). Không mặc định rằng UART, USB CDC, LED tích hợp hoặc GPIO2 hoạt
-động giống ESP32 classic.
-
-Đặc biệt với ESP32-C3/S3 và các chip có USB Serial/JTAG, đọc phần USB CDC trong:
-
-<https://docs.wokwi.com/guides/esp32>
-
-Không vừa cấu hình `serialInterface = "USB_SERIAL_JTAG"` vừa giữ các dây
-`$serialMonitor` nếu tài liệu của chip yêu cầu bỏ chúng.
-
-Nếu repository đổi nền tảng, định tuyến nguồn theo nhà sản xuất thay vì tái sử
-dụng tài liệu ESP32:
-
-| Board/chip | Nguồn phần cứng và SDK ưu tiên |
-|---|---|
-| ESP32 family | Espressif Docs: <https://docs.espressif.com/> |
-| Arduino AVR/SAMD/Renesas | Arduino Hardware và Language Reference: <https://docs.arduino.cc/> |
-| RP2040/Raspberry Pi Pico | Raspberry Pi Documentation: <https://www.raspberrypi.com/documentation/microcontrollers/> |
-| STM32 | STMicroelectronics STM32 portal: <https://www.st.com/en/microcontrollers-microprocessors/stm32-32-bit-arm-cortex-mcus.html> và datasheet/reference manual của đúng MCU |
-
-Nếu framework đổi sang Zephyr, dùng <https://docs.zephyrproject.org/latest/>;
-nếu dùng Raspberry Pi Pico SDK, dùng tài liệu SDK tại Raspberry Pi. Sau đó mới
-dùng trang integration tương ứng của PlatformIO hoặc Wokwi để nối build system
-với simulator.
-
-### 3. Wokwi for VS Code
-
-- Bắt đầu với Wokwi for VS Code:
-  <https://docs.wokwi.com/vscode/getting-started>
-- Cấu hình `wokwi.toml` và RFC2217:
-  <https://docs.wokwi.com/vscode/project-config>
-- Di chuyển project vào VS Code:
-  <https://docs.wokwi.com/vscode/migrating>
-- Trang Marketplace chính thức:
-  <https://marketplace.visualstudio.com/items?itemName=Wokwi.wokwi-vscode>
-
-Phải build firmware trước khi start simulator. Sau khi sửa code, build lại và
-xác nhận timestamp/hash của artifact thay đổi nếu thay đổi đó phải ảnh hưởng
-firmware.
-
-Vị trí Serial UI phụ thuộc phiên bản extension. Wokwi for VS Code 3.6 dùng
-terminal tích hợp của VS Code (thường có tên `Wokwi Terminal`) thay vì panel
-Serial nằm dưới sơ đồ. Khi làm việc với phiên bản khác, đọc changelog của chính
-package đã cài trước khi hướng dẫn người dùng tìm UI.
-
-Định tuyến tài liệu theo extension đang thực sự thực hiện tác vụ:
-
-| Extension | Nguồn ưu tiên |
-|---|---|
-| Wokwi Simulator | Wokwi Docs, trang Marketplace chính thức, changelog/schema của package đã cài |
-| PlatformIO IDE | <https://docs.platformio.org/en/latest/integration/ide/vscode.html> và PlatformIO Core docs |
-| ESP-IDF for VS Code | <https://docs.espressif.com/projects/vscode-esp-idf-extension/en/latest/> |
-| Arduino IDE/CLI integration | <https://docs.arduino.cc/arduino-cli/> và trang Marketplace do Arduino phát hành |
-
-Không dùng tài liệu của một extension để suy ra hành vi UI hoặc cổng serial của
-extension khác. PlatformIO Monitor, Wokwi Terminal và ESP-IDF Monitor là ba
-consumer serial khác nhau dù cùng hiển thị trong panel Terminal của VS Code.
-
-### 4. `diagram.json` và linh kiện
-
-- Định dạng sơ đồ và danh sách MCU:
-  <https://docs.wokwi.com/diagram-format>
-- Phần cứng được hỗ trợ:
-  <https://docs.wokwi.com/getting-started/supported-hardware>
-- LED part chính thức:
-  <https://docs.wokwi.com/parts/wokwi-led>
-- Serial Monitor và các pin ảo:
-  <https://docs.wokwi.com/guides/serial-monitor>
-- Wokwi CLI và `lint`:
-  <https://docs.wokwi.com/wokwi-ci/cli-usage>
-
-Mọi `type` trong `parts` phải lấy nguyên văn từ Wokwi Docs, Wokwi Elements hoặc
-schema của extension. Không rút gọn prefix `wokwi-`.
-
-Mọi chân trong `connections` phải được đối chiếu với cả part reference và code.
-TX nối sang RX, RX nối sang TX. Không mặc định một board có LED tích hợp; nếu
-code điều khiển LED rời thì `diagram.json` phải có LED rời và dây tương ứng.
-
-`Serial.println()` gửi dữ liệu qua Serial/UART. Nó không làm chữ xuất hiện trên
-OLED/LCD. Muốn có màn hình vật lý trong sơ đồ phải thêm đúng display part, wiring,
-library và code render theo tài liệu của display đó.
-
-## Baseline đã xác minh của repository này
-
-Target hiện tại:
-
-```ini
-[env:esp32dev]
-platform = espressif32
-board = esp32dev
-framework = arduino
-monitor_speed = 115200
-```
-
-Wokwi đọc firmware từ:
-
-```toml
-[wokwi]
-version = 1
-elf = ".pio/build/esp32dev/firmware.elf"
-firmware = ".pio/build/esp32dev/firmware.bin"
-rfc2217ServerPort = 4000
-```
-
-Sơ đồ dùng ESP32 DevKitC V4, LED part `wokwi-led`, GPIO2 và UART0. Các kết nối
-Serial bắt buộc đối với baseline đã xác minh này là:
-
-```json
-[ "esp:TX", "$serialMonitor:RX", "", [] ],
-[ "esp:RX", "$serialMonitor:TX", "", [] ]
-```
-
-`src/main.cpp` dùng `Serial.begin(115200)`, nên baud rate kiểm tra phải là
-115200. Dòng `Hello ESP32!` xuất hiện sau một chu kỳ HIGH/LOW, khoảng 2 giây.
-
-Không dùng task `PlatformIO: Serial Monitor` mặc định để quan sát ESP32 ảo. Nếu
-task báo `/dev/cu.*`, `/dev/tty*` hoặc `COM*`, đó là cổng thiết bị của hệ điều
-hành. Dùng `Wokwi Terminal`, hoặc RFC2217 tại `localhost:4000` khi cần kiểm tra
-tự động.
-
-## Kiểm thử bằng Wokwi CLI
-
-Các tác vụ kiểm thử/mô phỏng — chạy simulator, thu Serial, xác nhận LED/GPIO,
-chứng minh hành vi firmware — đều dùng `wokwi-cli` (headless), không dùng cách
-mở browser/tab VS Code rồi bấm "Run" và quan sát bằng mắt.
-
-- Lint sơ đồ: `wokwi-cli lint`.
-- Chạy simulator headless và kiểm tra hành vi:
-  `wokwi-cli --expect-text "<mốc-định>" --fail-text "<triệu-chứng-sai>" --timeout 30000 .`
-  hoặc `./scripts/poc.sh <n> simulate ...` khi POC có script.
-- Kết luận "firmware đúng/sai" phải dựa trên output Serial / `--expect-text`
-  của CLI, không phải trạng thái UI.
-
-### Token Wokwi
-
-`wokwi-cli` chỉ chạy mô phỏng khi có biến `WOKWI_CLI_TOKEN`. Để có thể chạy các lệnh lệnh
-mô phỏng, yêu cầu người dùng cấp token:
-
-1. Người dùng mở <https://wokwi.com/dashboard/ci> (Wokwi dashboard → CI).
-2. Tạo và copy **API/CI token** (chuỗi dạng `wok_...`).
-3. Xuất token vào shell trước khi chạy: `export WOKWI_CLI_TOKEN='<token>'`.
-
-Không tự tạo, đoán, hard-code hay commit token. Nếu thiếu token, dừng lại
-và hỏi người dùng.
-
-## Cổng kiểm chứng bắt buộc
-
-Thực hiện theo thứ tự và không bỏ qua lỗi:
-
-1. Xác thực cú pháp JSON:
-
+1. **Xác thực cú pháp `diagram.json`:**
    ```bash
    node -e 'JSON.parse(require("fs").readFileSync("diagram.json", "utf8"))'
    ```
-
-2. Build đúng environment:
-
+2. **Biên dịch mã nguồn:**
    ```bash
    pio run -e esp32dev
    ```
-
-3. Xác nhận artifact:
-
+3. **Xác nhận Binary Artifact:**
    ```bash
-   test -f .pio/build/esp32dev/firmware.elf
-   test -f .pio/build/esp32dev/firmware.bin
+   test -f .pio/build/esp32dev/firmware.elf && test -f .pio/build/esp32dev/firmware.bin
    ```
-
-4. Lint sơ đồ bằng Wokwi CLI nếu CLI có sẵn:
-
+4. **Lint sơ đồ Wokwi:**
    ```bash
    wokwi-cli lint
    ```
+5. **Xác nhận hành vi Serial / Phần cứng:**
+   - Trên Simulator: chạy `wokwi-cli --expect-text "<marker>"` để kiểm tra marker.
+   - Trên Board thật: quan sát LED đổi trạng thái và thu log qua `pio device monitor`.
 
-   Phân biệt rõ `error`, `warning` và `info`. Đối chiếu warning với tài liệu
-   Wokwi hiện hành trước khi kết luận part không được hỗ trợ.
+---
 
-5. Start simulator và giữ tab simulator hiển thị. Wokwi có thể pause khi tab bị
-   ẩn, vì vậy không dùng trạng thái paused để kết luận firmware hỏng.
+## 6. Cấu trúc Tài liệu Tham khảo
 
-6. Phải quan sát được Serial thực tế. Có thể dùng `Wokwi Terminal`, hoặc PySerial
-   qua RFC2217:
-
-   ```python
-   import serial
-
-   port = serial.serial_for_url(
-       "rfc2217://localhost:4000",
-       baudrate=115200,
-       timeout=5,
-   )
-   print(port.readline().decode(errors="replace"))
-   port.close()
-   ```
-
-7. Với LED/GPIO, phải quan sát LED đổi trạng thái hoặc thu tín hiệu bằng Wokwi
-   Logic Analyzer. Không chỉ dựa vào việc source code có `digitalWrite()`.
-
-8. Sau kiểm thử, gỡ linh kiện, helper, port hoặc artifact tạm không thuộc thiết
-   kế cuối. Chạy lại build và lint trên trạng thái cuối cùng.
-
-## Chẩn đoán theo triệu chứng
-
-| Triệu chứng | Kiểm tra trước |
-|---|---|
-| Board hiện nhưng linh kiện mất | `parts[].type`; tra Wokwi part reference/schema |
-| LED hiện nhưng không nháy | Pin code so với wiring, polarity A/C, simulator có đang pause không |
-| Không có Serial | `Serial.begin`, baud, TX/RX wiring, vị trí terminal theo phiên bản extension |
-| PlatformIO monitor mở Bluetooth/USB | Đang mở cổng thiết bị thật, không phải Wokwi virtual serial |
-| Sửa code nhưng hành vi không đổi | Save, build lại, kiểm tra đúng environment và artifact path |
-| `serialMonitor.display` không đổi UI | Kiểm tra changelog/source của extension; UI web và VS Code có thể khác |
-| Mong chữ xuất hiện trên sơ đồ | Xác định cần UART terminal hay cần thêm OLED/LCD thật |
-| Simulator có board nhưng không chạy | Kiểm tra firmware tồn tại, tab có bị pause, license và log extension |
-
-## Yêu cầu khi báo cáo kết quả
-
-Báo cáo phải nêu:
-
-- board, framework và phiên bản extension đã kiểm tra;
-- file đã thay đổi;
-- nguồn chính thức đã dùng;
-- lệnh build/lint/test đã chạy;
-- output thực tế đã quan sát;
-- warning còn lại và lý do chấp nhận hoặc cách xử lý.
-
-Nếu chưa quan sát được output hoặc trạng thái phần cứng, phải nói rõ chưa xác
-minh thành công và tiếp tục chẩn đoán; không suy diễn từ build success.
+- [`docs/hardware/BOARD-ESP32-DEVKIT-V1-30PIN.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/hardware/BOARD-ESP32-DEVKIT-V1-30PIN.md): Đặc tả phần cứng và sơ đồ pinout board 30 chân.
+- [`docs/hardware/KIT-COMPONENTS-REFERENCE.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/hardware/KIT-COMPONENTS-REFERENCE.md): Danh mục cảm biến, module và linh kiện kit thí nghiệm.
+- [`docs/guides/CLI-WORKFLOW-GUIDE.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/guides/CLI-WORKFLOW-GUIDE.md): Hướng dẫn chi tiết sử dụng PlatformIO và Wokwi CLI.
+- [`docs/guides/HARDWARE-FLASHING-GUIDE.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/guides/HARDWARE-FLASHING-GUIDE.md): Quy trình cắm nạp board thật trên macOS.
+- [`docs/reference/WOKWI-SIMULATION-AND-LIMITS.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/reference/WOKWI-SIMULATION-AND-LIMITS.md): Kiến trúc mô phỏng Wokwi và các giới hạn kỹ thuật.
+- [`docs/reference/TROUBLESHOOTING-AND-LESSONS.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/reference/TROUBLESHOOTING-AND-LESSONS.md): Sổ tay chẩn đoán sự cố và bài học kinh nghiệm.
+- [`docs/examples/POC-05-CLOUD-WEBSOCKET.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/examples/POC-05-CLOUD-WEBSOCKET.md): Kiến trúc mẫu dự án IoT Cloud WebSocket.

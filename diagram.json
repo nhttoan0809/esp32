@@ -3,13 +3,13 @@
   "author": "toannguyen",
   "editor": "wokwi",
   "parts": [
-    { "type": "board-esp32-devkit-c-v4", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    { "type": "board-esp32-devkit-v1", "id": "esp", "top": 0, "left": 0, "attrs": {} },
     { "type": "wokwi-led", "id": "led1", "top": 100, "left": 300, "attrs": { "color": "red" } }
   ],
   "connections": [
-    [ "esp:2", "led1:A", "red", [] ],
+    [ "esp:D2", "led1:A", "red", [] ],
     [ "led1:C", "esp:GND.1", "black", [] ],
-    [ "esp:TX", "$serialMonitor:RX", "", [] ],
-    [ "esp:RX", "$serialMonitor:TX", "", [] ]
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ]
   ]
 }
