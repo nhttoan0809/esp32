@@ -136,7 +136,7 @@ Không đưa Wi-Fi password, device token, dashboard API key, ngrok authtoken ho
 
 ## 5. Pin map và LED semantics
 
-Pin map mục tiêu cho ESP32 DevKitC V4:
+Pin map mục tiêu cho ESP32 DevKit V1 (30 chân; phần tử Wokwi `board-esp32-devkit-v1`):
 
 | Thành phần | GPIO | Điều kiện sáng |
 |---|---:|---|
@@ -149,7 +149,7 @@ Pin map mục tiêu cho ESP32 DevKitC V4:
 
 Mọi output được đưa về LOW trước khi chuyển pin sang OUTPUT để tránh chớp lúc
 boot. Diagram chỉ dùng identifier đã đối chiếu tài liệu Wokwi:
-`board-esp32-devkit-c-v4`, `wokwi-led`, `wokwi-pushbutton` và part resistor chính
+`board-esp32-devkit-v1`, `wokwi-led`, `wokwi-pushbutton` và part resistor chính
 thức sau khi kiểm tra schema/docs của extension 3.6.0. UART0 tiếp tục nối TX/RX
 chéo với `$serialMonitor`.
 

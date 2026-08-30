@@ -169,10 +169,8 @@ Từ đây sang phía server/điện thoại, làm tiếp theo README POC5:
 - Quy trình viết cho **Mac + kit ESP32 Basic Starter + POC5 code tại
   `pocs/poc5-cloud-device/`**, kiểm tra chéo với `pocs/poc5-cloud-device/README.md`,
   `scripts/poc.sh` và `include/app_config.h` (2026-08-26).
-- Chưa có cơ hội chạy thử vì kit chưa về; khi kit về, điểm cần đối chiếu
-  đầu tiên: (1) chip USB-serial trên board là loại nào (bước 2),
-  (2) đủ pin GPIO 18/19/21/22/23/25 trên board, (3) cáp kit có phải cáp dữ
-  liệu.
+- Board đã về (2026-08-27), là ESP32 DevKit V1 30 chân. Việc đối chiếu GPIO 18/19/21/22/23/25
+  đã hoàn tất với layout chuẩn + phần tử Wokwi `board-esp32-devkit-v1`; xác nhận lại hàng phải khi nối dây.
 
 ## Nối mạch POC5 trên breadboard
 
@@ -220,8 +218,5 @@ GPIO ──[điện trở 220Ω]──► (đầu + LED, chân dài) ──► L
   `INPUT_PULLUP` (xem `app_config.h` / `device_controller.cpp`) nên **không**
   cần thêm điện trở.
 
-> Lưu ý pin map: POC5 khóa theo ESP32 DevKitC. Khi board kit về, xác nhận đủ
-> GPIO 18/19/21/22/23/25 (trên hàng 30 pin, có số in trên PCB). Nếu thiếu một
-> chân (ví dụ bản 22 chân không có GPIO25), sửa đúng hằng tương ứng trong
-> `pocs/poc5-cloud-device/include/app_config.h` (như `SETUP_BUTTON_PIN`) sang
-> GPIO trống rồi bố trí lại linh kiện cho khớp.
+> Lưu ý pin map: POC5 khóa theo số GPIO; phần tử Wokwi là `board-esp32-devkit-v1` (30 chân),
+> cùng form board thật ESP32 DevKit V1 — nối dây theo số in trên chân.

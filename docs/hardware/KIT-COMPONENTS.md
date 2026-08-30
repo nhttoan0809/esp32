@@ -14,7 +14,7 @@ làm được gì, và cái nào cần lưu ý khi dùng.
 
 | Linh kiện | Số lượng | Ghi chú |
 |---|---:|---|
-| Board ESP32 | 1 | Kit không ghi model cụ thể; thường là bản clone 30 chân (loại DevKitC). |
+| Board ESP32 | 1 | Ghi nhãn **ESP32 DevKit V1, 30 chân** (kiểm tra vật lý 2026-08-27). Hàng trái (từ trên): EN, VP, VN, D34, D35, D32, D33, D25, D26, D27, D14, D12, D13, GND, VIN. |
 | Cáp truyền dữ liệu (cáp nạp code) | 1 | Vừa cấp nguồn vừa truyền serial; phải là cáp dữ liệu (xem mục 5). |
 | Breadboard MB102 | 1 | Gắn mạch không cần hàn. |
 
@@ -106,11 +106,6 @@ file setup của từng POC.
 
 ## 5. Trạng thái xác minh
 
-- Danh mục ghi nhận **nguyên văn mô tả kit do người đặt mua cung cấp**
-  (2026-08-26), chưa có cơ hội đối chiếu từng linh kiện vật lý.
-- Cáp "truyền dữ liệu" phải kiểm tra thực tế: cắm vào Mac, chạy `pio device
-  list` (xem [HARDWARE-SETUP-POC5.md](HARDWARE-SETUP-POC5.md) mục 3) — có ra
-  `/dev/cu.*` thì mới là cáp dữ liệu.
-- Khi board ESP32 về, đối chiếu đủ các GPIO mà POC cần (POC5: 18/19/21/22/23/25)
-  và loại chip USB-serial trên board; chi tiết xử lý khi thiếu nằm trong file
-  setup POC5.
+- Board ESP32 thật ghi nhãn **ESP32 DevKit V1, 30 chân** (kiểm tra vật lý 2026-08-27). Đã đối chiếu 6 GPIO POC5 (D25 hàng trái; D18/D19/D21/D22/D23 hàng phải) khớp với layout chuẩn + phần tử Wokwi `board-esp32-devkit-v1`.
+- Cáp "truyền dữ liệu" phải kiểm tra thực tế: cắm vào Mac, chạy `pio device list` (xem [HARDWARE-SETUP-POC5.md](HARDWARE-SETUP-POC5.md) mục 3) — có ra `/dev/cu.*` thì mới là cáp dữ liệu.
+- Khi board ESP32 về, đối chiếu đủ các GPIO mà POC cần (POC5: 18/19/21/22/23/25) và loại chip USB-serial trên board; chi tiết xử lý khi thiếu nằm trong file setup POC5.
