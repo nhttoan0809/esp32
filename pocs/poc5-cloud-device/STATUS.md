@@ -109,10 +109,7 @@ nghiệm thu end-to-end. Các đường thay thế khi cần:
 
 ## Wokwi lint info còn lại
 
-CLI báo `unsupported-part` mức **info** cho
-`board-esp32-devkit-c-v4`. Identifier này vẫn được giữ vì tài liệu diagram
-Wokwi chính thức và schema của Wokwi for VS Code 3.6.0 chấp nhận đúng tên đó;
-không có warning hoặc error.
+CLI báo `unsupported-part` mức **info** cho `board-esp32-devkit-v1` (thay thế `board-esp32-devkit-c-v4` từ 2026-08-30 để khớp 1-1 với board thật ESP32 DevKit V1 30 chân). Identifier này được chấp nhận; không có warning hoặc error.
 
 ## Lệnh kiểm chứng đã chạy
 
