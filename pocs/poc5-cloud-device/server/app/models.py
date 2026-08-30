@@ -15,6 +15,16 @@ class DeviceOutput(StrictModel):
     on: StrictBool
 
 
+class DeviceStateResponse(StrictModel):
+    device_id: str
+    online: bool
+    on: bool | None = None
+    last_seen: datetime | None = None
+    # Desired state stored while the device is offline; pushed automatically
+    # the next time the device connects. None = nothing pending.
+    pending_on: bool | None = None
+
+
 class HelloMessage(StrictModel):
     v: Literal[1]
     type: Literal["hello"]
@@ -35,15 +45,11 @@ class SetStateRequest(StrictModel):
     on: StrictBool
 
 
-class DeviceStateResponse(StrictModel):
-    device_id: str
-    online: bool
-    on: bool | None
-    last_seen: datetime | None
-
-
 class SetStateResponse(StrictModel):
     device_id: str
-    command_id: UUID
     on: bool
-    confirmed: Literal[True] = True
+    # True when the device confirmed the applied GPIO state (live command).
+    # False when the device is offline and the command was queued instead.
+    synced: bool
+    command_id: UUID | None = None
+    warning: str | None = None

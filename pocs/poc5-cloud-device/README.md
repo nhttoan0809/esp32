@@ -2,8 +2,12 @@
 
 POC này triển khai luồng IoT thực tế tối thiểu: ESP32 mở SoftAP/portal để nhận
 Wi-Fi và public server, kết nối outbound bằng WSS, rồi nhận lệnh bật/tắt
-`Real_Device` từ dashboard FastAPI. Server chuyển lệnh trực tiếp và chỉ trả HTTP
-200 sau khi ESP32 đã đặt GPIO rồi ACK; không có `desired_state`, queue hay replay.
+`Real_Device` từ dashboard FastAPI. Khi device online, server chuyển lệnh trực
+tiếp và chỉ trả HTTP 200 sau khi ESP32 đã đặt GPIO rồi ACK (trả `synced: true`).
+Khi device offline, lệnh được **lưu (queued)** và trả `synced: false` kèm cảnh
+báo; server tự **đồng bộ** trạng thái mong muốn đó vào lần kết nối kế tiếp của
+device (mô hình `desired_state`), nên không có queue lệnh vô hạn hay replay nhiều
+lệnh — chỉ giữ đúng 1 trạng thái mong muốn cuối cùng.
 
 Trạng thái kiểm chứng hiện tại nằm tại [STATUS.md](STATUS.md); thiết kế và protocol
 chi tiết nằm tại [../../docs/pocs/POC-05-CLOUD-WEBSOCKET-DEVICE.md](../../docs/pocs/POC-05-CLOUD-WEBSOCKET-DEVICE.md).

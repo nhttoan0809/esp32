@@ -76,6 +76,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             online=snapshot.online,
             on=snapshot.on,
             last_seen=snapshot.last_seen,
+            pending_on=snapshot.pending_on,
         )
 
     @app.put(
@@ -90,8 +91,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             command_id, confirmed_on = await registry.send_state_command(
                 device_id, request.on
             )
-        except DeviceOfflineError as error:
-            raise HTTPException(status_code=503, detail="device_offline") from error
+        except DeviceOfflineError:
+            # No live connection. Remember the desired state; it is pushed
+            # automatically the next time the device connects. Acknowledge the
+            # request as accepted-but-not-yet-synced so the caller knows the
+            # physical device has not moved yet.
+            await registry.queue_state(device_id, request.on)
+            return SetStateResponse(
+                device_id=device_id,
+                on=request.on,
+                synced=False,
+                command_id=None,
+                warning="device_offline_queued",
+            )
         except DeviceDisconnectedError as error:
             raise HTTPException(
                 status_code=503, detail="device_disconnected"
@@ -107,8 +119,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
         return SetStateResponse(
             device_id=device_id,
-            command_id=command_id,
             on=confirmed_on,
+            synced=True,
+            command_id=command_id,
         )
 
     @app.websocket("/ws/devices/{device_id}")
@@ -137,6 +150,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 {"v": 1, "type": "ready", "device_id": device_id}
             )
             LOGGER.info("DEVICE_ONLINE device_id=%s", device_id)
+
+            # If a desired state was queued while this device was offline,
+            # push it now so the physical device catches up on reconnect.
+            # Fire-and-forget by design (see reconcile_pending).
+            await registry.reconcile_pending(session)
 
             while True:
                 raw_message = await websocket.receive_text()

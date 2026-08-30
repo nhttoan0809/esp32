@@ -56,15 +56,26 @@ def test_dashboard_api_requires_key() -> None:
         assert response.json()["detail"] == "invalid_dashboard_api_key"
 
 
-def test_offline_command_is_rejected_and_not_queued() -> None:
+def test_offline_command_is_queued_and_warned() -> None:
     with make_client() as client:
         response = client.put(
             f"/api/devices/{DEVICE_ID}/state",
             headers=dashboard_headers(),
             json={"on": True},
         )
-        assert response.status_code == 503
-        assert response.json()["detail"] == "device_offline"
+        assert response.status_code == 200
+        body = response.json()
+        assert body["synced"] is False
+        assert body["command_id"] is None
+        assert body["warning"] == "device_offline_queued"
+
+        # The desired state is stored and visible while the device is offline.
+        state = client.get(
+            f"/api/devices/{DEVICE_ID}", headers=dashboard_headers()
+        )
+        assert state.status_code == 200
+        assert state.json()["online"] is False
+        assert state.json()["pending_on"] is True
 
 
 def test_websocket_rejects_invalid_device_token() -> None:
@@ -130,7 +141,75 @@ def test_direct_command_returns_only_after_matching_ack() -> None:
             body = response.json()
             assert body["command_id"] == command["command_id"]
             assert body["on"] is True
-            assert body["confirmed"] is True
+            assert body["synced"] is True
+
+
+def test_offline_desired_state_is_pushed_on_reconnect() -> None:
+    with make_client() as client:
+        # 1) Device is offline; a PUT is queued and warns.
+        queued = client.put(
+            f"/api/devices/{DEVICE_ID}/state",
+            headers=dashboard_headers(),
+            json={"on": True},
+        )
+        assert queued.status_code == 200
+        assert queued.json()["synced"] is False
+
+        # 2) The device (re)connects and reports its *physical* state is off.
+        with client.websocket_connect(
+            f"/ws/devices/{DEVICE_ID}", headers=websocket_headers()
+        ) as websocket:
+            websocket.send_json(hello(on=False))
+            assert websocket.receive_json()["type"] == "ready"
+
+            # 3) The server automatically pushes the queued desired state so
+            #    the physical device catches up on reconnect.
+            command = websocket.receive_json()
+            assert command["type"] == "set_state"
+            assert command["on"] is True
+
+            # 4) The device confirms the applied state.
+            websocket.send_json(
+                {
+                    "v": 1,
+                    "type": "state_report",
+                    "command_id": command["command_id"],
+                    "device_id": DEVICE_ID,
+                    "on": True,
+                }
+            )
+
+            # 5) The queue is now satisfied, so a reconnect is a no-op.
+            state = client.get(
+                f"/api/devices/{DEVICE_ID}", headers=dashboard_headers()
+            )
+            assert state.json()["online"] is True
+            assert state.json()["on"] is True
+            assert state.json()["pending_on"] is None
+
+
+def test_already_in_desired_state_is_not_repushed_on_reconnect() -> None:
+    with make_client() as client:
+        client.put(
+            f"/api/devices/{DEVICE_ID}/state",
+            headers=dashboard_headers(),
+            json={"on": True},
+        )
+
+        # Device reconnects already in the desired state (physical is ON).
+        with client.websocket_connect(
+            f"/ws/devices/{DEVICE_ID}", headers=websocket_headers()
+        ) as websocket:
+            websocket.send_json(hello(on=True))
+            assert websocket.receive_json()["type"] == "ready"
+
+            # No set_state should be pushed; the next GET shows it settled.
+            state = client.get(
+                f"/api/devices/{DEVICE_ID}", headers=dashboard_headers()
+            )
+            assert state.json()["online"] is True
+            assert state.json()["on"] is True
+            assert state.json()["pending_on"] is None
 
 
 def test_command_times_out_without_ack() -> None:

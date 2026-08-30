@@ -56,12 +56,21 @@
       }
 
       function render(body) {
-        statusNode.textContent = [
-          `Online: ${body.online ?? true}`,
-          `Real_Device: ${body.on === null ? 'unknown' : body.on ? 'ON' : 'OFF'}`,
-          body.last_seen ? `Last seen: ${body.last_seen}` : '',
-          body.command_id ? `Command: ${body.command_id}` : '',
-        ].filter(Boolean).join('\n');
+        const lines = [];
+        if ('online' in body) lines.push(`Online: ${body.online ? 'true' : 'false'}`);
+        const onLabel = body.on === undefined || body.on === null ? 'unknown' : body.on ? 'ON' : 'OFF';
+        lines.push(`Real_Device: ${onLabel}`);
+        if (body.last_seen) lines.push(`Last seen: ${body.last_seen}`);
+        if (body.command_id) lines.push(`Command: ${body.command_id}`);
+        // A queued (not-yet-synced) desired state: surfaced from GET (pending_on)
+        // or from a PUT that returned synced=false with a warning.
+        if (body.pending_on !== null && body.pending_on !== undefined) {
+          lines.push(`Queued (will sync on reconnect): ${body.pending_on ? 'ON' : 'OFF'}`);
+        }
+        if (body.synced === false) {
+          lines.push('⚠ Chưa đồng bộ — lệnh đã lưu, sẽ tự đồng bộ khi device online.');
+        }
+        statusNode.textContent = lines.filter(Boolean).join('\n');
       }
 
       async function refresh() {

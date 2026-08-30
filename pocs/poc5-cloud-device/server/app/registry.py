@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from uuid import UUID, uuid4
 
 from fastapi import WebSocket, WebSocketDisconnect
+
+LOGGER = logging.getLogger("poc5.registry")
 
 
 class DeviceOfflineError(RuntimeError):
@@ -30,6 +33,9 @@ class DeviceSnapshot:
     online: bool = False
     on: bool | None = None
     last_seen: datetime | None = None
+    # Desired state requested while offline; pushed automatically on the next
+    # connection. None = nothing is queued.
+    pending_on: bool | None = None
 
 
 @dataclass(slots=True)
@@ -120,6 +126,12 @@ class DeviceRegistry:
             snapshot.on = on
             snapshot.last_seen = self._now()
 
+            # The device is now physically in `on`. If that is the state we
+            # queued while it was offline, the reconciliation is satisfied and
+            # the queue can be cleared so we do not re-push it next reconnect.
+            if snapshot.pending_on is not None and snapshot.pending_on == on:
+                snapshot.pending_on = None
+
             pending = session.pending
             if pending is None or pending.command_id != command_id:
                 return False
@@ -141,7 +153,79 @@ class DeviceRegistry:
                 online=current.online,
                 on=current.on,
                 last_seen=current.last_seen,
+                pending_on=current.pending_on,
             )
+
+    async def queue_state(self, device_id: str, on: bool) -> None:
+        """Remember a desired state requested while the device is offline.
+
+        It is pushed automatically by reconcile_pending() the next time the
+        device connects. Later calls overwrite it, so the newest request wins.
+        """
+        await self._set_pending(device_id, on)
+
+    async def _set_pending(self, device_id: str, on: bool | None) -> None:
+        async with self._guard:
+            snapshot = self._snapshots.setdefault(
+                device_id, DeviceSnapshot(device_id=device_id)
+            )
+            snapshot.pending_on = on
+
+    async def reconcile_pending(self, session: DeviceSession) -> bool:
+        """Push a queued desired state to a just-reconnected device.
+
+        Called from the WebSocket read-loop coroutine right after the device
+        becomes ready, so this MUST stay fire-and-forget: it sends at most one
+        command and returns WITHOUT awaiting the ACK. Awaiting the ACK inline
+        would deadlock, because that same coroutine is the one that reads and
+        dispatches the ACK. The queue is cleared by record_state_report() when
+        the matching state_report arrives; if it never arrives, the next
+        reconnect retries it.
+        """
+        command: dict[str, object] | None = None
+        async with self._guard:
+            if self._sessions.get(session.device_id) is not session:
+                return False
+            snapshot = self._snapshots.setdefault(
+                session.device_id, DeviceSnapshot(device_id=session.device_id)
+            )
+            queued = snapshot.pending_on
+            if queued is None:
+                return False
+            reported = snapshot.on
+            if reported == queued:
+                # Device is already in the desired state; just clear the queue.
+                snapshot.pending_on = None
+                LOGGER.info(
+                    "RECONCILE_NOOP device_id=%s on=%s",
+                    session.device_id,
+                    queued,
+                )
+                return False
+            command_id = uuid4()
+            command = {
+                "v": 1,
+                "type": "set_state",
+                "command_id": str(command_id),
+                "device_id": session.device_id,
+                "on": queued,
+            }
+            LOGGER.info(
+                "RECONCILE_PUSH device_id=%s command_id=%s on=%s",
+                session.device_id,
+                command_id,
+                queued,
+            )
+        try:
+            await session.websocket.send_json(command)
+        except (RuntimeError, OSError, WebSocketDisconnect) as error:
+            LOGGER.warning(
+                "RECONCILE_SEND_FAILED device_id=%s error=%s",
+                session.device_id,
+                error,
+            )
+            return False
+        return True
 
     async def send_state_command(self, device_id: str, on: bool) -> tuple[UUID, bool]:
         session = await self._online_session(device_id)
@@ -166,15 +250,31 @@ class DeviceRegistry:
                     }
                 )
             except (RuntimeError, OSError, WebSocketDisconnect) as error:
+                # The socket may already be gone (device just dropped). Keep
+                # the desired state queued so reconcile_pending() retries it
+                # when the device reconnects.
+                await self._set_pending(device_id, on)
                 raise DeviceDisconnectedError() from error
 
             try:
                 confirmed_on = await asyncio.wait_for(
                     result, timeout=self._command_timeout_seconds
                 )
+                # The device confirmed it is physically in the requested
+                # state, which is now the newest desired state, so nothing
+                # remains pending.
+                await self._set_pending(device_id, None)
                 return command_id, confirmed_on
             except TimeoutError as error:
+                # The command was sent but its confirmation was lost. Keep it
+                # queued so the next reconnect can verify/apply it.
+                await self._set_pending(device_id, on)
                 raise DeviceAckTimeoutError() from error
+            except DeviceDisconnectedError as error:
+                # The socket dropped while waiting for the ACK. Keep the
+                # desired state queued so the next reconnect retries it.
+                await self._set_pending(device_id, on)
+                raise
             finally:
                 if session.pending is pending:
                     session.pending = None

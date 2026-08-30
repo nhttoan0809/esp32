@@ -1,6 +1,28 @@
 # Trạng thái POC 5 — Cloud WebSocket device
 
-Cập nhật: 2026-08-23.
+Cập nhật: 2026-08-27.
+
+## Offline desired-state + auto-sync (2026-08-27)
+
+- Thay đổi hợp đồng server (phía device/firmware **không đổi**):
+  - `PUT /state` khi device offline: không còn 503 `device_offline`; trả 200
+    với `synced: false`, `command_id: null`,
+    `warning: "device_offline_queued"`. Trạng thái mong muốn được lưu
+    (mới nhất ghi đè — chỉ giữ 1 giá trị, không phải queue nhiều lệnh).
+  - `GET /devices/{id}` thêm trường `pending_on` (null khi không có gì
+    pending).
+  - Khi device (tái) kết nối và `hello.reported.on` khác `pending_on`,
+    server tự đẩy `set_state` (fire-and-forget; ACK do read-loop nhận và
+    xóa queue). Nếu `hello.reported.on` đã khớp → không đẩy lại, chỉ xóa
+    queue. ACK của lệnh live bị timeout/mất cũng giữ `pending_on` để tự
+    hồi ở lần reconnect kế tiếp.
+  - Dashboard hiển thị dòng cảnh báo "chưa đồng bộ / queued".
+- 12 server tests pass (10 test hợp đồng cũ + 2 test mới: queued-while-offline
+  và auto-reconcile-on-reconnect, trong đó có nhánh no-op khi device đã ở
+  đúng trạng thái).
+- Cần restart uvicorn để áp dụng (ngrok không cần chạy lại).
+- Nghiệm thu thật (board thật + LED GPIO23) vẫn chờ gate cũ ở mục bên dưới;
+  test này xác minh bằng fake device qua ngrok + TestClient.
 
 ## Đã triển khai và xác minh
 
