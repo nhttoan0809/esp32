@@ -9,7 +9,8 @@
 // Định nghĩa chân GPIO kết nối với LED
 // GPIO 2 là chân LED tích hợp (Onboard LED) trên ESP32 DevKit V1
 // và cũng được nối ra LED rời ngoài trên mạch Wokwi
-constexpr uint8_t LED_PIN = 2;
+constexpr uint8_t LED_PIN_1 = 18;
+constexpr uint8_t LED_PIN_2 = 19;
 
 // Thời gian trễ giữa các lần bật / tắt (milliseconds)
 constexpr uint32_t BLINK_INTERVAL_MS = 1000;
@@ -26,27 +27,32 @@ void setup()
     delay(500);
 
     // Cấu hình chân GPIO của LED làm ngõ ra (OUTPUT)
-    pinMode(LED_PIN, OUTPUT);
+    pinMode(LED_PIN_1, OUTPUT);
+    pinMode(LED_PIN_2, OUTPUT);
 
     Serial.println("========================================");
     Serial.println("   ESP32 DevKit V1 - Basic LED Blink    ");
     Serial.println("========================================");
-    Serial.printf("[INIT] LED configured on GPIO %d\n", LED_PIN);
+    Serial.printf("[INIT] LED_PIN_1 configured on GPIO %d\n", LED_PIN_1);
+    Serial.printf("[INIT] LED_PIN_2 configured on GPIO %d\n", LED_PIN_2);
     Serial.printf("[INIT] Blink interval: %d ms\n", BLINK_INTERVAL_MS);
 }
 
 void loop()
 {
     blinkCount++;
-
-    // 1. Bật đèn LED (mức logic HIGH - 3.3V)
-    digitalWrite(LED_PIN, HIGH);
-    Serial.printf("[%lu ms] Cycle #%u - [LED] State: ON\n", (unsigned long)millis(), blinkCount);
+    // Pha 1: LED 1 BẬT (Vàng), LED 2 TẮT (Xanh lá)
+    digitalWrite(LED_PIN_1, HIGH);
+    digitalWrite(LED_PIN_2, LOW);
+    Serial.printf("[%lu ms] Cycle #%u - LED 1 (D%d): ON  | LED 2 (D%d): OFF\n", 
+                  (unsigned long)millis(), blinkCount, LED_PIN_1, LED_PIN_2);
     delay(BLINK_INTERVAL_MS);
-
-    // 2. Tắt đèn LED (mức logic LOW - 0V)
-    digitalWrite(LED_PIN, LOW);
-    Serial.printf("[%lu ms] Cycle #%u - [LED] State: OFF\n", (unsigned long)millis(), blinkCount);
+    // Pha 2: LED 1 TẮT (Vàng), LED 2 BẬT (Xanh lá)
+    digitalWrite(LED_PIN_1, LOW);
+    digitalWrite(LED_PIN_2, HIGH);
+    Serial.printf("[%lu ms] Cycle #%u - LED 1 (D%d): OFF | LED 2 (D%d): ON\n", 
+                  (unsigned long)millis(), blinkCount, LED_PIN_1, LED_PIN_2);
     delay(BLINK_INTERVAL_MS);
 }
+
 
