@@ -13,5 +13,10 @@ class DeviceController {
   bool realDeviceOn() const;
 
  private:
+  bool setupReady_ = false;
+  bool clientConnected_ = false;
+  bool wifiConnected_ = false;
+  bool serverConnected_ = false;
   bool realDeviceOn_ = false;
 };
+
