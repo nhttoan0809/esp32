@@ -12,11 +12,13 @@ class WifiManager {
   void connect(const DeviceConfig &config, bool finiteAttempts);
   void stop();
   void loop();
+  void scanAndPrintNetworks();
   bool connected() const;
   bool failed() const;
   uint8_t attempts() const;
   State state() const;
   const String &lastError() const;
+
 
  private:
   void startAttempt(uint32_t now);
