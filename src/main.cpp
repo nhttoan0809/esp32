@@ -46,12 +46,16 @@ void loop()
     digitalWrite(LED_PIN_2, LOW);
     Serial.printf("[%lu ms] Cycle #%u - LED 1 (D%d): ON  | LED 2 (D%d): OFF\n", 
                   (unsigned long)millis(), blinkCount, LED_PIN_1, LED_PIN_2);
+    // Serial.printf("[%lu ms] Cycle #%u - LED 1 (D%d): ON \n", 
+    //               (unsigned long)millis(), blinkCount, LED_PIN_1);
     delay(BLINK_INTERVAL_MS);
     // Pha 2: LED 1 TẮT (Vàng), LED 2 BẬT (Xanh lá)
     digitalWrite(LED_PIN_1, LOW);
     digitalWrite(LED_PIN_2, HIGH);
     Serial.printf("[%lu ms] Cycle #%u - LED 1 (D%d): OFF | LED 2 (D%d): ON\n", 
                   (unsigned long)millis(), blinkCount, LED_PIN_1, LED_PIN_2);
+    // Serial.printf("[%lu ms] Cycle #%u - LED 1 (D%d): OFF \n", 
+    //               (unsigned long)millis(), blinkCount, LED_PIN_1);
     delay(BLINK_INTERVAL_MS);
 }
 
