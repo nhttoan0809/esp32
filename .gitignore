@@ -1,14 +1,17 @@
-# PlatformIO
+# PlatformIO & Virtual Environments
 .pio/
 .venv/
-.vscode/
 __pycache__/
 *.pyc
 *.log
-pocs/poc3-web-led/include/secrets.h
+
+# VS Code (ignore user workspace caches, keep extension recommendations)
+.vscode/*
+!.vscode/extensions.json
 
 # Local credentials (never commit real Wi-Fi secrets)
 pocs/poc1-wifi-http/include/secrets.h
+pocs/poc3-web-led/include/secrets.h
 pocs/poc5-cloud-device/include/secrets.h
 pocs/poc5-cloud-device/server/.env
 pocs/poc5-cloud-device/server/.venv/

@@ -6,12 +6,13 @@ Repository phát triển, thử nghiệm và xây dựng các ứng dụng IoT t
 
 ## 1. Điểm nổi bật & Triết lý Thiết kế
 
-- **CLI-First Workflow:** Không phụ thuộc vào giao diện mở rộng IDE. Mọi thao tác biên dịch, nạp code, giám sát Serial và mô phỏng đều thực thi trực tiếp qua dòng lệnh bằng **PlatformIO Core CLI (`pio`)** và **Wokwi CLI (`wokwi-cli`)**.
+- **CLI-First Workflow (Khuyến nghị):** Không phụ thuộc vào giao diện mở rộng IDE. Mọi thao tác biên dịch, nạp code, giám sát Serial và mô phỏng đều thực thi trực tiếp qua dòng lệnh bằng **PlatformIO Core CLI (`pio`)** và **Wokwi CLI (`wokwi-cli`)**, đảm bảo tính tái lập (reproducible) và thân thiện với AI coding agent / CI-CD pipeline.
+- **VS Code Extensions (Tùy chọn / Optional):** Dự án khai báo sẵn các extension khuyến nghị tại [`.vscode/extensions.json`](.vscode/extensions.json) (`platformio.platformio-ide`, `wokwi.wokwi-vscode`) dành cho các nhà phát triển muốn thao tác, debug hoặc mô phỏng trực quan thông qua giao diện đồ họa VS Code.
 - **Hardware-Ready:** Chuẩn hoá thiết kế mạch và cấu hình cho board **ESP32 DevKit V1 30-pin** cùng bộ linh kiện thí nghiệm tiêu chuẩn.
 - **Thư viện Cốt lõi Chuẩn:**
-  - **Wi-Fi Provisioning:** Sử dụng **`tzapu/WiFiManager`** với Captive Portal tự động và Clean Connect.
+  - **Wi-Fi Provisioning:** Sử dụng **`tzapu/WiFiManager`** với Captive Portal tự động, menu chọn Wi-Fi Dropdown và Clean Connect.
   - **Cloud WebSocket (WSS):** Sử dụng **`gilmaimon/ArduinoWebsockets`** kết nối bảo mật qua cổng 443 với Cloudflare / ngrok.
-- **Reference Architecture (POC 5):** Dự án mẫu hoàn chỉnh về IoT Provisioning qua SoftAP/Web Portal + Outbound Secure WebSocket (WSS) + Máy chủ FastAPI (Desired State pattern).
+- **Reference Architecture (POC 5):** Dự án mẫu hoàn chỉnh về IoT Provisioning qua SoftAP/Web Portal + Outbound Secure WebSocket (WSS) + Máy chủ FastAPI (Desired State pattern) + Giao diện Web Light Theme.
 
 ---
 
@@ -19,6 +20,8 @@ Repository phát triển, thử nghiệm và xây dựng các ứng dụng IoT t
 
 ```text
 esp32-learning/
+├── .vscode/
+│   └── extensions.json        # Khuyến nghị Extension VS Code (PlatformIO, Wokwi) - Tùy chọn
 ├── AGENTS.md                  # Quy tắc & Quy chuẩn bắt buộc cho AI Coding Agent
 ├── README.md                  # Cẩm nang tổng quan dự án
 ├── platformio.ini             # Cấu hình PlatformIO gốc (esp32dev, Arduino, 115200)
@@ -81,6 +84,13 @@ wokwi-cli lint pocs/poc5-cloud-device
 # Chạy mô phỏng tự động và bắt chuỗi Serial (Cần WOKWI_CLI_TOKEN)
 wokwi-cli --expect-text "Hello ESP32!" --timeout 15000 .
 ```
+
+### 3.4 Sử dụng VS Code Extensions (Tùy chọn / Optional)
+Nếu bạn muốn sử dụng giao diện đồ họa trên VS Code:
+1. Mở thẻ **Extensions** (`Ctrl+Shift+X` hoặc `Cmd+Shift+X`), chấp nhận cài đặt các Extension khuyến nghị trong [`.vscode/extensions.json`](.vscode/extensions.json):
+   - **PlatformIO IDE** (`platformio.platformio-ide`): Quản lý board, thư viện, nạp code và Serial Monitor qua thanh trạng thái dưới cùng.
+   - **Wokwi Simulator** (`wokwi.wokwi-vscode`): Mở trực tiếp file `diagram.json` để kích hoạt mô phỏng đồ họa mạch ESP32.
+2. **Lưu ý:** Giao diện đồ họa là tùy chọn để thuận tiện quan sát; toàn bộ tiêu chuẩn kiểm chứng cốt lõi của dự án vẫn luôn được vận hành và xác thực qua các công cụ CLI tiêu chuẩn (`pio`, `wokwi-cli`, `pytest`).
 
 ---
 
