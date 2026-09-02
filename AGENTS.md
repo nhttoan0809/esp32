@@ -5,6 +5,9 @@
 Tài liệu này là quy chuẩn bắt buộc cho mọi tác vụ phát triển, lập trình và kiểm thử trong repository `esp32-learning`.
 - **Triết lý:** **CLI-First & Agent-Friendly**. Không sử dụng hoặc phụ thuộc vào giao diện đồ hoạ (UI/Extensions) trên IDE. Mọi thao tác build, flash, lint, simulate, test phải thực hiện qua các lệnh CLI chính thức.
 - **Nền tảng mục tiêu:** Vi điều khiển **ESP32 DevKit V1 (30 chân)** trên nền tảng **PlatformIO Core CLI (`pio`)** + **Arduino Framework** + **Wokwi Simulator CLI (`wokwi-cli`)**.
+- **Thư viện Cốt lõi Chuẩn:**
+  - **Wi-Fi Provisioning:** `tzapu/WiFiManager` (`^2.0.17`)
+  - **Cloud WebSocket (WSS):** `gilmaimon/ArduinoWebsockets` (`^0.5.4`)
 
 ---
 
@@ -14,6 +17,8 @@ Tài liệu này là quy chuẩn bắt buộc cho mọi tác vụ phát triển,
    - Arduino-ESP32 Core: <https://docs.espressif.com/projects/arduino-esp32/en/latest/>
    - ESP32 Technical Reference Manual: <https://www.espressif.com/en/support/documents/technical-documents>
    - PlatformIO Core: <https://docs.platformio.org/en/latest/core/index.html>
+   - WiFiManager: <https://github.com/tzapu/WiFiManager>
+   - ArduinoWebsockets: <https://github.com/gilmaimon/ArduinoWebsockets>
    - Wokwi Docs & CLI: <https://docs.wokwi.com/>
 2. **Không tự đoán identifier / part name:**
    - Mã board Wokwi: `board-esp32-devkit-v1` hoặc `board-esp32-devkit-c-v4`.
@@ -67,14 +72,14 @@ pio run -t clean
 pio device list
 
 # 2. Nạp code (Nếu lỗi, đưa board vào Bootloader: giữ BOOT, nhấn RST/EN, thả BOOT)
-pio run -t upload --upload-port /dev/cu.usbserial-XXXX
+pio run -d pocs/poc5-cloud-device -e esp32dev -t upload --upload-port /dev/cu.usbserial-XXXX
 
 # 3. Theo dõi Serial Monitor (115200 baud)
 pio device monitor -p /dev/cu.usbserial-XXXX -b 115200
-# Thoát: Ctrl + ]
+# Thoát: Ctrl + C hoặc Ctrl + ]
 
-# 4. Xoá trắng Flash / NVS
-pio run -t erase --upload-port /dev/cu.usbserial-XXXX
+# 4. Xoá trắng Flash / NVS (Format toàn bộ cấu hình)
+pio run -d pocs/poc5-cloud-device -e esp32dev -t erase --upload-port /dev/cu.usbserial-XXXX
 ```
 
 ### 4.3 Kiểm thử & Mô phỏng Tự động (Wokwi CLI)
@@ -85,7 +90,6 @@ wokwi-cli lint pocs/poc5-cloud-device
 
 # 2. Kiểm thử tự động với chuỗi Serial mong đợi (Yêu cầu WOKWI_CLI_TOKEN)
 wokwi-cli --expect-text "Hello ESP32!" --timeout 15000 .
-wokwi-cli --expect-text "WIFI_CONNECTED" --fail-text "AUTH_FAILED" --timeout 30000 pocs/poc5-cloud-device
 ```
 
 ---
@@ -100,15 +104,15 @@ Mỗi thay đổi đối với codebase hoặc sơ đồ mạch phải vượt q
    ```
 2. **Biên dịch mã nguồn:**
    ```bash
-   pio run -e esp32dev
+   pio run -d pocs/poc5-cloud-device -e esp32dev
    ```
 3. **Xác nhận Binary Artifact:**
    ```bash
-   test -f .pio/build/esp32dev/firmware.elf && test -f .pio/build/esp32dev/firmware.bin
+   test -f pocs/poc5-cloud-device/.pio/build/esp32dev/firmware.elf && test -f pocs/poc5-cloud-device/.pio/build/esp32dev/firmware.bin
    ```
 4. **Lint sơ đồ Wokwi:**
    ```bash
-   wokwi-cli lint
+   wokwi-cli lint pocs/poc5-cloud-device
    ```
 5. **Xác nhận hành vi Serial / Phần cứng:**
    - Trên Simulator: chạy `wokwi-cli --expect-text "<marker>"` để kiểm tra marker.
@@ -122,6 +126,8 @@ Mỗi thay đổi đối với codebase hoặc sơ đồ mạch phải vượt q
 - [`docs/hardware/KIT-COMPONENTS-REFERENCE.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/hardware/KIT-COMPONENTS-REFERENCE.md): Danh mục cảm biến, module và linh kiện kit thí nghiệm.
 - [`docs/guides/CLI-WORKFLOW-GUIDE.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/guides/CLI-WORKFLOW-GUIDE.md): Hướng dẫn chi tiết sử dụng PlatformIO và Wokwi CLI.
 - [`docs/guides/HARDWARE-FLASHING-GUIDE.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/guides/HARDWARE-FLASHING-GUIDE.md): Quy trình cắm nạp board thật trên macOS.
+- [`docs/reference/WIFI-PROVISIONING-AND-WIFIMANAGER.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/reference/WIFI-PROVISIONING-AND-WIFIMANAGER.md): Đặc tả kiến trúc Wi-Fi, Single RF PHY, Captive Portal, cấu hình và xử lý NVS.
+- [`docs/reference/WEBSOCKET-CLIENT-AND-ARDUINOWEBSOCKETS.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/reference/WEBSOCKET-CLIENT-AND-ARDUINOWEBSOCKETS.md): Đặc tả kiến trúc WebSocket WSS qua Cloudflare/ngrok, cấu hình TLS, Custom Headers và xử lý Pydantic Schema.
 - [`docs/reference/WOKWI-SIMULATION-AND-LIMITS.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/reference/WOKWI-SIMULATION-AND-LIMITS.md): Kiến trúc mô phỏng Wokwi và các giới hạn kỹ thuật.
-- [`docs/reference/TROUBLESHOOTING-AND-LESSONS.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/reference/TROUBLESHOOTING-AND-LESSONS.md): Sổ tay chẩn đoán sự cố và bài học kinh nghiệm.
+- [`docs/reference/TROUBLESHOOTING-AND-LESSONS.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/reference/TROUBLESHOOTING-AND-LESSONS.md): Sổ tay chẩn đoán sự cố và bài học kinh nghiệm toàn diện.
 - [`docs/examples/POC-05-CLOUD-WEBSOCKET.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/examples/POC-05-CLOUD-WEBSOCKET.md): Kiến trúc mẫu dự án IoT Cloud WebSocket.

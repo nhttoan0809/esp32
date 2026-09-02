@@ -1,6 +1,6 @@
 # Kiến trúc Mẫu: IoT Device Provisioning & Điều khiển qua WebSocket (POC 5)
 
-Tài liệu này mô tả chi tiết kiến trúc của **POC 5** — một mô hình hoàn chỉnh cho thiết bị IoT ESP32 bao gồm: Wi-Fi Provisioning qua SoftAP/Captive Portal, kết nối Cloud an toàn qua Outbound WebSocket (WSS/TLS), và điều khiển hai chiều với máy chủ FastAPI theo mô hình `desired_state`.
+Tài liệu này mô tả chi tiết kiến trúc của **POC 5** — một mô hình hoàn chỉnh cho thiết bị IoT ESP32 bao gồm: Wi-Fi Provisioning qua Captive Portal với **`tzapu/WiFiManager`**, kết nối Cloud an toàn qua Outbound WebSocket (WSS/TLS) với **`gilmaimon/ArduinoWebsockets`**, và điều khiển hai chiều với máy chủ FastAPI theo mô hình `desired_state`.
 
 ---
 
@@ -10,12 +10,12 @@ Tài liệu này mô tả chi tiết kiến trúc của **POC 5** — một mô 
 ┌────────────────────────────────┐
 │   Điện thoại / Trình duyệt     │
 └──────────────┬─────────────────┘
-               │  1. Join SoftAP & Nhập Wi-Fi + Server Config (192.168.4.1)
+               │  1. Join SoftAP & Tự động bung Captive Portal (WiFiManager)
                ▼
 ┌────────────────────────────────┐      Outbound WSS (Port 443)      ┌──────────────────────────┐
 │   ESP32 DevKit V1 (Device)     │ ────────────────────────────────► │  Cloud Server (FastAPI)  │
-│                                │                                   │  + ngrok HTTPS Tunnel    │
-│  - SoftAP: 192.168.4.1         │ ◄──────────────────────────────── │                          │
+│                                │   (gilmaimon/ArduinoWebsockets)   │  + Cloudflare / ngrok    │
+│  - WiFiManager (Captive Portal)│ ◄──────────────────────────────── │                          │
 │  - Preferences (NVS Config)    │       Command: {"action":"set"}   └─────────────┬────────────┘
 │  - GPIO23 (Real_Device Relay)  │ ────────────────────────────────►               │
 │  - Status LEDs (18,19,21,22)   │       ACK: {"status":"synced"}                  │
@@ -30,15 +30,20 @@ Tài liệu này mô tả chi tiết kiến trúc của **POC 5** — một mô 
 
 ---
 
-## 2. Các Module Thành phần trong Firmware ESP32
+## 2. Các Thư viện Cốt lõi Tiêu chuẩn
 
-Mã nguồn tại `pocs/poc5-cloud-device/src/` được chia thành các module độc lập, rõ ràng:
+Mã nguồn tại `pocs/poc5-cloud-device/src/` được xây dựng dựa trên 2 thư viện cốt lõi đã được chứng thực ổn định:
 
-1. **`app_state.h / app_state.cpp`**: Quản lý máy trạng thái tổng thể (`Boot`, `Provisioning`, `ConnectingWiFi`, `ConnectedWiFi`, `CloudReady`, `Error`).
-2. **`device_controller.h / device_controller.cpp`**: Quản lý chân GPIO của thiết bị tải thực tế (`Real_Device` - GPIO23), các LED trạng thái hệ thống, và nút bấm cấu hình (GPIO25).
-3. **`config_manager.h / config_manager.cpp`**: Quản lý lưu trữ cấu hình mạng Wi-Fi và Cloud Server vào bộ nhớ flash NVS (qua thư viện `Preferences`) theo cơ chế safe commit.
-4. **`provisioning_manager.h / provisioning_manager.cpp`**: Khởi chạy Wi-Fi SoftAP (`ESP32-SETUP-XXXX`) và HTTP Web Server để phục vụ giao diện portal cấu hình.
-5. **`cloud_client.h / cloud_client.cpp`**: Quản lý kết nối WebSocket outbound (WSS với thư viện `arduinoWebSockets`), kiểm tra TLS probe, gửi bản tin `hello`, nhận lệnh `set_state` và gửi `state_report` ACK.
+1. **`tzapu/WiFiManager` (`^2.0.17`)**:
+   - Quản lý toàn bộ vòng đời Wi-Fi: tự động kết nối Wi-Fi đã lưu trong NVS, tự động mở SoftAP và Captive Portal khi chưa có mạng hoặc kết nối thất bại.
+   - Quản lý các tham số tùy chỉnh: `Server Host` (Cloudflare/ngrok domain), `Server Port`, `WebSocket Path`.
+   - Xem chi tiết: [`docs/reference/WIFI-PROVISIONING-AND-WIFIMANAGER.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/reference/WIFI-PROVISIONING-AND-WIFIMANAGER.md).
+
+2. **`gilmaimon/ArduinoWebsockets` (`^0.5.4`)**:
+   - Quản lý kết nối WSS Outbound qua cổng 443 với mã hóa TLS linh hoạt (`setInsecure()` hoặc CA Cert).
+   - Chuẩn hóa Header `Host: domain` (không bị dính `:443` gây lỗi ở các reverse proxy).
+   - Hỗ trợ gửi `ping/pong` định kỳ giữ kết nối và xử lý bản tin JSON qua `ArduinoJson`.
+   - Xem chi tiết: [`docs/reference/WEBSOCKET-CLIENT-AND-ARDUINOWEBSOCKETS.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/reference/WEBSOCKET-CLIENT-AND-ARDUINOWEBSOCKETS.md).
 
 ---
 
@@ -78,19 +83,23 @@ cp .env.example .env
 uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-### 5.2 Mở Public Tunnel (ngrok)
+### 5.2 Mở Public Tunnel (Cloudflare Tunnel hoặc ngrok)
 ```bash
+# Lựa chọn 1: Cloudflare Tunnel (Khuyên dùng - Ổn định & Ping thấp)
+cloudflared tunnel --url http://localhost:8000
+
+# Lựa chọn 2: ngrok
 ngrok http 8000
 ```
 
-### 5.3 Biên dịch Firmware & Nạp lên Board
+### 5.3 Nạp Firmware & Theo dõi Serial
 ```bash
-# Build firmware
-pio run -d pocs/poc5-cloud-device -e esp32dev
+# 1. Xoá NVS nếu cần đổi cấu hình mới
+pio run -d pocs/poc5-cloud-device -e esp32dev -t erase --upload-port /dev/cu.usbserial-XXXX
 
-# Flash firmware lên board thật
+# 2. Build & Flash firmware
 pio run -d pocs/poc5-cloud-device -e esp32dev -t upload --upload-port /dev/cu.usbserial-XXXX
 
-# Theo dõi Serial
+# 3. Theo dõi Serial Monitor
 pio device monitor -p /dev/cu.usbserial-XXXX -b 115200
 ```

@@ -8,6 +8,9 @@ Repository phát triển, thử nghiệm và xây dựng các ứng dụng IoT t
 
 - **CLI-First Workflow:** Không phụ thuộc vào giao diện mở rộng IDE. Mọi thao tác biên dịch, nạp code, giám sát Serial và mô phỏng đều thực thi trực tiếp qua dòng lệnh bằng **PlatformIO Core CLI (`pio`)** và **Wokwi CLI (`wokwi-cli`)**.
 - **Hardware-Ready:** Chuẩn hoá thiết kế mạch và cấu hình cho board **ESP32 DevKit V1 30-pin** cùng bộ linh kiện thí nghiệm tiêu chuẩn.
+- **Thư viện Cốt lõi Chuẩn:**
+  - **Wi-Fi Provisioning:** Sử dụng **`tzapu/WiFiManager`** với Captive Portal tự động và Clean Connect.
+  - **Cloud WebSocket (WSS):** Sử dụng **`gilmaimon/ArduinoWebsockets`** kết nối bảo mật qua cổng 443 với Cloudflare / ngrok.
 - **Reference Architecture (POC 5):** Dự án mẫu hoàn chỉnh về IoT Provisioning qua SoftAP/Web Portal + Outbound Secure WebSocket (WSS) + Máy chủ FastAPI (Desired State pattern).
 
 ---
@@ -30,7 +33,9 @@ esp32-learning/
 │   ├── guides/                # Hướng dẫn thao tác dòng lệnh & Nạp board thật
 │   │   ├── CLI-WORKFLOW-GUIDE.md
 │   │   └── HARDWARE-FLASHING-GUIDE.md
-│   ├── reference/             # Giới hạn kỹ thuật Wokwi & Sổ tay chẩn đoán lỗi
+│   ├── reference/             # Giới hạn kỹ thuật, Kiến trúc Wi-Fi, WebSocket & Sổ tay lỗi
+│   │   ├── WIFI-PROVISIONING-AND-WIFIMANAGER.md
+│   │   ├── WEBSOCKET-CLIENT-AND-ARDUINOWEBSOCKETS.md
 │   │   ├── WOKWI-SIMULATION-AND-LIMITS.md
 │   │   └── TROUBLESHOOTING-AND-LESSONS.md
 │   └── examples/              # Kiến trúc dự án mẫu
@@ -58,10 +63,13 @@ pio run -d pocs/poc5-cloud-device -e esp32dev
 pio device list
 
 # Nạp code lên board thật (Giữ BOOT, nhấn EN/RST nếu cần vào bootloader)
-pio run -t upload --upload-port /dev/cu.usbserial-XXXX
+pio run -d pocs/poc5-cloud-device -e esp32dev -t upload --upload-port /dev/cu.usbserial-XXXX
 
-# Mở Serial Monitor (Baud 115200, thoát bằng Ctrl + ])
+# Mở Serial Monitor (Baud 115200, thoát bằng Ctrl + C hoặc Ctrl + ])
 pio device monitor -p /dev/cu.usbserial-XXXX -b 115200
+
+# Xoá trắng Flash / NVS (Khi cần đổi mạng hoặc đổi Server host)
+pio run -d pocs/poc5-cloud-device -e esp32dev -t erase --upload-port /dev/cu.usbserial-XXXX
 ```
 
 ### 3.3 Mô phỏng & Lint (Wokwi CLI)
@@ -82,6 +90,8 @@ wokwi-cli --expect-text "Hello ESP32!" --timeout 15000 .
 - 📦 [**Danh mục Linh kiện Thí nghiệm**](docs/hardware/KIT-COMPONENTS-REFERENCE.md): Thông số và cách nối OLED SSD1306, DHT11, PIR HC-SR501, Relay, Còi buzzer, v.v.
 - ⚙️ [**Hướng dẫn Workflow CLI**](docs/guides/CLI-WORKFLOW-GUIDE.md): Chi tiết cách làm việc với PlatformIO Core và Wokwi CLI.
 - 🔌 [**Hướng dẫn Cắm nạp Board thật (macOS)**](docs/guides/HARDWARE-FLASHING-GUIDE.md): Driver CP210x/CH34x, Bootloader sequence, cấp nguồn an toàn.
+- 📶 [**Kiến trúc Wi-Fi Provisioning & WiFiManager**](docs/reference/WIFI-PROVISIONING-AND-WIFIMANAGER.md): Giới hạn Single RF PHY, quy trình Captive Portal, cấu hình tham số Server và xử lý NVS.
+- 🌐 [**Kiến trúc WebSocket & ArduinoWebsockets**](docs/reference/WEBSOCKET-CLIENT-AND-ARDUINOWEBSOCKETS.md): Kết nối Outbound WSS qua Cloudflare/ngrok, cấu hình TLS, Custom Headers và xử lý Pydantic Schema.
 - 🔬 [**Mô phỏng Wokwi & Giới hạn Kỹ thuật**](docs/reference/WOKWI-SIMULATION-AND-LIMITS.md): So sánh Public vs Private Gateway, TLS outbound issue #721.
-- 💡 [**Sổ tay Kinh nghiệm & Xử lý sự cố**](docs/reference/TROUBLESHOOTING-AND-LESSONS.md): Bài học thực tế về WebSockets SSL error handling, NVS safe commit, Desired state pattern.
+- 💡 [**Sổ tay Kinh nghiệm & Xử lý sự cố**](docs/reference/TROUBLESHOOTING-AND-LESSONS.md): Bài học thực tế về RF Lock, WebSockets Header, NVS safe commit, Desired state pattern.
 - 🚀 [**Kiến trúc Mẫu POC 5: Cloud WebSocket**](docs/examples/POC-05-CLOUD-WEBSOCKET.md): Tài liệu thiết kế hệ thống IoT đầy đủ.

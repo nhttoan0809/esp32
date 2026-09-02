@@ -1,60 +1,78 @@
 # Sổ tay Kinh nghiệm & Xử lý sự cố Thực tế (Lessons Learned & Troubleshooting)
 
-Tài liệu này đúc kết các bài học kinh nghiệm sâu sắc từ quá trình thiết kế, lập trình và sửa lỗi thực tế trên ESP32 trong môi trường kết hợp giữa Simulator và Phần cứng thật.
+Tài liệu này đúc kết toàn bộ các bài học kinh nghiệm sâu sắc từ quá trình thiết kế, lập trình, cấu hình mạng và sửa lỗi thực tế trên vi điều khiển **ESP32 DevKit V1 (30 chân)**.
 
 ---
 
-## 1. Bài học về Thư viện WebSockets (arduinoWebSockets)
+## 1. Bài học về Wi-Fi: Giới hạn Single RF PHY & SoftAP Handover
 
-### Hiện tượng "Nuốt lỗi SSL"
-- **Triệu chứng:** Khi hàm kết nối TLS thất bại (`WiFiClientSecure::connect` trả về 0 sau timeout 5s), thư viện `WebSocketsClient` chỉ ghi log nội bộ qua macro `DEBUG_WEBSOCKETS` (mặc định bị tắt ở bản Release) và **không phát ra bất kỳ event `WStype_ERROR` nào**.
-- Lập trình viên chỉ thấy event `WStype_DISCONNECTED reason="TCP connection cleanup"`, dẫn tới hiểu lầm là lỗi mất kết nối TCP thay vì lỗi bắt tay TLS.
+### 1.1 Hiện tượng Kẹt kênh Vô tuyến (RF Channel Lock)
+- **Triệu chứng:** ESP32 mở SoftAP ở Kênh 1 (`CH1`). Điện thoại kết nối vào nhập Wi-Fi nhà ở Kênh 10 (`CH10`). Khi bấm Submit, ESP32 treo cứng ở trạng thái `WIFI_CONNECTING` cho đến khi timeout mà không có log ngắt kết nối.
+- **Nguyên nhân:** ESP32 chỉ có **1 bộ thu phát RF 2.4GHz duy nhất**. Khi đang giữ sóng với điện thoại ở Kênh 1, phần cứng không thể nhảy sang Kênh 10 để bắt tay WPA2 với Router.
 - **Kinh nghiệm áp dụng:**
-  1. Luôn chủ động viết các hàm thăm dò riêng (**Diagnostic Probes**): Gọi trực tiếp `WiFiClient::connect` (để kiểm tra TCP) và `WiFiClientSecure::connect` (để kiểm tra TLS + Root CA) trước khi trao quyền cho thư viện WebSocket.
-  2. Log rõ ràng mã lỗi trả về và thời gian thực thi (`elapsed_ms`) của kết nối TLS.
+  1. Sử dụng thư viện tiêu chuẩn **`tzapu/WiFiManager`** để quản lý chu trình Provisioning.
+  2. Áp dụng mô hình **Save & Clean Connect**: Đóng hoàn toàn SoftAP, giải phóng 100% công suất chip về chế độ `WIFI_STA` thuần túy trước khi bắt tay với Router.
+  3. ESP32 chỉ hỗ trợ băng tần **2.4GHz (802.11 b/g/n)**, không hỗ trợ 5GHz.
 
 ---
 
-## 2. Bài học về Bộ nhớ NVS (Non-Volatile Storage) & Cấu hình
+## 2. Bài học về WebSocket Client: `gilmaimon/ArduinoWebsockets` vs `Links2004`
 
-### Cơ chế Commit an toàn (Safe Commit Pattern)
-- **Vấn đề:** Nếu lưu ngay thông tin Wi-Fi / Server người dùng nhập vào NVS mà không kiểm tra, khi người dùng nhập sai mật khẩu Wi-Fi hoặc sai địa chỉ Server, ESP32 sẽ khởi động lại và vướng vào vòng lặp kết nối thất bại liên tục (Boot loop / Connection freeze).
-- **Mô hình giải pháp:**
-  1. Lưu cấu hình mới vào RAM dưới dạng **Pending Configuration**.
-  2. Thử kết nối Wi-Fi ──► Thử lấy giờ NTP ──► Thử bắt tay TLS ──► Kết nối WebSocket thành công và nhận gói tin `ready` từ server.
-  3. Chỉ khi toàn bộ chuỗi trên thành công mới gọi `Preferences.putString()` và đánh dấu `CONFIG_COMMITTED`.
-  4. Nếu thất bại sau số lần thử nhất định, rollback về cấu hình cũ hoặc mở lại SoftAP portal để người dùng cấu hình lại.
+### 2.1 Lỗi Header `Host:` với Reverse Proxy (Cloudflare / ngrok)
+- **Triệu chứng:** Thư viện cũ `Links2004/arduinoWebSockets` liên tục bị ngắt kết nối với mã lỗi `WSS_DISCONNECTED reason=TCP connection cleanup`.
+- **Nguyên nhân:** Thư viện cũ tự ý chèn cổng `:443` vào Header HTTP Upgrade (`Host: example.com:443`). Các reverse proxy hiện đại coi đây là vi phạm định dạng và lập tức reset kết nối TCP.
+- **Kinh nghiệm áp dụng:** Chuẩn hoá toàn bộ dự án sang thư viện **`gilmaimon/ArduinoWebsockets`** (hỗ trợ truyền trực tiếp URL `wss://...` và tạo Header `Host:` chuẩn RFC).
 
----
-
-## 3. Bài học về Quản lý Trạng thái Thiết bị (Desired State vs Reported State)
-
-### Tránh Queue lệnh vô hạn
-- **Vấn đề:** Khi thiết bị IoT bị ngắt kết nối tạm thời, nếu máy chủ lưu hàng chục lệnh bật/tắt liên tiếp vào hàng đợi (Queue), khi thiết bị online trở lại nó sẽ thực thi dồn dập toàn bộ các lệnh cũ (Replay Storm), gây chớp tắt tải và trạng thái không đoán trước được.
-- **Mô hình giải pháp (Desired State Shadow):**
-  - Máy chủ chỉ lưu **duy nhất 1 trạng thái mong muốn cuối cùng** (`desired_state`).
-  - Khi thiết bị kết nối lại, máy chủ gửi duy nhất trạng thái này trong payload `hello_ack` / `sync`.
-  - Thiết bị áp dụng GPIO rồi gửi phản hồi ACK `reported_state` để đồng bộ.
+### 2.2 Sửa lỗi `setInsecure()` trên nhánh ESP32 của `ArduinoWebsockets`
+- Trong file `esp32_tcp.hpp` và `websockets_client.cpp`, đảm bảo class `SecuredEsp32TcpClient` định nghĩa `void setInsecure() { this->client.setInsecure(); }` và gọi `setInsecure()` khi không truyền CA cert, giúp kết nối linh hoạt với mọi Public Tunnel (Cloudflare, ngrok).
 
 ---
 
-## 4. Bài học về Chứng chỉ TLS & Public Tunnel (ngrok)
+## 3. Bài học về Giao thức & Bảo mật TLS/WSS
 
-### Tin cậy Root CA (Trust Anchor)
-- **Vấn đề:** Khi public server local qua ngrok, ngrok sử dụng chứng chỉ TLS được cấp bởi Let's Encrypt (**ISRG Root X1**).
-- **Lưu ý:**
-  - ESP32 phải được nhúng chứng chỉ gốc `ISRG_ROOT_X1_CA_CERT` trong firmware (`WiFiClientSecure::setCACert`).
-  - Cần đồng bộ thời gian thực qua NTP (`configTime(0, 0, "pool.ntp.org")`) trước khi bắt tay TLS; nếu đồng hồ hệ thống ESP32 ở năm 1970, chứng chỉ TLS sẽ bị mbedTLS từ chối do bị xem là chưa tới ngày hiệu lực (Certificate not yet valid).
-  - Portal ESP32 chỉ nên nhận **Hostname** (ví dụ `example.ngrok-free.app`), không nhận kèm scheme `https://` hay cổng trong chuỗi host.
+### 3.1 Chứng chỉ TLS Đa dạng giữa các Nhà cung cấp Tunnel
+- **ngrok:** Thường sử dụng chứng chỉ của **Let's Encrypt** (Intermediate CA `YE2` hoặc `R10/R11`).
+- **Cloudflare Tunnel (`trycloudflare.com`):** Thường sử dụng chứng chỉ của **Google Trust Services** (`WE1`).
+- **Kinh nghiệm:** Trong môi trường thử nghiệm với Tunnel động, sử dụng `webSocket.setInsecure()`. Trong môi trường Production với domain cố định, nhúng trực tiếp chuỗi PEM Root CA tương ứng (`setCACert`).
+
+### 3.2 Bắt buộc Thêm Header Bypass cho Tunnel
+- Khi kết nối qua ngrok, luôn thêm Header:
+  - `ngrok-skip-browser-warning: 69420`
+  - `User-Agent: ESP32-Client`
+  để tránh bị proxy trả về trang cảnh báo HTML Interstitial thay vì chuyển tiếp WebSocket Upgrade `HTTP 101`.
+
+### 3.3 Đồng bộ Thời gian thực qua NTP
+- Phải đồng bộ thời gian hệ thống (`configTime(0, 0, "pool.ntp.org")`) trước khi bắt tay TLS nếu có kiểm tra thời hạn chứng chỉ CA.
 
 ---
 
-## 5. Bảng kiểm tra nhanh khi gặp lỗi hệ thống (Fast Checklist)
+## 4. Bài học về Schema Validation (Backend Pydantic Strict Mode)
 
-| Vấn đề | Điểm kiểm tra cốt lõi |
-|---|---|
-| **Build lỗi không tìm thấy header** | Kiểm tra `lib_deps` trong `platformio.ini` đã khai báo đúng tên package chưa. |
-| **Serial in ký tự lạ / rác** | Kiểm tra baud rate trong code `Serial.begin(115200)` có khớp với `monitor_speed = 115200` không. |
-| **ESP32 liên tục reset sau khi boot** | Kiểm tra nguồn điện có bị sụt áp khi bật Wi-Fi không; kiểm tra có chân GPIO nào bị dùng chạm vào Strapping pin (GPIO 6-11, GPIO 12) không. |
-| **Không lấy được giờ NTP** | Kiểm tra router Wi-Fi có chặn cổng UDP 123 không; kiểm tra ESP32 đã nhận IP hợp lệ từ DHCP chưa. |
-| **Lỗi TLS Handshake fail (code -0x2700...)** | Kiểm tra giờ hệ thống qua NTP đã đồng bộ chưa; kiểm tra nội dung PEM của Root CA có đúng định dạng kết thúc bằng newline không. |
+### 4.1 Lỗi Thiếu trường Gói tin Handshake
+- **Triệu chứng:** ESP32 kết nối WSS thành công (`WSS_UPGRADED`), gửi gói `WSS_HELLO_SENT` nhưng Server lập tức đóng socket (`WSS_DISCONNECTED`).
+- **Nguyên nhân:** Backend FastAPI dùng Pydantic `StrictModel` (`extra="forbid"`). Gói tin JSON của ESP32 bị thiếu trường bắt buộc `"firmware": "poc5-cloud-device-1.0.0"`.
+- **Kinh nghiệm:** Mọi cấu trúc JSON trên ESP32 C++ (ArduinoJson) phải khớp chính xác 100% từng trường dữ liệu với Schema trên Backend.
+
+---
+
+## 5. Bài học về Quản lý Bộ nhớ Flash / NVS
+
+### 5.1 Xoá và Cập nhật NVS khi Đổi Server Host
+Khi ESP32 đã lưu thông tin Wi-Fi/Server cũ vào NVS, nó sẽ tự động kết nối và bỏ qua Portal. Áp dụng 3 phương án:
+1. **Dùng lệnh CLI (Khuyên dùng):** `pio run -d pocs/poc5-cloud-device -e esp32dev -t erase --upload-port /dev/cu.usbserial-XXXX` để format sạch Flash trong 2 giây.
+2. **Factory Reset Nút bấm:** Nhấn giữ nút GPIO 25 trong $\ge 5$ giây (`wm.resetSettings()`, `configStore.clear()`).
+3. **On-Demand Portal:** Nhấn ngắn nút GPIO 25 để mở lại Portal sửa Server Host mà không mất Wi-Fi.
+
+---
+
+## 6. Bảng Tra cứu Sự cố Nhanh (Fast Troubleshooting Matrix)
+
+| Triệu chứng | Nguyên nhân cốt lõi | Cách xử lý |
+|---|---|---|
+| **`WIFI_CONNECTING` bị treo 90s** | Kẹt kênh RF giữa SoftAP (CH1) và Router (CH10) | Dùng `WiFiManager` hoặc tắt hẳn SoftAP trước khi kết nối Station |
+| **`WSS_DISCONNECTED reason=TCP connection cleanup`** | Thư viện cũ gửi sai Header `Host: domain:443` | Chuyển sang dùng `gilmaimon/ArduinoWebsockets` |
+| **`WSS_CONNECT_FAILED` ngay lập tức** | `WiFiClientSecure` cố xác thực với CA rỗng | Gọi `webSocket.setInsecure()` hoặc nạp đúng CA Cert |
+| **`WSS_HELLO_SENT` xong bị ngắt kết nối** | JSON thiếu trường (`firmware`, `device_id`) khiến Pydantic báo lỗi | Bổ sung đầy đủ các trường theo đúng Model trên Backend |
+| **Không đổi được Server Host mới** | NVS vẫn đang lưu cấu hình Server cũ | Chạy lệnh `pio run -t erase` hoặc nhấn giữ nút GPIO 25 $\ge 5$s |
+| **Serial in ký tự lạ / rác khi boot** | Baud rate không khớp | Cấu hình `Serial.begin(115200)` và `monitor_speed = 115200` |
+| **ESP32 liên tục reset khi bật Wi-Fi** | Sụt áp nguồn điện (Brownout Reset) | Đổi cáp USB chất lượng cao, cấp đủ nguồn $\ge 500\text{mA}$ |
