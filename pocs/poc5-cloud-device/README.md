@@ -42,15 +42,22 @@ uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
 Các URL local:
+- Login: `http://127.0.0.1:8000/login`
 - Dashboard: `http://127.0.0.1:8000/dashboard`
 - API Docs: `http://127.0.0.1:8000/docs`
 - Health check: `http://127.0.0.1:8000/health`
 
 ---
 
-## 3. Public Server qua ngrok
+## 3. Public Server qua Cloudflare Tunnel hoặc ngrok
 
-Sau khi server chạy ở port 8000:
+### Lựa chọn 1: Cloudflare Tunnel (Khuyên dùng)
+```bash
+cloudflared tunnel --url http://localhost:8000
+```
+Lấy domain `.trycloudflare.com` (chỉ lấy host, ví dụ: `xxxx.trycloudflare.com`) để cấu hình vào Portal.
+
+### Lựa chọn 2: ngrok
 ```bash
 ngrok http 8000
 ```
@@ -102,8 +109,8 @@ pio device monitor -p /dev/cu.usbserial-XXXX -b 115200
 # Lint sơ đồ mạch
 wokwi-cli lint pocs/poc5-cloud-device
 
-# Chạy mô phỏng headless và kiểm tra marker
-wokwi-cli --expect-text "HTTP_SERVER_STARTED" --timeout 20000 pocs/poc5-cloud-device
+# Chạy mô phỏng headless và kiểm tra marker khởi động
+wokwi-cli --expect-text "Đang kiểm tra Wi-Fi" --timeout 20000 pocs/poc5-cloud-device
 ```
 
 ---
@@ -112,5 +119,5 @@ wokwi-cli --expect-text "HTTP_SERVER_STARTED" --timeout 20000 pocs/poc5-cloud-de
 
 ```bash
 cd pocs/poc5-cloud-device/server
-pytest -q
+python3 -m pytest tests
 ```

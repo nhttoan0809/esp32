@@ -14,6 +14,13 @@ Tài liệu này đúc kết toàn bộ các bài học kinh nghiệm sâu sắc
   2. Áp dụng mô hình **Save & Clean Connect**: Đóng hoàn toàn SoftAP, giải phóng 100% công suất chip về chế độ `WIFI_STA` thuần túy trước khi bắt tay với Router.
   3. ESP32 chỉ hỗ trợ băng tần **2.4GHz (802.11 b/g/n)**, không hỗ trợ 5GHz.
 
+### 1.2 Quản lý LED Chỉ báo Client Kết nối SoftAP (GPIO 19)
+- **Triệu chứng:** Khi chuyển từ custom portal sang `WiFiManager`, LED 19 (báo có điện thoại/máy tính join SoftAP) không còn sáng khi client kết nối.
+- **Nguyên nhân:** Thư viện `WiFiManager` đóng gói toàn bộ luồng mạng bên trong `wm.autoConnect()`, không tự động set chân GPIO khi có station kết nối vào SoftAP của ESP32.
+- **Kinh nghiệm áp dụng:** Sử dụng hệ thống sự kiện cốt lõi của Arduino-ESP32 `WiFi.onEvent()` để lắng nghe:
+  - `ARDUINO_EVENT_WIFI_AP_STACONNECTED`: Bật LED 19 (`digitalWrite(LED_CLIENT_PIN, HIGH)`).
+  - `ARDUINO_EVENT_WIFI_AP_STADISCONNECTED`: Tắt LED 19 (`digitalWrite(LED_CLIENT_PIN, LOW)`).
+
 ---
 
 ## 2. Bài học về WebSocket Client: `gilmaimon/ArduinoWebsockets` vs `Links2004`
@@ -46,22 +53,32 @@ Tài liệu này đúc kết toàn bộ các bài học kinh nghiệm sâu sắc
 
 ---
 
-## 4. Bài học về Schema Validation (Backend Pydantic Strict Mode)
+## 4. Bài học về Schema Validation (Backend & Firmware)
 
-### 4.1 Lỗi Thiếu trường Gói tin Handshake
+### 4.1 Lỗi Thiếu trường Gói tin Handshake (Pydantic Strict Mode)
 - **Triệu chứng:** ESP32 kết nối WSS thành công (`WSS_UPGRADED`), gửi gói `WSS_HELLO_SENT` nhưng Server lập tức đóng socket (`WSS_DISCONNECTED`).
 - **Nguyên nhân:** Backend FastAPI dùng Pydantic `StrictModel` (`extra="forbid"`). Gói tin JSON của ESP32 bị thiếu trường bắt buộc `"firmware": "poc5-cloud-device-1.0.0"`.
 - **Kinh nghiệm:** Mọi cấu trúc JSON trên ESP32 C++ (ArduinoJson) phải khớp chính xác 100% từng trường dữ liệu với Schema trên Backend.
 
+### 4.2 Lỗi Mismatch Schema `set_state` (Flat vs Nested JSON)
+- **Triệu chứng:** Khi người dùng bật/tắt thiết bị trên Dashboard hoặc qua REST API `/api/devices/{id}/state`, ESP32 nhận được tin nhắn nhưng không kích hoạt GPIO 23 mà ngắt kết nối WebSocket (`webSocket_.close()`).
+- **Nguyên nhân:** Backend FastAPI gửi gói lệnh phẳng `{"type": "set_state", "command_id": "...", "on": true}`, trong khi firmware ESP32 lại parse cấu trúc lồng `document["desired"]["on"]`. Khi không tìm thấy trường `desired`, firmware coi đây là lệnh không hợp lệ và ngắt socket.
+- **Kinh nghiệm:** Thiết kế bộ parse JSON của Firmware linh hoạt (hỗ trợ cả `document["on"]` và `document["desired"]["on"]`) để đảm bảo tính tương thích ngược và ngăn chặn drop socket ngoài ý muốn.
+
 ---
 
-## 5. Bài học về Quản lý Bộ nhớ Flash / NVS
+## 5. Bài học về Quản lý Mã nguồn & Bộ nhớ Flash
 
 ### 5.1 Xoá và Cập nhật NVS khi Đổi Server Host
 Khi ESP32 đã lưu thông tin Wi-Fi/Server cũ vào NVS, nó sẽ tự động kết nối và bỏ qua Portal. Áp dụng 3 phương án:
 1. **Dùng lệnh CLI (Khuyên dùng):** `pio run -d pocs/poc5-cloud-device -e esp32dev -t erase --upload-port /dev/cu.usbserial-XXXX` để format sạch Flash trong 2 giây.
 2. **Factory Reset Nút bấm:** Nhấn giữ nút GPIO 25 trong $\ge 5$ giây (`wm.resetSettings()`, `configStore.clear()`).
 3. **On-Demand Portal:** Nhấn ngắn nút GPIO 25 để mở lại Portal sửa Server Host mà không mất Wi-Fi.
+
+### 5.2 Xử lý Tệp Dead Code trong PlatformIO
+- **Vấn đề:** PlatformIO tự động quét và biên dịch **toàn bộ** các file `.cpp` nằm trong thư mục `src/`, bất kể file đó có được `#include` hay không.
+- **Hệ quả:** Các file thử nghiệm cũ làm tăng đáng kể thời gian build và làm phình dung lượng bộ nhớ Flash của vi điều khiển.
+- **Kinh nghiệm:** Luôn xóa hoặc di chuyển các file thử nghiệm không sử dụng ra ngoài thư mục `src/`.
 
 ---
 
@@ -70,9 +87,11 @@ Khi ESP32 đã lưu thông tin Wi-Fi/Server cũ vào NVS, nó sẽ tự động 
 | Triệu chứng | Nguyên nhân cốt lõi | Cách xử lý |
 |---|---|---|
 | **`WIFI_CONNECTING` bị treo 90s** | Kẹt kênh RF giữa SoftAP (CH1) và Router (CH10) | Dùng `WiFiManager` hoặc tắt hẳn SoftAP trước khi kết nối Station |
+| **LED 19 không sáng khi có client join SoftAP** | Chưa đăng ký event listener với Wi-Fi driver | Bổ sung `WiFi.onEvent()` cho `ARDUINO_EVENT_WIFI_AP_STACONNECTED` |
 | **`WSS_DISCONNECTED reason=TCP connection cleanup`** | Thư viện cũ gửi sai Header `Host: domain:443` | Chuyển sang dùng `gilmaimon/ArduinoWebsockets` |
 | **`WSS_CONNECT_FAILED` ngay lập tức** | `WiFiClientSecure` cố xác thực với CA rỗng | Gọi `webSocket.setInsecure()` hoặc nạp đúng CA Cert |
 | **`WSS_HELLO_SENT` xong bị ngắt kết nối** | JSON thiếu trường (`firmware`, `device_id`) khiến Pydantic báo lỗi | Bổ sung đầy đủ các trường theo đúng Model trên Backend |
+| **Nhấn toggle trên Dashboard làm WSS bị disconnect** | JSON Schema mismatch (`on` vs `desired.on`) | Cập nhật firmware parse cả flat `on` và nested `desired.on` |
 | **Không đổi được Server Host mới** | NVS vẫn đang lưu cấu hình Server cũ | Chạy lệnh `pio run -t erase` hoặc nhấn giữ nút GPIO 25 $\ge 5$s |
 | **Serial in ký tự lạ / rác khi boot** | Baud rate không khớp | Cấu hình `Serial.begin(115200)` và `monitor_speed = 115200` |
 | **ESP32 liên tục reset khi bật Wi-Fi** | Sụt áp nguồn điện (Brownout Reset) | Đổi cáp USB chất lượng cao, cấp đủ nguồn $\ge 500\text{mA}$ |

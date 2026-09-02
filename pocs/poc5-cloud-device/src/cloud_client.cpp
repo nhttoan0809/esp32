@@ -4,8 +4,6 @@
 #include <time.h>
 
 #include "app_config.h"
-#include "tls_ca.h"
-
 
 using namespace app_config;
 

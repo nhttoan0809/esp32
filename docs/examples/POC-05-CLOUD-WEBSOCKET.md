@@ -10,21 +10,27 @@ Tài liệu này mô tả chi tiết kiến trúc của **POC 5** — một mô 
 ┌────────────────────────────────┐
 │   Điện thoại / Trình duyệt     │
 └──────────────┬─────────────────┘
-               │  1. Join SoftAP & Tự động bung Captive Portal (WiFiManager)
+               │  1. Join SoftAP & Tự động bung Captive Portal (WiFi Dropdown + Light Theme)
                ▼
 ┌────────────────────────────────┐      Outbound WSS (Port 443)      ┌──────────────────────────┐
 │   ESP32 DevKit V1 (Device)     │ ────────────────────────────────► │  Cloud Server (FastAPI)  │
 │                                │   (gilmaimon/ArduinoWebsockets)   │  + Cloudflare / ngrok    │
 │  - WiFiManager (Captive Portal)│ ◄──────────────────────────────── │                          │
-│  - Preferences (NVS Config)    │       Command: {"action":"set"}   └─────────────┬────────────┘
+│  - Preferences (NVS Config)    │       Command: {"on": true}       └─────────────┬────────────┘
 │  - GPIO23 (Real_Device Relay)  │ ────────────────────────────────►               │
 │  - Status LEDs (18,19,21,22)   │       ACK: {"status":"synced"}                  │
 └────────────────────────────────┘                                                 │
-                                                                                   │ 2. Điều khiển qua Web UI
+                                                                                   │ 2. Đăng nhập & Điều khiển
                                                                                    ▼
                                                                      ┌──────────────────────────┐
-                                                                     │   Dashboard Điều khiển   │
-                                                                     │   (/dashboard REST+WS)   │
+                                                                     │   Trang Đăng nhập (/login)│
+                                                                     │   (Xác thực Dashboard Key)│
+                                                                     └─────────────┬────────────┘
+                                                                                   │ Redirect hợp lệ
+                                                                                   ▼
+                                                                     ┌──────────────────────────┐
+                                                                     │   Dashboard (/dashboard) │
+                                                                     │   (Auto Sync 3s, Relay ON)│
                                                                      └──────────────────────────┘
 ```
 
@@ -36,13 +42,14 @@ Mã nguồn tại `pocs/poc5-cloud-device/src/` được xây dựng dựa trên
 
 1. **`tzapu/WiFiManager` (`^2.0.17`)**:
    - Quản lý toàn bộ vòng đời Wi-Fi: tự động kết nối Wi-Fi đã lưu trong NVS, tự động mở SoftAP và Captive Portal khi chưa có mạng hoặc kết nối thất bại.
+   - Giao diện **Light Theme** hiện đại: Tự động chuyển danh sách mạng quét được thành dạng menu thả xuống `<select>` kết hợp nút Quét lại (🔄), loại bỏ hoàn toàn hiện tượng vỡ hàng chữ do icon khóa và thông số % RSSI.
    - Quản lý các tham số tùy chỉnh: `Server Host` (Cloudflare/ngrok domain), `Server Port`, `WebSocket Path`.
    - Xem chi tiết: [`docs/reference/WIFI-PROVISIONING-AND-WIFIMANAGER.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/reference/WIFI-PROVISIONING-AND-WIFIMANAGER.md).
 
 2. **`gilmaimon/ArduinoWebsockets` (`^0.5.4`)**:
    - Quản lý kết nối WSS Outbound qua cổng 443 với mã hóa TLS linh hoạt (`setInsecure()` hoặc CA Cert).
    - Chuẩn hóa Header `Host: domain` (không bị dính `:443` gây lỗi ở các reverse proxy).
-   - Hỗ trợ gửi `ping/pong` định kỳ giữ kết nối và xử lý bản tin JSON qua `ArduinoJson`.
+   - Hỗ trợ gửi `ping/pong` định kỳ giữ kết nối và xử lý bản tin JSON linh hoạt (hỗ trợ cả flat và nested state command).
    - Xem chi tiết: [`docs/reference/WEBSOCKET-CLIENT-AND-ARDUINOWEBSOCKETS.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/reference/WEBSOCKET-CLIENT-AND-ARDUINOWEBSOCKETS.md).
 
 ---
@@ -60,12 +67,19 @@ Mã nguồn tại `pocs/poc5-cloud-device/src/` được xây dựng dựa trên
 
 ---
 
-## 4. Backend Server (FastAPI + Uvicorn)
+## 4. Backend Server (FastAPI + Uvicorn) & Web UI
 
 Thư mục `pocs/poc5-cloud-device/server/`:
 - **Giao thức:** REST API cho người dùng & WebSocket endpoint `/ws/devices/{device_id}` cho ESP32.
-- **Xác thực:** Bearer token per-device và API Key cho Dashboard.
-- **Mô hình State:** Lưu trữ `desired_state` và `reported_state` trong RAM. Khi người dùng bật công tắc trên dashboard, server gửi lệnh xuống ESP32 qua WebSocket và chỉ phản hồi HTTP 200 sau khi ESP32 đã kích hoạt GPIO và gửi lại bản tin xác nhận (`synced: true`).
+- **Xác thực:** 
+  - Token bí mật per-device (`POC5_DEVICE_TOKENS_JSON`).
+  - Khóa quản trị Dashboard (`POC5_DASHBOARD_API_KEY`) truyền qua Header `X-API-Key`.
+- **Hệ thống Giao diện Web (Light Theme):**
+  - `GET /login`: Trang đăng nhập xác thực API Key, lưu token vào `localStorage` và tự động điều hướng.
+  - `GET /dashboard`: Giao diện quản trị thời gian thực (Auth Guard bảo vệ), đồng bộ trạng thái mỗi 3s.
+  - `POST /api/auth/verify`: Endpoint kiểm tra tính hợp lệ của API Key.
+  - `GET /api/devices`: Trả về danh sách snapshot trạng thái toàn bộ thiết bị (`online`, `on`, `last_seen`, `pending_on`).
+  - `PUT /api/devices/{id}/state`: Gửi lệnh bật/tắt thiết bị tức thời hoặc lưu vào hàng đợi nếu thiết bị offline.
 
 ---
 

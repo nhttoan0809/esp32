@@ -27,21 +27,11 @@ constexpr char NVS_SERVER_PATH_KEY[] = "path";
 constexpr uint16_t HTTPS_PORT = 443;
 constexpr char DEFAULT_SERVER_PATH[] = "/ws/devices";
 constexpr uint32_t WIFI_CONNECT_TIMEOUT_MS = 20000;
-// Diagnostic only. The WebSockets library gives its combined TCP+TLS
-// connect() a hard 5000ms (its WEBSOCKETS_TCP_TIMEOUT). This generous
-// budget lets the TLS probe distinguish "handshake is slow through the
-// gateway" (completes in e.g. 6-12s) from "handshake never completes".
-constexpr uint32_t TLS_PROBE_TIMEOUT_MS = 20000;
 constexpr uint32_t TIME_SYNC_TIMEOUT_MS = 15000;
 constexpr uint32_t APP_HELLO_TIMEOUT_MS = 5000;
-constexpr uint32_t PENDING_CONFIG_TIMEOUT_MS = 90000;
-constexpr uint32_t AP_GRACE_PERIOD_MS = 60000;
 constexpr uint32_t BUTTON_DEBOUNCE_MS = 40;
 constexpr uint32_t BUTTON_FACTORY_RESET_MS = 5000;
-constexpr size_t MAX_FORM_BODY_BYTES = 512;
 constexpr size_t MAX_WEBSOCKET_MESSAGE_BYTES = 512;
 constexpr uint32_t WEBSOCKET_PING_INTERVAL_MS = 20000;
-constexpr uint32_t WEBSOCKET_PONG_TIMEOUT_MS = 10000;
-constexpr uint8_t WEBSOCKET_MISSED_PONG_LIMIT = 2;
 
 }  // namespace app_config
