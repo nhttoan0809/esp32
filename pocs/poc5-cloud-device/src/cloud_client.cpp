@@ -1,13 +1,11 @@
 #include "cloud_client.h"
 
-#include <WiFiClient.h>
-#include <WiFiClientSecure.h>
-
 #include <ArduinoJson.h>
 #include <time.h>
 
 #include "app_config.h"
 #include "tls_ca.h"
+
 
 using namespace app_config;
 
@@ -37,36 +35,57 @@ void CloudClient::begin(const DeviceConfig &config, const char *deviceId,
   config_ = config;
   deviceId_ = deviceId;
   deviceToken_ = deviceToken;
+
   socketPath_ = config_.serverPath;
   if (socketPath_.endsWith("/")) {
     socketPath_.remove(socketPath_.length() - 1);
   }
   socketPath_ += '/';
   socketPath_ += deviceId_;
-  authorizationHeader_ = F("Authorization: Bearer ");
-  authorizationHeader_ += deviceToken_;
-  authorizationHeader_ += F("\r\n");
+
+  const String scheme = (config_.serverPort == 443) ? "wss://" : "ws://";
+  String portPart = "";
+  if (config_.serverPort != 80 && config_.serverPort != 443 && config_.serverPort != 0) {
+    portPart = ":" + String(config_.serverPort);
+  }
+  wsUrl_ = scheme + config_.serverHost + portPart + socketPath_;
+
+  // Thiết lập các header và cấu hình SSL cho client
+  webSocket_.setInsecure();
+  webSocket_.addHeader("Authorization", String("Bearer ") + deviceToken_);
+  webSocket_.addHeader("ngrok-skip-browser-warning", "69420");
+  webSocket_.addHeader("User-Agent", "ESP32-Client");
+
+
+
+  webSocket_.onMessage([this](websockets::WebsocketsMessage message) {
+    handleMessage(message.data());
+  });
+
+  webSocket_.onEvent([this](websockets::WebsocketsEvent event, String data) {
+    handleEvent(event, data);
+  });
+
   configured_ = true;
   state_ = State::WaitingForWifi;
   lastError_ = "";
   reconnectAttempt_ = 0;
-  Serial.printf("CLOUD_CONFIGURED host=%s port=%u path=%s device_id=%s\r\n",
-                config_.serverHost.c_str(), config_.serverPort,
-                socketPath_.c_str(), deviceId_.c_str());
+
+  Serial.printf("CLOUD_CONFIGURED url=%s device_id=%s\r\n",
+                wsUrl_.c_str(), deviceId_.c_str());
 }
 
 void CloudClient::stop() {
   configured_ = false;
-  if (transportStarted_) {
-    webSocket_.disconnect();
+  if (webSocket_.available()) {
+    webSocket_.close();
   }
-  transportStarted_ = false;
   wifiWasConnected_ = false;
   state_ = State::Disabled;
   reconnectAttempt_ = 0;
   clearSensitiveString(deviceToken_);
-  authorizationHeader_ = "";
   socketPath_ = "";
+  wsUrl_ = "";
   deviceId_ = "";
   clearDeviceConfig(config_);
 }
@@ -80,13 +99,12 @@ void CloudClient::loop(bool wifiConnected) {
   if (!wifiConnected) {
     if (wifiWasConnected_) {
       wifiWasConnected_ = false;
-      if (transportStarted_) {
-        webSocket_.disconnect();
-        transportStarted_ = false;
+      if (webSocket_.available()) {
+        webSocket_.close();
       }
       state_ = State::WaitingForWifi;
       lastError_ = F("wifi_disconnected");
-      Serial.println("CLOUD_PAUSED reason=wifi_disconnected");
+      Serial.println(F("CLOUD_PAUSED reason=wifi_disconnected"));
     }
     return;
   }
@@ -111,21 +129,26 @@ void CloudClient::loop(bool wifiConnected) {
     return;
   }
 
-  if (state_ == State::RetryWait && !transportStarted_ &&
-      deadlineReached(now, timeSyncRetryAt_)) {
-    startTimeSync(now);
+  if (state_ == State::RetryWait && deadlineReached(now, reconnectAt_)) {
+    startTransport();
     return;
   }
 
-  if (transportStarted_) {
-    webSocket_.loop();
+  if (webSocket_.available()) {
+    webSocket_.poll();
+  }
+
+  // Ping heartbeat định kỳ để duy trì kết nối
+  if (state_ == State::Online && now - lastPingSentAt_ >= WEBSOCKET_PING_INTERVAL_MS) {
+    lastPingSentAt_ = now;
+    webSocket_.ping();
   }
 
   if (state_ == State::Authenticating &&
       now - helloStartedAt_ >= APP_HELLO_TIMEOUT_MS) {
     lastError_ = F("hello_timeout");
-    Serial.println("WSS_HELLO_TIMEOUT");
-    webSocket_.disconnect();
+    Serial.println(F("WSS_HELLO_TIMEOUT"));
+    webSocket_.close();
   }
 }
 
@@ -166,192 +189,115 @@ void CloudClient::startTimeSync(uint32_t now) {
   timeSyncStartedAt_ = now;
   lastError_ = "";
   configTime(0, 0, "pool.ntp.org", "time.nist.gov");
-  Serial.println("TIME_SYNC_STARTED");
-}
-
-void CloudClient::probeTcpConnectivity() {
-  // Plain-TCP probe of host:port, run right before the TLS/WebSocket attempt
-  // so the Serial trace shows WHICH layer is failing:
-  //   TCP_PROBE_OK     -> plain TCP through the gateway works; the WSS
-  //                       failure is at the TLS or WebSocket layer.
-  //   TCP_PROBE_FAILED -> DNS/routing failed below TLS. 0 = timeout; a
-  //                       negative code is an lwIP/esp_wifi error (host not
-  //                       found, no route, ...) — read the printed code.
-  // connect() blocks, so this runs on the same call path that would block
-  // the TLS attempt anyway; on a working link it returns in milliseconds.
-  WiFiClient probeClient;
-  const int result = probeClient.connect(config_.serverHost.c_str(),
-                                         config_.serverPort);
-  if (result == 1) {
-    Serial.printf("TCP_PROBE_OK host=%s port=%u\r\n",
-                  config_.serverHost.c_str(), config_.serverPort);
-    probeClient.stop();
-  } else {
-    Serial.printf("TCP_PROBE_FAILED host=%s port=%u code=%d\r\n",
-                  config_.serverHost.c_str(), config_.serverPort, result);
-  }
-}
-
-void CloudClient::probeTlsConnectivity() {
-  // Full TLS handshake against the SAME host/port/CA the WebSocket transport
-  // will use, with a generous timeout so a slow gateway can still finish it.
-  // Discriminates the two remaining WSS failure modes:
-  //   code=1  -> handshake completed; elapsed_ms shows how slow it is.
-  //              If it exceeds the WebSockets library's hard 5000ms
-  //              WEBSOCKETS_TCP_TIMEOUT budget, that is the whole bug.
-  //   code=0  -> stalled until the probe timeout (no TLS data made it back).
-  //   code<0  -> actively rejected (CA/cipher/cert validation failure).
-  WiFiClientSecure probeSsl;
-  probeSsl.setCACert(SERVER_ROOT_CA);
-  const uint32_t startedAt = millis();
-  const int result = probeSsl.connect(config_.serverHost.c_str(),
-                                      config_.serverPort,
-                                      TLS_PROBE_TIMEOUT_MS);
-  const uint32_t elapsedMs = millis() - startedAt;
-  if (result == 1) {
-    Serial.printf("TLS_PROBE_OK elapsed_ms=%lu\r\n",
-                  static_cast<unsigned long>(elapsedMs));
-    probeSsl.stop();
-  } else {
-    Serial.printf("TLS_PROBE_FAILED code=%d elapsed_ms=%lu\r\n", result,
-                  static_cast<unsigned long>(elapsedMs));
-  }
+  Serial.println(F("TIME_SYNC_STARTED"));
 }
 
 void CloudClient::startTransport() {
   state_ = State::Connecting;
-  probeTcpConnectivity();
-  probeTlsConnectivity();
-  transportStarted_ = true;
-  webSocket_.onEvent([this](WStype_t type, uint8_t *payload, size_t length) {
-    handleEvent(type, payload, length);
-  });
-  webSocket_.setExtraHeaders(authorizationHeader_.c_str());
-  webSocket_.setReconnectInterval(nextReconnectDelay());
-  webSocket_.enableHeartbeat(WEBSOCKET_PING_INTERVAL_MS,
-                             WEBSOCKET_PONG_TIMEOUT_MS,
-                             WEBSOCKET_MISSED_PONG_LIMIT);
-  webSocket_.beginSslWithCA(config_.serverHost.c_str(), config_.serverPort,
-                            socketPath_.c_str(), SERVER_ROOT_CA);
-  Serial.printf("WSS_CONNECTING host=%s port=%u path=%s\r\n",
-                config_.serverHost.c_str(), config_.serverPort,
-                socketPath_.c_str());
+  Serial.printf("WSS_CONNECTING url=%s\r\n", wsUrl_.c_str());
+
+  const bool ok = webSocket_.connect(wsUrl_);
+  if (ok) {
+    Serial.println(F("WSS_UPGRADED"));
+    state_ = State::Authenticating;
+    helloStartedAt_ = millis();
+    lastPingSentAt_ = millis();
+    sendHello();
+  } else {
+    state_ = State::RetryWait;
+    const uint32_t delayMs = nextReconnectDelay();
+    reconnectAt_ = millis() + delayMs;
+    Serial.printf("WSS_CONNECT_FAILED retry_ms=%lu\r\n",
+                  static_cast<unsigned long>(delayMs));
+  }
 }
 
-void CloudClient::handleEvent(WStype_t type, uint8_t *payload, size_t length) {
-  switch (type) {
-    case WStype_DISCONNECTED: {
+void CloudClient::handleEvent(websockets::WebsocketsEvent event, const String &data) {
+  switch (event) {
+    case websockets::WebsocketsEvent::ConnectionOpened:
+      // Handled in connect() return
+      break;
+    case websockets::WebsocketsEvent::ConnectionClosed: {
       if (!configured_) {
         return;
       }
       state_ = State::RetryWait;
       const uint32_t delayMs = nextReconnectDelay();
-      webSocket_.setReconnectInterval(delayMs);
+      reconnectAt_ = millis() + delayMs;
       lastError_ = F("websocket_disconnected");
-      // The WebSockets library sometimes passes a close reason (e.g. "code
-      // 1006"); log it when present so the Serial trace shows WHY the
-      // connection dropped.
-      if (length > 0) {
-        Serial.printf("WSS_DISCONNECTED reason=%.*s retry_ms=%lu\r\n",
-                      static_cast<int>(length),
-                      reinterpret_cast<const char *>(payload),
-                      static_cast<unsigned long>(delayMs));
-      } else {
-        Serial.printf("WSS_DISCONNECTED retry_ms=%lu\r\n",
-                      static_cast<unsigned long>(delayMs));
-      }
+      Serial.printf("WSS_DISCONNECTED retry_ms=%lu\r\n",
+                    static_cast<unsigned long>(delayMs));
       break;
     }
-    case WStype_CONNECTED:
-      state_ = State::Authenticating;
-      helloStartedAt_ = millis();
-      lastError_ = "";
-      Serial.println("WSS_UPGRADED");
-      sendHello();
+    case websockets::WebsocketsEvent::GotPing:
+      webSocket_.pong();
       break;
-    case WStype_TEXT:
-      handleText(payload, length);
-      break;
-    case WStype_ERROR: {
-      // The WebSockets library passes the human-readable failure text here
-      // (e.g. "SSL handshake failed", "connect failed"). It is the single
-      // most useful fact when a connection attempt dies before WSS_UPGRADED.
-      lastError_ = F("websocket_error");
-      if (length > 0) {
-        Serial.printf("WSS_ERROR reason=%.*s\r\n",
-                      static_cast<int>(length),
-                      reinterpret_cast<const char *>(payload));
-      } else {
-        Serial.println("WSS_ERROR reason=unknown");
-      }
-      break;
-    }
-    default:
+    case websockets::WebsocketsEvent::GotPong:
       break;
   }
 }
 
-void CloudClient::handleText(uint8_t *payload, size_t length) {
-  if (length == 0 || length > MAX_WEBSOCKET_MESSAGE_BYTES) {
+void CloudClient::handleMessage(const String &payload) {
+  if (payload.length() == 0 || payload.length() > MAX_WEBSOCKET_MESSAGE_BYTES) {
     lastError_ = F("invalid_message_size");
-    Serial.println("WSS_PROTOCOL_ERROR reason=message_size");
-    webSocket_.disconnect();
+    Serial.println(F("WSS_PROTOCOL_ERROR reason=message_size"));
+    webSocket_.close();
     return;
   }
 
   JsonDocument document;
-  const DeserializationError error = deserializeJson(document, payload, length);
+  const DeserializationError error = deserializeJson(document, payload);
   if (error || !document.is<JsonObject>()) {
     lastError_ = F("invalid_json");
-    Serial.println("WSS_PROTOCOL_ERROR reason=invalid_json");
-    webSocket_.disconnect();
+    Serial.println(F("WSS_PROTOCOL_ERROR reason=invalid_json"));
+    webSocket_.close();
     return;
   }
 
-  const JsonObjectConst object = document.as<JsonObjectConst>();
-  const char *type = object["type"] | "";
-  if (state_ == State::Authenticating && strcmp(type, "ready") == 0) {
-    const char *readyDeviceId = object["device_id"] | "";
-    if (object.size() != 3 || (object["v"] | 0) != 1 ||
-        deviceId_ != readyDeviceId) {
-      lastError_ = F("invalid_ready");
-      Serial.println("WSS_PROTOCOL_ERROR reason=invalid_ready");
-      webSocket_.disconnect();
-      return;
-    }
+  const int version = document["v"] | 0;
+  const char *type = document["type"] | "";
+  const char *incomingDeviceId = document["device_id"] | "";
+
+  if (version != 1 || strcmp(incomingDeviceId, deviceId_.c_str()) != 0) {
+    lastError_ = F("protocol_mismatch");
+    Serial.println(F("WSS_PROTOCOL_ERROR reason=version_or_device_id"));
+    webSocket_.close();
+    return;
+  }
+
+  if (strcmp(type, "ready") == 0) {
     state_ = State::Online;
     reconnectAttempt_ = 0;
     lastError_ = "";
-    Serial.println("WSS_AUTHENTICATED");
+    Serial.println(F("WSS_AUTHENTICATED"));
     return;
   }
 
-  if (state_ != State::Online || strcmp(type, "set_state") != 0 ||
-      object.size() != 5 || (object["v"] | 0) != 1 ||
-      !object["on"].is<bool>()) {
-    lastError_ = F("invalid_command");
-    Serial.println("WSS_PROTOCOL_ERROR reason=invalid_command");
-    webSocket_.disconnect();
+  if (strcmp(type, "set_state") == 0) {
+    const String commandId = document["command_id"] | "";
+    if (!validCommandId(commandId) || !document["desired"].is<JsonObject>() ||
+        !document["desired"]["on"].is<bool>()) {
+      lastError_ = F("invalid_set_state");
+      Serial.println(F("WSS_PROTOCOL_ERROR reason=invalid_set_state"));
+      webSocket_.close();
+      return;
+    }
+
+    const bool desiredOn = document["desired"]["on"].as<bool>();
+    Serial.printf("COMMAND_RECEIVED id=%s on=%s\r\n",
+                  commandId.c_str(), desiredOn ? "true" : "false");
+
+    bool confirmedOn = desiredOn;
+    if (applyStateHandler_) {
+      confirmedOn = applyStateHandler_(desiredOn);
+    }
+    reportedOn_ = confirmedOn;
+    sendStateReport(commandId, confirmedOn);
     return;
   }
 
-  const char *commandDeviceId = object["device_id"] | "";
-  const String commandId = object["command_id"] | "";
-  if (deviceId_ != commandDeviceId || !validCommandId(commandId) ||
-      !applyStateHandler_) {
-    lastError_ = F("invalid_command_fields");
-    Serial.println("WSS_PROTOCOL_ERROR reason=invalid_command_fields");
-    webSocket_.disconnect();
-    return;
-  }
-
-  const bool requestedOn = object["on"].as<bool>();
-  Serial.printf("COMMAND_RECEIVED command_id=%s on=%s\r\n",
-                commandId.c_str(), requestedOn ? "true" : "false");
-  reportedOn_ = applyStateHandler_(requestedOn);
-  Serial.printf("DEVICE_STATE_APPLIED command_id=%s on=%s\r\n",
-                commandId.c_str(), reportedOn_ ? "true" : "false");
-  sendStateReport(commandId, reportedOn_);
+  lastError_ = F("unknown_message_type");
+  Serial.printf("WSS_UNKNOWN_TYPE type=%s\r\n", type);
 }
 
 void CloudClient::sendHello() {
@@ -359,53 +305,52 @@ void CloudClient::sendHello() {
   document["v"] = 1;
   document["type"] = "hello";
   document["device_id"] = deviceId_;
-  document["firmware"] = "poc5-0.1.0";
-  document["reported"]["on"] = reportedOn_;
-  String message;
-  serializeJson(document, message);
-  webSocket_.sendTXT(message);
-  Serial.println("WSS_HELLO_SENT");
+  document["firmware"] = "poc5-cloud-device-1.0.0";
+  JsonObject reported = document["reported"].to<JsonObject>();
+  reported["on"] = reportedOn_;
+
+  String payload;
+  serializeJson(document, payload);
+  webSocket_.send(payload);
+  Serial.printf("WSS_HELLO_SENT reported_on=%s\r\n",
+                reportedOn_ ? "true" : "false");
 }
 
 void CloudClient::sendStateReport(const String &commandId, bool on) {
   JsonDocument document;
   document["v"] = 1;
   document["type"] = "state_report";
-  document["command_id"] = commandId;
   document["device_id"] = deviceId_;
+  document["command_id"] = commandId;
   document["on"] = on;
-  String message;
-  serializeJson(document, message);
-  if (webSocket_.sendTXT(message)) {
-    Serial.printf("COMMAND_ACK_SENT command_id=%s on=%s\r\n",
-                  commandId.c_str(), on ? "true" : "false");
-  } else {
-    Serial.printf("COMMAND_ACK_FAILED command_id=%s\r\n", commandId.c_str());
-  }
+
+  String payload;
+  serializeJson(document, payload);
+  webSocket_.send(payload);
+  Serial.printf("STATE_REPORT_SENT id=%s on=%s\r\n",
+                commandId.c_str(), on ? "true" : "false");
 }
 
 uint32_t CloudClient::nextReconnectDelay() {
-  static constexpr uint32_t delays[] = {1000, 2000, 4000, 8000,
-                                         16000, 30000, 60000};
-  const size_t index = min(static_cast<size_t>(reconnectAttempt_),
-                           sizeof(delays) / sizeof(delays[0]) - 1);
+  // Backoff: 2s, 4s, 8s, 16s, max 30s
+  static const uint32_t delays[] = {2000, 4000, 8000, 16000, 30000};
+  const size_t maxIndex = sizeof(delays) / sizeof(delays[0]) - 1;
+  const size_t index = (reconnectAttempt_ > maxIndex) ? maxIndex : reconnectAttempt_;
   if (reconnectAttempt_ < 255) {
     ++reconnectAttempt_;
   }
-  return delays[index] + static_cast<uint32_t>(esp_random() % 501);
+  return delays[index];
 }
 
 bool CloudClient::validCommandId(const String &value) const {
-  if (value.length() != 36) {
+  if (value.isEmpty() || value.length() > 64) {
     return false;
   }
-  for (size_t index = 0; index < value.length(); ++index) {
-    const char character = value[index];
-    if (index == 8 || index == 13 || index == 18 || index == 23) {
-      if (character != '-') {
-        return false;
-      }
-    } else if (!isxdigit(static_cast<unsigned char>(character))) {
+  for (size_t i = 0; i < value.length(); ++i) {
+    const char c = value[i];
+    const bool valid = (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||
+                       (c >= '0' && c <= '9') || c == '-' || c == '_';
+    if (!valid) {
       return false;
     }
   }
