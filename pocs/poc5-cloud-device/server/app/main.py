@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.security import APIKeyHeader
 from pydantic import ValidationError
 
@@ -60,9 +60,46 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def health() -> dict[str, str]:
         return {"status": "ok"}
 
+    @app.get("/", include_in_schema=False)
+    async def root() -> RedirectResponse:
+        return RedirectResponse(url="/dashboard")
+
+    @app.get("/login", include_in_schema=False)
+    async def login_page() -> FileResponse:
+        return FileResponse(STATIC_DIR / "login.html")
+
     @app.get("/dashboard", include_in_schema=False)
     async def dashboard() -> FileResponse:
         return FileResponse(STATIC_DIR / "dashboard.html")
+
+    @app.post(
+        "/api/auth/verify",
+        dependencies=[Depends(require_dashboard_key)],
+    )
+    async def verify_auth() -> dict[str, Any]:
+        return {"status": "ok", "authenticated": True}
+
+    @app.get(
+        "/api/devices",
+        response_model=list[DeviceStateResponse],
+        dependencies=[Depends(require_dashboard_key)],
+    )
+    async def list_devices() -> list[DeviceStateResponse]:
+        configured_ids = set(active_settings.device_tokens.keys())
+        all_ids = sorted(configured_ids.union(await registry.all_device_ids()))
+        results: list[DeviceStateResponse] = []
+        for dev_id in all_ids:
+            snapshot = await registry.snapshot(dev_id)
+            results.append(
+                DeviceStateResponse(
+                    device_id=snapshot.device_id,
+                    online=snapshot.online,
+                    on=snapshot.on,
+                    last_seen=snapshot.last_seen,
+                    pending_on=snapshot.pending_on,
+                )
+            )
+        return results
 
     @app.get(
         "/api/devices/{device_id}",

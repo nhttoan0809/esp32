@@ -41,12 +41,42 @@ def hello(on: bool = False) -> dict[str, object]:
     }
 
 
-def test_health_and_dashboard_are_served() -> None:
+def test_health_and_dashboard_and_login_are_served() -> None:
     with make_client() as client:
         assert client.get("/health").json() == {"status": "ok"}
+        login = client.get("/login")
+        assert login.status_code == 200
+        assert "ESP32 IoT Dashboard" in login.text
         dashboard = client.get("/dashboard")
         assert dashboard.status_code == 200
-        assert "ESP32 Real Device" in dashboard.text
+        assert "ESP32 Cloud Controller" in dashboard.text
+        root = client.get("/", follow_redirects=False)
+        assert root.status_code == 307
+        assert root.headers["location"] == "/dashboard"
+
+
+def test_auth_verify_and_device_list_endpoints() -> None:
+    with make_client() as client:
+        # Auth verify with invalid key
+        bad_auth = client.post("/api/auth/verify", headers={"X-API-Key": "wrong"})
+        assert bad_auth.status_code == 401
+
+        # Auth verify with valid key
+        good_auth = client.post("/api/auth/verify", headers=dashboard_headers())
+        assert good_auth.status_code == 200
+        assert good_auth.json()["authenticated"] is True
+
+        # List devices with invalid key
+        bad_list = client.get("/api/devices")
+        assert bad_list.status_code == 401
+
+        # List devices with valid key
+        good_list = client.get("/api/devices", headers=dashboard_headers())
+        assert good_list.status_code == 200
+        devices = good_list.json()
+        assert isinstance(devices, list)
+        assert len(devices) >= 1
+        assert devices[0]["device_id"] == DEVICE_ID
 
 
 def test_dashboard_api_requires_key() -> None:

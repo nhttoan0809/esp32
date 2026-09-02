@@ -275,15 +275,24 @@ void CloudClient::handleMessage(const String &payload) {
 
   if (strcmp(type, "set_state") == 0) {
     const String commandId = document["command_id"] | "";
-    if (!validCommandId(commandId) || !document["desired"].is<JsonObject>() ||
-        !document["desired"]["on"].is<bool>()) {
+    bool hasOn = false;
+    bool desiredOn = false;
+
+    if (document["on"].is<bool>()) {
+      hasOn = true;
+      desiredOn = document["on"].as<bool>();
+    } else if (document["desired"].is<JsonObject>() && document["desired"]["on"].is<bool>()) {
+      hasOn = true;
+      desiredOn = document["desired"]["on"].as<bool>();
+    }
+
+    if (!validCommandId(commandId) || !hasOn) {
       lastError_ = F("invalid_set_state");
       Serial.println(F("WSS_PROTOCOL_ERROR reason=invalid_set_state"));
       webSocket_.close();
       return;
     }
 
-    const bool desiredOn = document["desired"]["on"].as<bool>();
     Serial.printf("COMMAND_RECEIVED id=%s on=%s\r\n",
                   commandId.c_str(), desiredOn ? "true" : "false");
 

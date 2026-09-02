@@ -53,6 +53,7 @@ void configModeCallback(WiFiManager *myWiFiManager) {
 
 void startCloudConnection() {
   deviceController.setSetupReady(false);
+  deviceController.setProvisioningClientConnected(false);
   deviceController.setWifiConnected(true);
 
   activeConfig.wifiSsid = WiFi.SSID();
@@ -123,6 +124,17 @@ void setup() {
     return deviceController.realDeviceOn();
   });
 
+  // Lắng nghe sự kiện SoftAP Client kết nối/ngắt kết nối (LED 19)
+  WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
+    deviceController.setProvisioningClientConnected(true);
+  }, ARDUINO_EVENT_WIFI_AP_STACONNECTED);
+
+  WiFi.onEvent([](WiFiEvent_t event, WiFiEventInfo_t info) {
+    if (WiFi.softAPgetStationNum() == 0) {
+      deviceController.setProvisioningClientConnected(false);
+    }
+  }, ARDUINO_EVENT_WIFI_AP_STADISCONNECTED);
+
   Serial.println();
   Serial.println(F("========================================================="));
   Serial.printf("🚀 POC5 CLOUD WEBSOCKET DEVICE - ID: %s\r\n", DEVICE_ID);
@@ -142,13 +154,70 @@ void setup() {
   }
 
   // Khởi tạo các ô nhập tùy chỉnh cho WiFiManager
-  WiFiManagerParameter custom_server_host("host", "Server Host (ngrok domain)", serverHostParam, 128);
-  WiFiManagerParameter custom_server_port("port", "Server Port", serverPortParam, 8);
-  WiFiManagerParameter custom_server_path("path", "WebSocket Path", serverPathParam, 64);
+  WiFiManagerParameter custom_server_host("host", "Server Host (Cloudflare/ngrok)", serverHostParam, 128, "placeholder=\"e.g. xxx.trycloudflare.com\"");
+  WiFiManagerParameter custom_server_port("port", "Server Port", serverPortParam, 8, "placeholder=\"443\"");
+  WiFiManagerParameter custom_server_path("path", "WebSocket Path", serverPathParam, 64, "placeholder=\"/ws/devices\"");
 
   wm.addParameter(&custom_server_host);
   wm.addParameter(&custom_server_port);
   wm.addParameter(&custom_server_path);
+
+  wm.setTitle("WiFi Configuration");
+  wm.setCustomHeadElement(
+      "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no\">"
+      "<style>"
+      ":root{--bg:#f1f5f9;--card:#ffffff;--primary:#007aff;--primary-hover:#0062cc;--text:#0f172a;--muted:#64748b;--border:#cbd5e1;}"
+      "*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}"
+      "body{background:var(--bg)!important;color:var(--text)!important;font-family:-apple-system,system-ui,sans-serif!important;margin:0;padding:max(16px,env(safe-area-inset-top)) 14px max(24px,env(safe-area-inset-bottom)) 14px;}"
+      ".c{width:94%!important;max-width:390px!important;background:var(--card)!important;border-radius:20px!important;border:1px solid rgba(0,0,0,0.06)!important;padding:26px 20px!important;box-shadow:0 12px 36px rgba(0,0,0,0.06)!important;margin:10px auto!important;text-align:left!important;}"
+      "h1,h2,h3{letter-spacing:-0.02em;}"
+      "h1{font-size:1.55rem!important;color:var(--primary)!important;font-weight:800!important;margin:0 0 16px 0!important;text-align:center!important;}"
+      "h3{font-size:0.88rem!important;color:var(--muted)!important;margin:14px 0 6px!important;text-align:left!important;font-weight:700!important;}"
+      "label,.custom-lbl{font-size:0.9rem!important;font-weight:700!important;color:#1e293b!important;display:block!important;margin:12px 0 6px!important;}"
+      "input,select,.custom-select{width:100%!important;box-sizing:border-box!important;background:#ffffff!important;color:var(--text)!important;border:1.5px solid var(--border)!important;border-radius:10px!important;padding:0 14px!important;font-size:16px!important;outline:none!important;margin-bottom:12px!important;height:48px!important;line-height:48px!important;transition:border-color 0.2s,box-shadow 0.2s;touch-action:manipulation;}"
+      "input:focus,select:focus,.custom-select:focus{border-color:var(--primary)!important;box-shadow:0 0 0 3px rgba(0,122,255,0.18)!important;}"
+      ".select-row{display:flex!important;gap:8px!important;align-items:center!important;margin-bottom:12px!important;}"
+      ".select-row select{margin-bottom:0!important;flex:1!important;}"
+      ".refresh-icon-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;width:48px!important;height:48px!important;background:#f8fafc!important;border:1.5px solid var(--border)!important;border-radius:10px!important;text-decoration:none!important;font-size:1.2rem!important;flex-shrink:0!important;color:var(--primary)!important;}"
+      ".refresh-icon-btn:hover{background:#e2e8f0!important;}"
+      "button{width:100%!important;background:var(--primary)!important;color:#fff!important;border:none!important;border-radius:10px!important;height:48px!important;font-size:1rem!important;font-weight:700!important;cursor:pointer!important;margin-top:14px!important;box-shadow:0 4px 14px rgba(0,122,255,0.25)!important;transition:all 0.2s;touch-action:manipulation;}"
+      "button:hover{background:var(--primary-hover)!important;}"
+      "button.D{background:#ef4444!important;box-shadow:0 4px 14px rgba(239,68,68,0.25)!important;}"
+      "a{color:var(--primary)!important;text-decoration:none!important;font-weight:600;}"
+      "div:has(> a[href='#p']),div:has(> a[onclick*='c(this)']),div.q,.q{display:none!important;}"
+      "</style>"
+      "<script>"
+      "window.addEventListener('DOMContentLoaded',function(){"
+      "var s=document.getElementById('s'),p=document.getElementById('p');"
+      "if(!s)return;"
+      "var links=document.querySelectorAll(\"a[href='#p'],a[onclick*='c(this)']\");"
+      "var set={};"
+      "for(var i=0;i<links.length;i++){"
+      "var txt=links[i].getAttribute('data-ssid')||links[i].innerText||links[i].textContent;"
+      "if(txt)set[txt.trim()]=true;"
+      "}"
+      "var wrap=document.createElement('div');"
+      "wrap.innerHTML='<label class=\"custom-lbl\">WiFi Network</label><div class=\"select-row\"><select id=\"wifi-sel\" class=\"custom-select\"><option value=\"\" disabled selected>Please select a network</option></select><a href=\"/wifi\" class=\"refresh-icon-btn\" title=\"Quét lại WiFi\">&#8635;</a></div>';"
+      "var sel=wrap.querySelector('#wifi-sel');"
+      "for(var name in set){"
+      "var opt=document.createElement('option');"
+      "opt.value=name;opt.innerText=name;"
+      "if(s.value===name)opt.selected=true;"
+      "sel.appendChild(opt);"
+      "}"
+      "var manual=document.createElement('option');"
+      "manual.value='__custom__';manual.innerText='✍️ Manual / Other WiFi...';"
+      "sel.appendChild(manual);"
+      "var f=s.form||s.parentElement;"
+      "f.insertBefore(wrap,s.previousElementSibling||s);"
+      "if(!s.value){s.style.display='none';var prev=s.previousElementSibling;if(prev&&prev.tagName==='LABEL')prev.style.display='none';}"
+      "sel.addEventListener('change',function(){"
+      "if(this.value==='__custom__'){s.style.display='block';s.value='';s.focus();}"
+      "else if(this.value){s.value=this.value;s.style.display='none';if(p)p.focus();}"
+      "});"
+      "});"
+      "</script>"
+  );
 
   wm.setSaveConfigCallback(saveConfigCallback);
   wm.setAPCallback(configModeCallback);
@@ -165,6 +234,7 @@ void setup() {
   if (!res) {
     Serial.println(F("[WM] ❌ Kết nối Wi-Fi thất bại hoặc hết thời gian chờ Portal."));
     deviceController.setSetupReady(false);
+    deviceController.setProvisioningClientConnected(false);
     deviceController.setWifiConnected(false);
   } else {
     Serial.println(F("[WM] 🎉 KẾT NỐI WI-FI THÀNH CÔNG!"));

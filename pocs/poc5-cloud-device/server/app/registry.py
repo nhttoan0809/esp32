@@ -156,6 +156,23 @@ class DeviceRegistry:
                 pending_on=current.pending_on,
             )
 
+    async def all_snapshots(self) -> dict[str, DeviceSnapshot]:
+        async with self._guard:
+            return {
+                device_id: DeviceSnapshot(
+                    device_id=snap.device_id,
+                    online=snap.online,
+                    on=snap.on,
+                    last_seen=snap.last_seen,
+                    pending_on=snap.pending_on,
+                )
+                for device_id, snap in self._snapshots.items()
+            }
+
+    async def all_device_ids(self) -> set[str]:
+        async with self._guard:
+            return set(self._snapshots.keys())
+
     async def queue_state(self, device_id: str, on: bool) -> None:
         """Remember a desired state requested while the device is offline.
 
