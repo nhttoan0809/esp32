@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Đăng nhập | ESP32 Cloud Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-base: #f1f5f9;
+      --card-bg: #ffffff;
+      --card-border: #e2e8f0;
+      --card-shadow: 0 20px 40px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+      --primary: #007aff;
+      --primary-hover: #0062cc;
+      --primary-glow: rgba(0, 122, 255, 0.25);
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --input-bg: #f8fafc;
+      --input-border: #cbd5e1;
+      --error-bg: #fee2e2;
+      --error-border: #fca5a5;
+      --error-text: #991b1b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      min-height: 100vh;
+      min-height: 100dvh;
+      background: var(--bg-base);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(0, 122, 255, 0.08) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(139, 92, 246, 0.06) 0px, transparent 50%),
+        radial-gradient(at 50% 50%, #f8fafc 0px, transparent 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+      color: var(--text-main);
+    }
+
+    .login-container {
+      width: 100%;
+      max-width: 420px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 36px 28px;
+      box-shadow: var(--card-shadow);
+      position: relative;
+      overflow: hidden;
+      animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .login-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #007aff, #3b82f6, #06b6d4);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .brand {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+
+    .logo-icon {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 14px;
+      background: rgba(0, 122, 255, 0.08);
+      border: 1px solid rgba(0, 122, 255, 0.2);
+      border-radius: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 20px rgba(0, 122, 255, 0.12);
+    }
+
+    .logo-icon svg {
+      width: 30px;
+      height: 30px;
+      fill: none;
+      stroke: var(--primary);
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .brand h1 {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--text-main);
+      letter-spacing: -0.02em;
+      margin-bottom: 6px;
+    }
+
+    .brand p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 8px;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .form-input {
+      width: 100%;
+      height: 50px;
+      background: var(--input-bg);
+      border: 1.5px solid var(--input-border);
+      border-radius: 12px;
+      padding: 0 46px 0 16px;
+      color: var(--text-main);
+      font-size: 16px;
+      font-family: inherit;
+      outline: none;
+      transition: all 0.2s ease;
+      touch-action: manipulation;
+    }
+
+    .form-input:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+      background: #ffffff;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 8px;
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      transition: color 0.2s;
+    }
+
+    .toggle-password:hover,
+    .toggle-password:active {
+      color: var(--primary);
+    }
+
+    .toggle-password svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .btn-submit {
+      width: 100%;
+      height: 50px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 6px 18px var(--primary-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      touch-action: manipulation;
+    }
+
+    .btn-submit:hover:not(:disabled) {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0, 122, 255, 0.35);
+    }
+
+    .btn-submit:active:not(:disabled) {
+      transform: translateY(0);
+      opacity: 0.95;
+    }
+
+    .btn-submit:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .alert {
+      display: none;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      margin-bottom: 18px;
+      align-items: center;
+      gap: 10px;
+      animation: shake 0.4s ease;
+    }
+
+    .alert.error {
+      display: flex;
+      background: var(--error-bg);
+      border: 1px solid var(--error-border);
+      color: var(--error-text);
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-6px); }
+      40%, 80% { transform: translateX(6px); }
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2.5px solid rgba(255, 255, 255, 0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      display: none;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .footer {
+      margin-top: 24px;
+      text-align: center;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    @media (max-width: 480px) {
+      .login-container {
+        padding: 28px 20px;
+        border-radius: 20px;
+      }
+      .brand h1 {
+        font-size: 1.25rem;
+      }
+      .logo-icon {
+        width: 52px;
+        height: 52px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="brand">
+      <div class="logo-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+      </div>
+      <h1>ESP32 IoT Dashboard</h1>
+      <p>Nhập Dashboard API Key để xác thực quyền quản trị</p>
+    </div>
+
+    <div id="errorAlert" class="alert error" role="alert">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"></circle>
+        <line x1="12" y1="8" x2="12" y2="12"></line>
+        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+      </svg>
+      <span id="errorMessage">Dashboard API Key không chính xác!</span>
+    </div>
+
+    <form id="loginForm" autocomplete="off">
+      <div class="form-group">
+        <label class="form-label" for="apiKeyInput">Dashboard API Key</label>
+        <div class="input-wrapper">
+          <input 
+            id="apiKeyInput" 
+            class="form-input" 
+            type="password" 
+            placeholder="Nhập khóa API bí mật..." 
+            required 
+            autofocus 
+          />
+          <button type="button" class="toggle-password" id="togglePassword" aria-label="Hiện/Ẩn mật khẩu">
+            <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" id="submitBtn" class="btn-submit">
+        <span class="spinner" id="btnSpinner"></span>
+        <span id="btnText">Đăng nhập Dashboard</span>
+      </button>
+    </form>
+
+    <div class="footer">
+      ESP32 DevKit V1 Cloud Controller &bull; POC 5
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'poc5_dashboard_api_key';
+    const form = document.getElementById('loginForm');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const submitBtn = document.getElementById('submitBtn');
+    const btnSpinner = document.getElementById('btnSpinner');
+    const btnText = document.getElementById('btnText');
+    const errorAlert = document.getElementById('errorAlert');
+    const errorMessage = document.getElementById('errorMessage');
+    const togglePassword = document.getElementById('togglePassword');
+
+    // Toggle password visibility
+    togglePassword.addEventListener('click', () => {
+      const type = apiKeyInput.type === 'password' ? 'text' : 'password';
+      apiKeyInput.type = type;
+      togglePassword.style.color = type === 'text' ? 'var(--primary)' : 'var(--text-muted)';
+    });
+
+    // Auto verify if key is already in localStorage
+    window.addEventListener('DOMContentLoaded', async () => {
+      const savedKey = localStorage.getItem(STORAGE_KEY);
+      if (savedKey) {
+        apiKeyInput.value = savedKey;
+        await verifyAndLogin(savedKey, true);
+      }
+    });
+
+    async function verifyAndLogin(key, silent = false) {
+      if (!silent) {
+        submitBtn.disabled = true;
+        btnSpinner.style.display = 'inline-block';
+        btnText.textContent = 'Đang xác thực...';
+        errorAlert.classList.remove('error');
+      }
+
+      try {
+        const response = await fetch('/api/auth/verify', {
+          method: 'POST',
+          headers: {
+            'X-API-Key': key,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          localStorage.setItem(STORAGE_KEY, key);
+          window.location.href = '/dashboard';
+          return;
+        }
+
+        const data = await response.json().catch(() => ({}));
+        localStorage.removeItem(STORAGE_KEY);
+        showError(data.detail === 'invalid_dashboard_api_key' 
+          ? 'Khóa API không hợp lệ. Vui lòng kiểm tra lại.' 
+          : 'Xác thực thất bại. Vui lòng thử lại.');
+      } catch (err) {
+        if (!silent) {
+          showError('Không thể kết nối đến máy chủ. Vui lòng kiểm tra mạng.');
+        }
+      } finally {
+        submitBtn.disabled = false;
+        btnSpinner.style.display = 'none';
+        btnText.textContent = 'Đăng nhập Dashboard';
+      }
+    }
+
+    function showError(msg) {
+      errorMessage.textContent = msg;
+      errorAlert.classList.add('error');
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const key = apiKeyInput.value.trim();
+      if (!key) return;
+      await verifyAndLogin(key);
+    });
+  </script>
+</body>
+</html>
