@@ -21,4 +21,4 @@ constexpr char WOKWI_PRECONFIG_SSID[] = "Wokwi-GUEST";
 constexpr char WOKWI_PRECONFIG_PASSWORD[] = "";
 // Replace with your ngrok domain, e.g. "a1b2c3d4.ngrok-free.app"
 // constexpr char WOKWI_PRECONFIG_SERVER_HOST[] = "sombrous-homomorphous-zavier.ngrok-free.dev";
-constexpr char WOKWI_PRECONFIG_SERVER_HOST[] = "northwest-mysimon-printers-given.trycloudflare.com";
+constexpr char WOKWI_PRECONFIG_SERVER_HOST[] = "represent-commerce-hundred-orientation.trycloudflare.com";

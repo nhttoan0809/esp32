@@ -10,6 +10,7 @@ from typing import Any
 from fastapi import Depends, FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.security import APIKeyHeader
+from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
 from .config import Settings
@@ -71,6 +72,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/dashboard", include_in_schema=False)
     async def dashboard() -> FileResponse:
         return FileResponse(STATIC_DIR / "dashboard.html")
+
+    @app.get("/dashboard.css", include_in_schema=False)
+    async def dashboard_css() -> FileResponse:
+        return FileResponse(STATIC_DIR / "dashboard.css")
+
+    @app.get("/dashboard.js", include_in_schema=False)
+    async def dashboard_js() -> FileResponse:
+        return FileResponse(STATIC_DIR / "dashboard.js")
+
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
     @app.post(
         "/api/auth/verify",

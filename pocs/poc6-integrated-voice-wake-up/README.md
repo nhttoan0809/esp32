@@ -1,11 +1,25 @@
-# POC 5 — ESP32 Provisioning & Điều khiển qua Cloud WebSocket
+# POC 6 — Tích hợp Voice Wake-Up & Điều khiển Đèn ESP32 qua Cloud WebSocket
 
-POC này triển khai kiến trúc IoT thực tế tối thiểu và hoàn chỉnh: ESP32 mở SoftAP/portal để nhận Wi-Fi và server public, kết nối outbound bằng WSS (TLS), rồi nhận lệnh bật/tắt `Real_Device` từ dashboard FastAPI. 
+POC này nâng cấp từ kiến trúc POC 5, bổ sung tính năng **Nhận diện giọng nói hai giai đoạn (Voice Wake-Up → Command Listening)** trực tiếp trên Dashboard Web bằng JavaScript thuần (Native Web Speech API & Web Audio API).
 
-- Khi device online: Server chuyển lệnh trực tiếp, ESP32 áp dụng GPIO rồi gửi ACK (`synced: true`).
-- Khi device offline: Lệnh được lưu theo mô hình **`desired_state`** (duy nhất 1 trạng thái mong muốn cuối cùng) và tự động đồng bộ khi device kết nối lại.
+## Tính năng Voice Control trên Dashboard
 
-> Tài liệu thiết kế chi tiết: [../../docs/examples/POC-05-CLOUD-WEBSOCKET.md](../../docs/examples/POC-05-CLOUD-WEBSOCKET.md)
+1. **Chế độ Lắng nghe Liên tục (Always-Listening):**
+   - Mặc định ở trạng thái **Sleeping** (chờ từ khoá kích hoạt).
+   - Khi phát hiện từ khoá **`"Wake Up"`**, hệ thống thức dậy sang trạng thái **Awake**.
+2. **Cửa sổ Nhận lệnh 8 giây (Command Window):**
+   - Hiển thị hiệu ứng sóng âm (soundwaves) và bộ đếm ngược trực quan (8s countdown badge).
+   - Phát âm thanh phản hồi chào đón (synthesized chime qua Web Audio API).
+3. **Thực thi Lệnh bằng Giọng nói:**
+   - Khi nhận lệnh **`"Change status"`**, hệ thống chuyển sang trạng thái **Executing**, tự động gọi API `PUT /api/devices/{id}/state` để đảo trạng thái đèn (BẬT/TẮT).
+   - Sau khi thực thi xong, tự động trở về trạng thái **Sleeping**.
+   - Nếu quá 8 giây không có lệnh hợp lệ, hệ thống phát tone báo hết giờ và tự quay lại **Sleeping**.
+4. **Không lưu trạng thái trên Server:**
+   - 100% State Machine (Inactive, Sleeping, Awake, Executing, Error) được quản lý trong bộ nhớ trình duyệt phía Client.
+   - Zero-dependency: Không cần cài đặt thư viện ngoài, chạy trực tiếp trên Chrome/Edge.
+
+> Tài liệu nghiên cứu chi tiết: [../../docs/reference/WEB-ALWAYS-LISTENING-AND-VOICE-WAKEUP.md](../../docs/reference/WEB-ALWAYS-LISTENING-AND-VOICE-WAKEUP.md)
+> Tài liệu thiết kế WebSocket: [../../docs/examples/POC-05-CLOUD-WEBSOCKET.md](../../docs/examples/POC-05-CLOUD-WEBSOCKET.md)
 
 ---
 

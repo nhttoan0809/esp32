@@ -1,27 +1,24 @@
-# Trạng thái POC 5 — Cloud WebSocket Device & Dashboard
+# Trạng thái POC 6 — Voice Wake-Up & Cloud WebSocket Dashboard
 
-Cập nhật: **2026-09-02**.
+Cập nhật: **2026-09-04**.
 
 ---
 
-## 1. Tổng kết Trạng thái & Nghiệm thu Thực tế
+## 1. Tổng kết Trạng thái & Nghiệm thu Tính năng
 
-- **Môi trường & Phần cứng:**
-  - Vi điều khiển **ESP32 DevKit V1 (30 chân)** đã được nạp firmware và nghiệm thu trực tiếp trên phần cứng thật qua cổng `/dev/cu.usbserial-0001`.
-  - Toàn bộ 5 bóng LED chỉ báo trạng thái (GPIO 18, 19, 21, 22, 23) và nút bấm Setup (GPIO 25) hoạt động ổn định và chính xác.
-- **Wi-Fi Provisioning & SoftAP Portal:**
-  - Chuẩn hoá hoàn toàn sang thư viện **`tzapu/WiFiManager` (`^2.0.17`)**.
-  - Giao diện Captive Portal hiện đại chuẩn **Light Theme**, tự động gom danh sách mạng Wi-Fi quét được thành dạng **Dropdown Select** trực quan, khắc phục lỗi vỡ hàng do icon và chuỗi RSSI %.
-  - Xử lý sự kiện `ARDUINO_EVENT_WIFI_AP_STACONNECTED` / `STADISCONNECTED` giúp LED 19 (Client Joined) sáng/tắt chuẩn xác.
-- **WebSocket Client & Cloud Server:**
-  - Thư viện WebSocket: **`gilmaimon/ArduinoWebsockets` (`^0.5.4`)** kết nối Outbound WSS qua cổng 443 (Cloudflare Tunnel / ngrok) với chế độ `setInsecure()` và đồng bộ NTP.
-  - Backend **FastAPI + Uvicorn** hỗ trợ mô hình `desired_state` cho cả thiết bị online và offline (tự động hồi phục trạng thái khi kết nối lại).
-  - Khắc phục lỗi Schema Mismatch `set_state` giữa Server (flat `on: bool`) và Device (nested `desired.on: bool`).
-- **Giao diện Quản trị Web (Light Theme):**
-  - **Trang Đăng nhập (`/login`):** Xác thực Dashboard API Key, ghi nhớ `localStorage`, hỗ trợ xem/ẩn mật khẩu, thiết kế Light Theme chống zoom tự động trên iOS Safari.
-  - **Trang Điều khiển (`/dashboard`):** Bảng điều khiển thiết bị thời gian thực (Auto Sync 3s), hiển thị trạng thái kết nối WSS Live (Online/Offline), nút gạt Relay GPIO 23, cảnh báo lệnh lưu trong hàng đợi và nút Đăng xuất.
-- **Backend Test Suite:** Toàn bộ **13/13 tests PASSED**.
-- **Dọn dẹp Mã nguồn:** Đã loại bỏ hoàn toàn các tệp dead code cũ (`provisioning_portal.*`, `wifi_manager.*`, `provisioning_page.h`), tối ưu dung lượng Flash và tăng tốc biên dịch PlatformIO.
+- **Môi trường & Nền tảng:**
+  - Vi điều khiển **ESP32 DevKit V1 (30 chân)** với kiến trúc WSS Cloud Controller kế thừa từ POC 5.
+  - Backend **FastAPI + Uvicorn** phục vụ REST API & WebSocket hub tại `/api/devices/{id}/state` và `/ws/device`.
+- **Tính năng Voice Wake-Up trên Web Dashboard:**
+  - **Công nghệ lõi:** Sử dụng **Native Web Speech API** (`webkitSpeechRecognition` / `SpeechRecognition`) chuẩn W3C, thuần JavaScript, zero-dependency.
+  - **Âm thanh phản hồi trực tiếp (Synthesized Audio Chimes):** Tích hợp **Web Audio API** (`AudioContext`) tạo âm thanh beep/chime tần số cao không cần file mp3 hay asset ngoài.
+  - **Quản lý trạng thái thuần Client (100% Frontend State Machine):**
+    - `inactive`: Tắt microphone, hiển thị nút bật trong header và floating badge.
+    - `sleeping`: Chế độ Always-Listening nền, chờ từ khoá `"Wake Up"`. Hiệu ứng pulse xanh dương nhẹ.
+    - `awake`: Thức dậy sau khi nhận `"Wake Up"`, mở cửa sổ nhận lệnh trong 8 giây (có đếm ngược badge `8s...1s` và sóng âm động).
+    - `executing`: Nhận diện chỉ thị `"Change status"` (hoặc các biến thể `"change the status"`, `"toggle"`, `"turn on/off"`), phát chime xác nhận và tự động gọi API `handleToggle()` để đảo trạng thái đèn LED.
+    - `error`: Xử lý mượt mà khi trình duyệt không hỗ trợ hoặc người dùng từ chối cấp quyền mic.
+  - **Khôi phục kết nối ngầm (Continuous Restart):** Xử lý sự kiện `onend` tự động gọi lại `recognition.start()` đảm bảo chế độ Always-Listening không bị ngắt quãng bởi các khoảng im lặng của trình duyệt.
 
 ---
 
