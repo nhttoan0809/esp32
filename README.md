@@ -32,7 +32,8 @@ esp32-learning/
 ├── docs/                      # Hệ thống tài liệu tham khảo chung
 │   ├── hardware/              # Đặc tả phần cứng board 30 chân & Danh mục linh kiện
 │   │   ├── BOARD-ESP32-DEVKIT-V1-30PIN.md
-│   │   └── KIT-COMPONENTS-REFERENCE.md
+│   │   ├── KIT-COMPONENTS-REFERENCE.md
+│   │   └── POTENTIOMETER-LED-DIMMER-SPECIFICATION.md
 │   ├── guides/                # Hướng dẫn thao tác dòng lệnh & Nạp board thật
 │   │   ├── CLI-WORKFLOW-GUIDE.md
 │   │   └── HARDWARE-FLASHING-GUIDE.md
@@ -44,6 +45,7 @@ esp32-learning/
 │   └── examples/              # Kiến trúc dự án mẫu
 │       └── POC-05-CLOUD-WEBSOCKET.md
 └── pocs/
+    ├── poc-potentiometer-dimmer/ # POC Điều chỉnh độ sáng LED bằng biến trở (ADC + PWM)
     └── poc5-cloud-device/     # Dự án mẫu hoàn chỉnh (Firmware ESP32 + FastAPI Backend)
 ```
 
