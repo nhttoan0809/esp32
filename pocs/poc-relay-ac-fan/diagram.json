@@ -1,0 +1,92 @@
+{
+  "version": 1,
+  "author": "toannguyen",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-v1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": -80,
+      "left": -120,
+      "attrs": {
+        "color": "black",
+        "label": "RELAY TOGGLE",
+        "key": "r"
+      }
+    },
+    {
+      "type": "wokwi-relay-module",
+      "id": "relay1",
+      "top": 10,
+      "left": 250,
+      "attrs": {
+        "transistor": "pnp"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "rStatus",
+      "top": -50,
+      "left": 230,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledStatus",
+      "top": -70,
+      "left": 330,
+      "attrs": {
+        "color": "green",
+        "label": "RELAY STATUS (GPIO27)"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "rLoad",
+      "top": 145,
+      "left": 330,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledLoad",
+      "top": 125,
+      "left": 430,
+      "attrs": {
+        "color": "yellow",
+        "label": "LOAD (Fan sim)"
+      }
+    }
+  ],
+  "connections": [
+    ["esp:TX0", "$serialMonitor:RX", "", []],
+    ["esp:RX0", "$serialMonitor:TX", "", []],
+
+    ["esp:D14", "btn1:1.r", "orange", ["h0"]],
+    ["btn1:2.r", "esp:GND.1", "black", ["h0"]],
+
+    ["esp:D26", "relay1:IN", "blue", ["h0"]],
+    ["esp:VIN", "relay1:VCC", "red", ["v20", "h0"]],
+    ["esp:GND.1", "relay1:GND", "black", ["v30", "h0"]],
+
+    ["relay1:NO", "rLoad:1", "orange", ["h0"]],
+    ["rLoad:2", "ledLoad:A", "orange", ["h0"]],
+    ["ledLoad:C", "esp:GND.1", "black", []],
+    ["relay1:COM", "esp:VIN", "red", ["v10", "h0"]],
+
+    ["esp:D27", "rStatus:1", "green", ["h0"]],
+    ["rStatus:2", "ledStatus:A", "green", ["h0"]],
+    ["ledStatus:C", "esp:GND.1", "black", []]
+  ]
+}
