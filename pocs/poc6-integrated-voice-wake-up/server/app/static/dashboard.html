@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Dashboard | ESP32 Cloud Controller</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/dashboard.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header>
+      <div class="brand-group">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <div class="brand-text">
+          <div class="brand-title">ESP32 Cloud Controller</div>
+          <div class="brand-subtitle">WebSocket Control Hub</div>
+        </div>
+      </div>
+
+      <div class="nav-actions">
+        <button id="voiceToggleBtn" class="btn-action btn-voice" title="Bật/Tắt Voice Wake-Up">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+          </svg>
+          <span class="btn-label" id="voiceBtnLabel">Voice Control</span>
+        </button>
+        <button id="refreshBtn" class="btn-action" title="Tải lại trạng thái">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          <span class="btn-label">Làm mới</span>
+        </button>
+        <button id="logoutBtn" class="btn-action btn-logout" title="Đăng xuất">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+          <span class="btn-label">Đăng xuất</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Status Bar -->
+    <div class="dashboard-status-bar">
+      <div class="section-title">Thiết bị kết nối</div>
+      <div class="status-indicators-group">
+        <div class="voice-live-badge inactive" id="voiceLiveBadge" title="Bấm để Bật/Tắt Voice Control">
+          <span class="voice-live-dot" id="voiceLiveDot"></span>
+          <span class="voice-live-text" id="voiceLiveText">Micro: Tắt (Bấm để bật)</span>
+        </div>
+        <div class="sync-indicator">
+          <span class="sync-dot"></span>
+          <span>Auto Sync (3s)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Device List Container -->
+    <div class="device-grid" id="deviceGrid">
+      <div class="empty-card">Đang kết nối và tải dữ liệu thiết bị...</div>
+    </div>
+  </div>
+
+  <!-- Voice Controller Floating Widget -->
+  <div id="voiceWidgetContainer" class="voice-widget-container">
+    <div id="voiceToast" class="voice-toast"></div>
+    <div id="voiceWidget" class="voice-widget inactive">
+      <div class="voice-widget-glow"></div>
+      <div class="voice-widget-header" id="voiceWidgetHeader">
+        <div class="voice-status-indicator">
+          <div class="voice-icon-wrapper" id="voiceIconWrapper">
+            <span id="voiceEmojiIcon" style="font-size: 1.25rem;">🔇</span>
+          </div>
+          <div class="voice-meta">
+            <div class="voice-title-row">
+              <span class="voice-state-title" id="voiceStateTitle">Voice Control</span>
+              <span class="voice-countdown-badge" id="voiceCountdownBadge" style="display: none;">8s</span>
+            </div>
+            <div class="voice-hint-text" id="voiceHintText">Bấm để bật mic nhận diện</div>
+          </div>
+        </div>
+        
+        <div class="voice-actions">
+          <div class="voice-waves" id="voiceWaves" style="display: none;">
+            <span class="v-wave"></span>
+            <span class="v-wave"></span>
+            <span class="v-wave"></span>
+            <span class="v-wave"></span>
+          </div>
+          <button id="voicePowerBtn" class="voice-power-btn" title="Bật / Tắt Voice Control">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+              <line x1="12" y1="2" x2="12" y2="12"></line>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Live Stream Console Line -->
+      <div class="voice-console-stream" id="voiceConsoleStream">
+        <span class="voice-stream-line" id="voiceStreamLine">● Mic chưa kích hoạt (Click để bật)</span>
+      </div>
+
+      <div class="voice-transcript-preview" id="voiceTranscriptPreview" style="display: none;">
+        <span class="transcript-label">Nghe được:</span>
+        <span class="transcript-content" id="transcriptText">...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Client Logic Script -->
+  <script src="/static/dashboard.js"></script>
+</body>
+</html>
