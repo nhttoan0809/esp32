@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "author": "toannguyen",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-v1", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    {
+      "type": "wokwi-pir-motion-sensor",
+      "id": "pir1",
+      "top": -140,
+      "left": 230,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_mode",
+      "top": -40,
+      "left": 230,
+      "attrs": { "color": "blue", "key": "m", "label": "Mode Toggle" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 120,
+      "left": 220,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led1",
+      "top": 100,
+      "left": 310,
+      "attrs": { "color": "yellow" }
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "bz1",
+      "top": 180,
+      "left": 230,
+      "attrs": {}
+    }
+  ],
+  "connections": [
+    [ "pir1:VCC", "esp:VIN", "red", [ "h-20", "v180" ] ],
+    [ "pir1:GND", "esp:GND.1", "black", [ "h-30", "v160" ] ],
+    [ "pir1:OUT", "esp:D33", "gold", [ "h-40", "v120" ] ],
+    [ "btn_mode:1.l", "esp:D4", "blue", [ "h-20", "v140" ] ],
+    [ "btn_mode:2.l", "esp:GND.2", "black", [ "h-30", "v160" ] ],
+    [ "esp:D21", "r1:1", "gold", [ "h20" ] ],
+    [ "r1:2", "led1:A", "gold", [ "h10" ] ],
+    [ "led1:C", "esp:GND.2", "black", [ "v40", "h-140" ] ],
+    [ "esp:D22", "bz1:2", "orange", [ "h20" ] ],
+    [ "bz1:1", "esp:GND.2", "black", [ "v40", "h-140" ] ],
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ]
+  ]
+}

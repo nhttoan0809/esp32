@@ -33,7 +33,8 @@ esp32-learning/
 │   ├── hardware/              # Đặc tả phần cứng board 30 chân & Danh mục linh kiện
 │   │   ├── BOARD-ESP32-DEVKIT-V1-30PIN.md
 │   │   ├── KIT-COMPONENTS-REFERENCE.md
-│   │   └── POTENTIOMETER-LED-DIMMER-SPECIFICATION.md
+│   │   ├── POTENTIOMETER-LED-DIMMER-SPECIFICATION.md
+│   │   └── MINIMAL-SENSORS-POC-SPECIFICATION.md
 │   ├── guides/                # Hướng dẫn thao tác dòng lệnh & Nạp board thật
 │   │   ├── CLI-WORKFLOW-GUIDE.md
 │   │   └── HARDWARE-FLASHING-GUIDE.md
@@ -45,8 +46,13 @@ esp32-learning/
 │   └── examples/              # Kiến trúc dự án mẫu
 │       └── POC-05-CLOUD-WEBSOCKET.md
 └── pocs/
-    ├── poc-potentiometer-dimmer/ # POC Điều chỉnh độ sáng LED bằng biến trở (ADC + PWM)
-    └── poc5-cloud-device/     # Dự án mẫu hoàn chỉnh (Firmware ESP32 + FastAPI Backend)
+    ├── poc-potentiometer-dimmer/  # POC Điều chỉnh độ sáng LED bằng biến trở (ADC + PWM)
+    ├── poc-relay-ac-fan/          # POC Điều khiển quạt AC 220V qua Relay cách ly quang
+    ├── poc-ldr-smart-light/       # POC Đèn thông minh LDR với Hysteresis chống rung & Auto-Dimmer
+    ├── poc-dht11-climate-monitor/ # POC Giám sát tiểu khí hậu & Cảnh báo nồm ẩm DHT11
+    ├── poc-ir-obstacle-barrier/   # POC Cảm biến tiệm cận không chạm & Đếm sản phẩm IR LM393
+    ├── poc-pir-motion-alarm/      # POC Đèn an ninh tự tắt & Báo động chuyển động PIR HC-SR501
+    └── poc5-cloud-device/         # Dự án mẫu hoàn chỉnh (Firmware ESP32 + FastAPI Backend)
 ```
 
 ---

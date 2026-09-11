@@ -1,0 +1,73 @@
+{
+  "version": 1,
+  "author": "toannguyen",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-v1", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    {
+      "type": "wokwi-dht22",
+      "id": "dht1",
+      "top": -140,
+      "left": 230,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_g",
+      "top": 60,
+      "left": 220,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_g",
+      "top": 40,
+      "left": 310,
+      "attrs": { "color": "green" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_y",
+      "top": 100,
+      "left": 220,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_y",
+      "top": 80,
+      "left": 310,
+      "attrs": { "color": "yellow" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_r",
+      "top": 140,
+      "left": 220,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_r",
+      "top": 120,
+      "left": 310,
+      "attrs": { "color": "red" }
+    }
+  ],
+  "connections": [
+    [ "dht1:VCC", "esp:3V3", "red", [ "h-20", "v120" ] ],
+    [ "dht1:GND", "esp:GND.2", "black", [ "h-30", "v100" ] ],
+    [ "dht1:SDA", "esp:D19", "gold", [ "h-50", "v80" ] ],
+    [ "esp:D23", "r_g:1", "green", [ "h20" ] ],
+    [ "r_g:2", "led_g:A", "green", [ "h10" ] ],
+    [ "led_g:C", "esp:GND.2", "black", [ "v40", "h-120" ] ],
+    [ "esp:D25", "r_y:1", "gold", [ "h-20" ] ],
+    [ "r_y:2", "led_y:A", "gold", [ "h10" ] ],
+    [ "led_y:C", "esp:GND.1", "black", [ "v40", "h-140" ] ],
+    [ "esp:D26", "r_r:1", "red", [ "h-20" ] ],
+    [ "r_r:2", "led_r:A", "red", [ "h10" ] ],
+    [ "led_r:C", "esp:GND.1", "black", [ "v40", "h-150" ] ],
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ]
+  ]
+}

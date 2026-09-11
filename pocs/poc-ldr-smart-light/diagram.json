@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "author": "toannguyen",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-v1", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    {
+      "type": "wokwi-photoresistor-sensor",
+      "id": "ldr1",
+      "top": -130,
+      "left": 230,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 130,
+      "left": 230,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led1",
+      "top": 110,
+      "left": 330,
+      "attrs": { "color": "yellow" }
+    }
+  ],
+  "connections": [
+    [ "ldr1:VCC", "esp:3V3", "red", [ "h-20", "v120" ] ],
+    [ "ldr1:GND", "esp:GND.2", "black", [ "h-30", "v100" ] ],
+    [ "ldr1:AO", "esp:D34", "gold", [ "h-50", "v80" ] ],
+    [ "ldr1:DO", "esp:D35", "blue", [ "h-60", "v100" ] ],
+    [ "esp:D18", "r1:1", "orange", [ "h20" ] ],
+    [ "r1:2", "led1:A", "red", [ "h10" ] ],
+    [ "led1:C", "esp:GND.1", "black", [ "v40", "h-150" ] ],
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ]
+  ]
+}

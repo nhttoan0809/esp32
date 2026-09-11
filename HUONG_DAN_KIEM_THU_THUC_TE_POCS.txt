@@ -1,0 +1,199 @@
+================================================================================
+HƯỚNG DẪN KIỂM THỬ 4 POCs CẢM BIẾN TRÊN BOARD THỰC TẾ (ESP32 DEVKIT V1 30-PIN)
+================================================================================
+
+Tài liệu này hướng dẫn chi tiết quy trình kiểm thử 4 Proof of Concepts (POC)
+trên phần cứng thật trong kit thí nghiệm ESP32 Starter:
+1. poc-ldr-smart-light        (Quang trở LDR với LM393)
+2. poc-dht11-climate-monitor  (Nhiệt độ & Độ ẩm DHT11)
+3. poc-ir-obstacle-barrier    (Tránh vật cản hồng ngoại LM393)
+4. poc-pir-motion-alarm       (Chuyển động PIR HC-SR501)
+
+--------------------------------------------------------------------------------
+PHẦN 1: QUY TRÌNH NẠP FIRMWARE BẰNG DÒNG LỆNH (CLI-FIRST TRÊN MACOS)
+--------------------------------------------------------------------------------
+
+1. Xác định cổng USB kết nối với ESP32:
+   Cắm cáp USB (loại cáp dữ liệu Data Cable) từ ESP32 vào máy Mac, gõ lệnh:
+   $ pio device list
+   hoặc:
+   $ ls -l /dev/cu.usb* /dev/cu.wch* /dev/cu.SLAB* 2>/dev/null
+
+   Kết quả thường có dạng: /dev/cu.usbserial-XXXX hoặc /dev/cu.wchusbserialXXXX.
+   Gọi cổng này là <PORT>.
+
+2. Biên dịch và Nạp firmware lên bo mạch:
+   Thay <PORT> bằng cổng thực tế vừa tìm được:
+
+   a) Nạp POC Ánh Sáng (LDR):
+   $ pio run -d pocs/poc-ldr-smart-light -e esp32dev -t upload --upload-port <PORT>
+
+   b) Nạp POC Nhiệt Ẩm & Nồm Ẩm (DHT11):
+   $ pio run -d pocs/poc-dht11-climate-monitor -e esp32dev -t upload --upload-port <PORT>
+
+   c) Nạp POC Tránh Vật Cản (IR Obstacle):
+   $ pio run -d pocs/poc-ir-obstacle-barrier -e esp32dev -t upload --upload-port <PORT>
+
+   d) Nạp POC Chuyển Động (PIR Motion):
+   $ pio run -d pocs/poc-pir-motion-alarm -e esp32dev -t upload --upload-port <PORT>
+
+   Mẹo nếu gặp lỗi "Failed to connect to ESP32 / Timed out":
+   - Nhấn và giữ im nút BOOT (bên phải cổng USB)
+   - Nhấn và nhả nút EN/RST (bên trái cổng USB) 1 lần
+   - Thả nút BOOT ra rồi chạy lại lệnh nạp.
+
+3. Mở Serial Monitor theo dõi dữ liệu cảm biến:
+   $ pio device monitor -p <PORT> -b 115200
+   (Thoát Serial Monitor: Nhấn Ctrl + ] hoặc Ctrl + C).
+
+--------------------------------------------------------------------------------
+PHẦN 2: PHƯƠNG PHÁP KÍCH THÍCH VẬT LÝ VÀ KIỂM CHỨNG TỪNG CẢM BIẾN
+--------------------------------------------------------------------------------
+
+================================================================================
+1. POC ÁNH SÁNG: pocs/poc-ldr-smart-light
+================================================================================
+* Sơ đồ cắm dây trên Breadboard:
+  - LDR Module:
+    + VCC -> Chân 3V3 của ESP32
+    + GND -> Chân GND của ESP32
+    + AO  -> GPIO 34 (Chân Input-Only thuộc ADC1)
+    + DO  -> GPIO 35 (Chân Input-Only thuộc ADC1)
+  - Đèn LED Vàng:
+    + GPIO 18 -> Điện trở hạn dòng 220 Ohm -> Chân Anode (+) LED Vàng
+    + Chân Cathode (-) LED Vàng -> Chân GND của ESP32
+
+* Kịch bản kích thích vật lý:
+  Bước 1: Để cảm biến dưới ánh sáng phòng bình thường.
+          Quan sát Serial: Giá trị ADC dao động 500 - 1500, State: OFF, LED tắt.
+  Bước 2: Dùng lòng bàn tay úp kín lên quang trở LDR để tạo bóng tối.
+          Quan sát: Giá trị ADC vọt lên >= 2800. Serial in ngay lập tức:
+          "[EVENT] >>> DUSK DETECTED! Turning Light ON" và đèn LED bật sáng.
+  Bước 3: Kiểm tra chống chập chờn (Hysteresis):
+          Hé nhẹ ngón tay sao cho ADC dao động quanh mức 2500 (nằm giữa vùng
+          trễ 2200 - 2800).
+          Hiện tượng: Đèn LED giữ nguyên trạng thái BẬT, hoàn toàn không bị chớp
+          tắt giật cục như các mạch so sánh đơn ngưỡng thông thường.
+  Bước 4: Kiểm tra Auto-Dimming:
+          Di chuyển ngón tay che từ xa lại gần từ từ.
+          Hiện tượng: Độ sáng đèn LED tăng dần mượt mà theo độ tối môi trường.
+  Bước 5: Bỏ tay ra hoàn toàn (Trời sáng rõ):
+          ADC giảm xuống <= 2200. Serial in:
+          "[EVENT] >>> DAWN DETECTED! Turning Light OFF" và đèn LED tắt.
+
+================================================================================
+2. POC NHIỆT ĐỘ & ĐỘ ẨM: pocs/poc-dht11-climate-monitor
+================================================================================
+* Sơ đồ cắm dây trên Breadboard:
+  - DHT11 Module:
+    + VCC  -> Chân 3V3 của ESP32
+    + GND  -> Chân GND của ESP32
+    + DATA -> GPIO 19
+  - 3 Đèn LED (Mỗi LED đều qua 1 điện trở 220 Ohm vào cực Anode, Cathode nối GND):
+    + LED Xanh lá -> GPIO 23 (Báo mức Lý tưởng - Comfort)
+    + LED Vàng    -> GPIO 25 (Báo Cảnh báo Nồm ẩm - Mold Alert)
+    + LED Đỏ      -> GPIO 26 (Báo Cảnh báo Quá nhiệt - Heat Alert)
+
+* Kịch bản kích thích vật lý:
+  Bước 1: Tiểu khí hậu phòng bình thường (Nhiệt độ 20-30°C, Độ ẩm 40-70%).
+          Quan sát: Chỉ LED Xanh lá sáng, Serial in "Status: COMFORT [OK]".
+  Bước 2: Kích hoạt Cảnh báo Nồm Ẩm (Độ ẩm >= 75%):
+          Ghé sát miệng vào khe lưới của cảm biến DHT11 và THỔI MỘT LUỒNG HƠI
+          THỞ ẤM & ẨM liên tục trong 3 - 5 giây.
+          Hiện tượng: Độ ẩm đọc được nhảy vọt lên 80% - 95%. LED Xanh lập tức
+          tắt, LED VÀNG BẬT SÁNG RỰC báo "Status: MOLD ALERT [HUMID]".
+          Sau 10 - 20 giây hơi ẩm bay hết, độ ẩm hạ xuống thì LED Xanh tự sáng lại.
+  Bước 3: Kích hoạt Cảnh báo Quá Nhiệt (Nhiệt độ >= 35°C):
+          Dùng máy sấy tóc thổi gió ấm từ xa (khoảng 30cm) vào cảm biến.
+          Hiện tượng: Nhiệt độ vượt 35°C, LED ĐỎ BẬT SÁNG báo "HEAT ALERT".
+
+================================================================================
+3. POC TRÁNH VẬT CẢN HỒNG NGOẠI: pocs/poc-ir-obstacle-barrier
+================================================================================
+* Sơ đồ cắm dây trên Breadboard:
+  - IR Obstacle Module:
+    + VCC -> Chân 3V3 của ESP32
+    + GND -> Chân GND của ESP32
+    + OUT -> GPIO 27 (Hỗ trợ ngắt ngoài Hardware Interrupt)
+  - Đèn LED Xanh:
+    + GPIO 13 -> Điện trở 220 Ohm -> Anode (+) LED Xanh -> Cathode nối GND
+  - Active Buzzer (Còi bíp 5V/3.3V):
+    + Chân dương (+) -> GPIO 14
+    + Chân âm (-)    -> GND
+
+* Hiệu chỉnh ban đầu:
+  Trên module có 1 biến trở xoay nhỏ màu xanh dương. Dùng tua-vít vặn nhẹ để
+  chỉnh cự ly nhận diện mong muốn (khoảng 3cm - 8cm). Khi không có vật cản,
+  đèn LED chỉ thị nhỏ trên module phải tắt.
+
+* Kịch bản kích thích vật lý:
+  Bước 1: Phía trước cảm biến thông thoáng.
+          Đèn LED và còi im lặng. Serial in "Sensor Pin: CLEAR (HIGH)".
+  Bước 2: Quét nhanh bàn tay hoặc tờ giấy qua trước 2 mắt đèn hồng ngoại.
+          Hiện tượng: Còi Buzzer kêu bíp ngắn 40ms, LED Xanh chớp sáng 400ms,
+          Serial in ngay: "[EVENT] >>> OBSTACLE DETECTED! Total Count: 1".
+  Bước 3: Kiểm tra chống đếm lặp (Dead-time Lockout):
+          Cố tình giữ yên bàn tay chắn trước cảm biến không rút ra.
+          Hiện tượng: Còi không kêu liên hồi và bộ đếm không bị nhảy loạn.
+          Chỉ khi rút tay ra và đưa vào lại sau 1 giây thì bộ đếm mới tăng lên
+          "Total Count: 2".
+
+================================================================================
+4. POC CHUYỂN ĐỘNG & BÁO ĐỘNG: pocs/poc-pir-motion-alarm
+================================================================================
+* Sơ đồ cắm dây trên Breadboard:
+  - PIR Module HC-SR501:
+    + VCC -> Chân VIN (5V) của ESP32 (Bắt buộc 5V cho vi mạch BISS0001)
+    + GND -> Chân GND của ESP32
+    + OUT -> GPIO 33 (Tín hiệu 3.3V TTL an toàn)
+  - Nút bấm 12x12mm:
+    + 1 chân nối vào GPIO 4
+    + 1 chân nối vào GND (Code dùng chế độ INPUT_PULLUP)
+  - Đèn LED Vàng:
+    + GPIO 21 -> Điện trở 220 Ohm -> Anode (+) LED Vàng -> Cathode nối GND
+  - Active Buzzer:
+    + Chân dương (+) -> GPIO 22
+    + Chân âm (-)    -> GND
+
+* Hiệu chỉnh trên module PIR:
+  - Biến trở Tx (Delay Time): Vặn HẾT CỠ NGƯỢC CHIỀU KIM ĐỒNG HỒ (để phần cứng
+    nhả tín hiệu nhanh, nhường quyền đếm thời gian trễ cho code ESP32).
+  - Biến trở Sx (Sensitivity): Vặn ở vị trí khoảng giữa (cự ly nhận 3 - 5m).
+  - Jumper: Cắm ở vị trí 'H' (Chế độ kích hoạt lặp lại - Repeat Trigger).
+
+* Kịch bản kích thích vật lý:
+  Bước 1: Khởi động làm nóng (Warm-up Period):
+          Khi cắm nguồn, trong 10 giây đầu tiên Serial in đếm ngược:
+          "[WARMUP] Cảm biến PIR đang ổn định quang học...".
+          Giữ yên không cử động trước cảm biến trong thời gian này.
+  Bước 2: Thử nghiệm Chế độ Đèn Tự Động (AUTO-LIGHT - Mặc định):
+          - Khua tay trước vòm nhựa trắng Fresnel -> LED Vàng bật sáng ngay lập
+            tức, Serial báo "MOTION DETECTED!".
+          - Đứng yên hoặc lùi ra xa -> Đồng hồ bắt đầu đếm lùi 8 giây (Hold time).
+            Hết 8 giây không có chuyển động, đèn LED Vàng tự động tắt:
+            "TIMEOUT REACHED. Light OFF".
+  Bước 3: Thử nghiệm Chế độ Báo Động An Ninh (ARMED SECURITY):
+          - Nhấn nút bấm trên GPIO 4 -> Còi kêu 2 tiếng bíp ngắn báo [ARMED].
+          - Bây giờ chỉ cần khẽ cử động tay trước cảm biến -> Còi Buzzer và LED
+            lập tức chớp nháy và hú còi cảnh báo liên tục theo nhịp 120ms.
+          - Nhấn nút GPIO 4 lần nữa để tắt báo động (DISARM - còi kêu 1 tiếng dài).
+
+--------------------------------------------------------------------------------
+PHẦN 3: SỔ TAY CHẨN ĐOÁN SỰ CỐ NHANH
+--------------------------------------------------------------------------------
+1. DHT11 in ra "Không đọc được dữ liệu" / "nan":
+   - Kiểm tra chân DATA có cắm đúng GPIO 19 không.
+   - Kiểm tra dây cắm có bị lỏng không (thử đổi dây jumper khác).
+   - Đảm bảo khoảng cách giữa 2 lần đọc tối thiểu là 2.0 giây.
+
+2. Cảm biến IR Obstacle luôn sáng đèn dù không có vật cản:
+   - Do biến trở vi chỉnh trên module đang vặn quá nhạy.
+   - Lấy tua-vít vặn ngược chiều kim đồng hồ từ từ cho đến khi đèn tắt hẳn.
+
+3. PIR HC-SR501 không nhận hoặc tín hiệu chập chờn:
+   - Cấp nhầm nguồn 3.3V thay vì 5V. Hãy chuyển chân VCC của PIR sang chân VIN.
+
+4. Đèn LED không sáng khi kích hoạt:
+   - Cắm ngược cực LED: Chân dài hơn (Anode +) phải cắm vào điện trở/GPIO,
+     chân ngắn hơn (Cathode -) cắm vào GND.
+================================================================================

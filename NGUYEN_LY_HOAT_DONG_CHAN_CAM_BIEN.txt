@@ -1,0 +1,266 @@
+================================================================================
+NGUYÊN LÝ HOẠT ĐỘNG VÀ ĐẶC TẢ TÍN HIỆU CÁC CHÂN CẢM BIẾN (ESP32 DEVKIT V1)
+================================================================================
+
+Tài liệu này phân tích chi tiết dòng chảy tín hiệu từ cảm biến vào vi điều khiển:
+- Nguồn điện cấp vào đâu?
+- Khi có tác động vật lý thì cảm biến biến đổi và truyền tín hiệu gì ra ngoài?
+- Chân nào trên ESP32 sẽ tiếp nhận tín hiệu đó?
+- Vi điều khiển ESP32 xử lý dữ liệu tiếp theo như thế nào trong firmware?
+
+Áp dụng cho 4 cảm biến cốt lõi:
+1. Module Quang Trở LDR với LM393 (Ánh Sáng)
+2. Module Cảm Biến Nhiệt Độ & Độ Ẩm DHT11
+3. Module Tránh Vật Cản Hồng Ngoại LM393
+4. Module Chuyển Động Hồng Ngoại Thụ Động PIR HC-SR501
+
+================================================================================
+1. MODULE QUANG TRỞ LDR VỚI LM393 (CẢM BIẾN ÁNH SÁNG)
+================================================================================
+
+1.1. Cấu trúc các chân trên cảm biến:
+  - VCC : Chân cấp nguồn dương.
+  - GND : Chân nối đất (Mass chung).
+  - AO  : Analog Output (Ngõ ra điện áp tương tự liên tục).
+  - DO  : Digital Output (Ngõ ra số mức logic 0 / 1 qua bộ so sánh LM393).
+
+1.2. Nguồn điện truyền vào đâu?
+  - Chân VCC nối vào chân [3V3] của ESP32 (Điện áp 3.3V DC).
+  - Chân GND nối vào chân [GND] của ESP32.
+  - Lý do: ESP32 hoạt động ở mức logic 3.3V. Cấp 3.3V vào LDR giúp dải điện áp ngõ ra
+    AO hoàn toàn tương thích với bộ chuyển đổi tương tự-sang-số (ADC) của ESP32.
+
+1.3. Khi có tác động vật lý thì truyền tín hiệu gì?
+  - Bản chất vật lý: Quang trở CdS (Cadmium Sulfide) có tính chất quang dẫn.
+    Khi hạt photon ánh sáng chiếu vào, các electron tự do được giải phóng:
+    + Trời càng SÁNG -> Điện trở của LDR càng GIẢM (chỉ còn vài trăm Ohm).
+    + Trời càng TỐI  -> Điện trở của LDR càng TĂNG VỌT (lên tới hàng Mega-Ohm).
+  - Tín hiệu tại chân AO (Analog Out):
+    Trên module có mạch cầu phân áp giữa LDR và điện trở cố định 10k Ohm:
+      V_AO = 3.3V * (R_LDR / (R_LDR + 10k))
+    Khi trời tối dần, R_LDR tăng lên -> Điện áp trên chân AO TĂNG DẦN từ 0V lên gần 3.3V.
+    Tín hiệu truyền đi là điện áp tương tự liên tục (Analog voltage 0V - 3.3V).
+  - Tín hiệu tại chân DO (Digital Out):
+    IC so sánh LM393 so sánh điện áp V_AO với điện áp mẫu từ chiết áp vi chỉnh:
+    + Khi trời Tối (V_AO vượt ngưỡng) -> DO xuất mức logic HIGH (3.3V).
+    + Khi trời Sáng (V_AO dưới ngưỡng) -> DO xuất mức logic LOW (0V).
+
+1.4. Chân nào trên ESP32 tiếp nhận?
+  - Chân [GPIO 34] (D34) nhận tín hiệu từ chân AO của cảm biến.
+    Đặc tính: GPIO 34 là chân Input-Only thuộc kênh ADC1 (ADC1_CH6).
+    *Quy tắc vàng*: ADC1 hoạt động bình thường kể cả khi bật Wi-Fi, không bị
+    vô hiệu hóa như các chân ADC2.
+  - Chân [GPIO 35] (D35) nhận tín hiệu từ chân DO của cảm biến.
+    Đặc tính: GPIO 35 cũng là chân Input-Only (không sợ bị cấu hình nhầm làm Output).
+
+1.5. ESP32 xử lý tiếp theo thế nào trong Firmware?
+  1. Đọc tín hiệu:
+     - Dùng hàm `analogRead(34)`: Bộ ADC 12-bit của ESP32 chuyển điện áp 0V - 3.3V
+       thành giá trị số nguyên từ 0 đến 4095.
+  2. Thuật toán Schmitt-Trigger Hysteresis (Chống chập chờn):
+     - Nếu đèn đang TẮT: Chỉ khi ADC >= 2800 (Trời tối sâu) mới chuyển trạng thái sang BẬT.
+     - Nếu đèn đang BẬT: Chỉ khi ADC <= 2200 (Trời sáng rõ) mới chuyển trạng thái sang TẮT.
+     - Vùng đệm 600 đơn vị (0.48V) giúp bóng đèn không bao giờ bị nhấp nháy giật cục
+       khi trời chạng vạng hoặc có bóng mây bay qua.
+  3. Thuật toán Ambient Auto-Dimming (Tự động tăng giảm độ sáng mượt mà):
+     - Khi đèn BẬT, firmware dùng hàm `map(adc, 2200, 4095, 800, 4095)` để tính toán
+       độ rộng xung PWM tương ứng với độ tối môi trường.
+     - Xuất tín hiệu xung LEDC PWM (5 kHz) ra [GPIO 18] -> qua điện trở hạn dòng 220 Ohm
+       vào cực Anode (+) của đèn LED phòng để điều chỉnh độ sáng 0% - 100%.
+
+================================================================================
+2. CẢM BIẾN NHIỆT ĐỘ & ĐỘ ẨM DHT11
+================================================================================
+
+2.1. Cấu trúc các chân trên cảm biến:
+  - VCC  : Chân cấp nguồn dương (3.3V hoặc 5V).
+  - GND  : Chân nối đất.
+  - DATA : Chân truyền/nhận dữ liệu số 2 chiều (Single-Bus 1-Wire).
+
+2.2. Nguồn điện truyền vào đâu?
+  - Chân VCC nối vào chân [3V3] của ESP32 (Điện áp 3.3V DC).
+  - Chân GND nối vào chân [GND] của ESP32.
+  - Lý do: Cấp 3.3V giúp các xung logic HIGH trên chân DATA xuất ra ở điện áp 3.3V,
+    đồng bộ hoàn hảo với chuẩn GPIO của ESP32 mà không làm quá áp chip.
+
+2.3. Khi có tác động vật lý thì truyền tín hiệu gì?
+  - Bản chất vật lý:
+    + Đo độ ẩm: Bên trong có màng hút ẩm điện trở (hoặc tụ điện ẩm). Khi độ ẩm
+      không khí thay đổi -> Lượng phân tử nước bám vào màng thay đổi -> Độ dẫn điện thay đổi.
+    + Đo nhiệt độ: Sử dụng một điện trở nhiệt NTC (Negative Temperature Coefficient),
+      khi nhiệt độ tăng -> Điện trở NTC giảm theo đặc tuyến nhiệt.
+    + Một vi điều khiển 8-bit tích hợp sẵn bên trong vỏ nhựa DHT11 sẽ liên tục đo đạc,
+      số hóa và lưu trữ hai giá trị nhiệt ẩm này vào bộ nhớ đệm.
+  - Tín hiệu tại chân DATA:
+    + Không phải là điện áp analog đơn giản, mà là MỘT GIAO THỨC TRUYỀN THÔNG SỐ (Digital Protocol).
+    + Quá trình bắt tay (Handshake):
+      1) ESP32 chủ động kéo chân DATA xuống mức LOW ít nhất 18ms (Start Signal).
+      2) ESP32 kéo lên HIGH 20-40us rồi chuyển chân thành INPUT để lắng nghe.
+      3) DHT11 kéo LOW 80us rồi kéo HIGH 80us để phát tín hiệu phản hồi xác nhận.
+      4) DHT11 xuất liên tiếp 40 BIT DỮ LIỆU KỸ THUẬT SỐ (5 Byte):
+         * Byte 1: Giá trị nguyên Độ ẩm (%)
+         * Byte 2: Giá trị thập phân Độ ẩm
+         * Byte 3: Giá trị nguyên Nhiệt độ (°C)
+         * Byte 4: Giá trị thập phân Nhiệt độ
+         * Byte 5: Checksum kiểm tra (Byte1 + Byte2 + Byte3 + Byte4 = Byte5).
+    + Mỗi bit được mã hóa bằng thời gian xung: Bit '0' có độ rộng xung HIGH ngắn (26-28us),
+      Bit '1' có độ rộng xung HIGH dài (70us).
+
+2.4. Chân nào trên ESP32 tiếp nhận?
+  - Chân [GPIO 19] tiếp nhận tín hiệu DATA.
+    Đặc tính: GPIO 19 là chân I/O kỹ thuật số thông thường, hỗ trợ chuyển đổi linh hoạt
+    giữa Output (khi gửi lệnh Start) và Input (khi nhận 40-bit dữ liệu).
+
+2.5. ESP32 xử lý tiếp theo thế nào trong Firmware?
+  1. Thư viện Adafruit DHT giải mã chuỗi 40-bit xung và kiểm tra tính toàn vẹn qua Checksum.
+  2. Firmware tính toán chỉ số nhiệt cảm nhận (Heat Index) dựa trên nhiệt độ và độ ẩm.
+  3. Phân loại và điều khiển 3 cơ cấu chấp hành (3 đèn LED qua trở 220 Ohm):
+     - Nếu Nhiệt độ 20-30°C và Độ ẩm 40-70% (Lý tưởng):
+       -> Kích chân [GPIO 23] lên mức HIGH -> Bật ĐÈN LED XANH LÁ (Comfort).
+     - Nếu Độ ẩm >= 75% (Hiện tượng nồm ẩm, nguy cơ nấm mốc và đọng sương):
+       -> Kích chân [GPIO 25] lên mức HIGH -> Bật ĐÈN LED VÀNG (Mold Alert).
+     - Nếu Nhiệt độ >= 35°C hoặc <= 16°C (Khắc nghiệt/Quá nhiệt):
+       -> Kích chân [GPIO 26] lên mức HIGH -> Bật ĐÈN LED ĐỎ (Heat Alert).
+
+================================================================================
+3. MODULE TRÁNH VẬT CẢN HỒNG NGOẠI LM393 (IR OBSTACLE SENSOR)
+================================================================================
+
+3.1. Cấu trúc các chân trên cảm biến:
+  - VCC : Cấp nguồn dương (3.3V - 5V).
+  - GND : Nối đất.
+  - OUT : Digital Output (Ngõ ra logic số Active LOW).
+
+3.2. Nguồn điện truyền vào đâu?
+  - Chân VCC nối vào chân [3V3] của ESP32.
+  - Chân GND nối vào chân [GND] của ESP32.
+  - Dòng điện nuôi LED phát hồng ngoại và IC LM393 tiêu thụ khoảng 10 - 20mA,
+    hoàn toàn nằm trong khả năng cấp dòng của chân 3V3 ESP32.
+
+3.3. Khi có tác động vật lý thì truyền tín hiệu gì?
+  - Bản chất vật lý:
+    + Đèn LED phát hồng ngoại (màu trắng/trong suốt) liên tục phóng chùm tia hồng ngoại
+      bước sóng 940nm (mắt người không nhìn thấy) về phía trước.
+    + Khi KHÔNG CÓ VẬT CẢN: Tia hồng ngoại truyền thẳng đi mất vào không gian, photodiode thu
+      (màu đen) không nhận được tia phản xạ -> Photodiode ở trạng thái ngắt.
+    + Khi CÓ VẬT CẢN (bàn tay, tờ giấy, hộp đồ): Tia hồng ngoại va đập vào bề mặt vật cản
+      bị tán xạ và phản xạ ngược lại -> Photodiode thu tiếp nhận photon hồng ngoại -> Xuất
+      hiện dòng quang điện làm sụt áp trên mạch thu.
+    + IC so sánh LM393 so sánh điện áp này với điện áp chuẩn từ biến trở vi chỉnh màu xanh.
+  - Tín hiệu tại chân OUT:
+    Module hoạt động theo nguyên lý "Active LOW":
+    + Khi CÓ VẬT CẢN che tia: Chân OUT bị kéo tụt xuống mức 0V (MỨC THẤP - LOW).
+      Đồng thời đèn LED chỉ thị màu xanh trên board module sáng lên.
+    + Khi THÔNG THOÁNG: Chân OUT được điện trở kéo lên giữ ở mức 3.3V (MỨC CAO - HIGH).
+      Đèn LED chỉ thị trên module tắt.
+
+3.4. Chân nào trên ESP32 tiếp nhận?
+  - Chân [GPIO 27] tiếp nhận tín hiệu OUT.
+    Đặc tính: GPIO 27 hỗ trợ ngắt phần cứng ngoài (External Hardware Interrupt).
+
+3.5. ESP32 xử lý tiếp theo thế nào trong Firmware?
+  1. Thay vì dùng CPU liên tục quét `digitalRead` tốn tài nguyên, firmware gắn một ngắt ngoài:
+     `attachInterrupt(digitalPinToInterrupt(27), isrObstacleDetected, FALLING);`
+     Ngay khi chân OUT tụt áp từ 3.3V xuống 0V (cạnh xuống FALLING), CPU ngắt ngay lập tức
+     để chạy hàm phục vụ ngắt `isrObstacleDetected`.
+  2. Thuật toán Lockout Dead-time (Khóa thời gian chết 1000ms):
+     Khi vật cản đi qua mép hoặc di chuyển chậm, tín hiệu có thể bị rung (bouncing) tạo
+     nhiều xung liên tiếp trong vài mili-giây. Firmware kiểm tra:
+     `if (now - lastInterruptTime >= 1000ms)` -> Chỉ chấp nhận 1 lần kích hoạt duy nhất.
+  3. Kích hoạt cơ cấu chấp hành:
+     - Tăng biến đếm: `objectCount++`.
+     - Kích chân [GPIO 13] lên HIGH trong 400ms -> Bật ĐÈN LED XANH hiển thị tiệm cận.
+     - Kích chân [GPIO 14] lên HIGH trong 40ms  -> Kêu CÒI ACTIVE BUZZER tiếng bíp ngắn
+       xác nhận không chạm (tương tự máy rót nước tự động hoặc xịt cồn sát khuẩn).
+
+================================================================================
+4. CẢM BIẾN CHUYỂN ĐỘNG HỒNG NGOẠI THỤ ĐỘNG PIR HC-SR501
+================================================================================
+
+4.1. Cấu trúc các chân trên cảm biến:
+  - VCC : Chân cấp nguồn dương (Yêu cầu 5V).
+  - GND : Chân nối đất.
+  - OUT : Chân tín hiệu số ngõ ra (3.3V TTL).
+  - Biến trở Sx : Chỉnh độ nhạy (Cự ly phát hiện từ 3m đến 7m).
+  - Biến trở Tx : Chỉnh thời gian trễ (Delay time từ 0.5 giây đến vài phút).
+  - Jumper H / L : Chế độ kích hoạt lặp lại (H) hoặc đơn lẻ (L).
+
+4.2. Nguồn điện truyền vào đâu? (ĐẶC BIỆT LƯU Ý)
+  - Chân VCC BẮT BUỘC NỐI VÀO CHÂN [VIN] của ESP32 (Nguồn 5V DC lấy trực tiếp từ USB).
+    *Cảnh báo kỹ thuật*: Nếu cắm vào chân 3V3, cảm biến sẽ hoạt động sai lệch hoặc hoàn
+    toàn không phản hồi vì IC xử lý BISS0001 và chip ổn áp tích hợp 7133 trên module
+    yêu cầu điện áp đầu vào tối thiểu từ 4.5V trở lên.
+  - Chân GND nối vào chân [GND] của ESP32.
+
+4.3. Khi có tác động vật lý thì truyền tín hiệu gì?
+  - Bản chất vật lý:
+    + Cảm biến này gọi là "Thụ động" (Passive) vì nó KHÔNG tự phát ra tia nào cả, mà chỉ
+      ngồi yên "hứng" bức xạ hồng ngoại tỏa ra từ cơ thể người/động vật (thân nhiệt ~37°C
+      phát ra bức xạ hồng ngoại bước sóng khoảng 9 - 10 micromet).
+    + Thấu kính vòm nhựa màu trắng đục (Thấu kính Fresnel) chia trường quan sát thành
+      nhiều phân vùng quang học sáng/tối xen kẽ.
+    + Bên dưới vòm có một mắt thu nhiệt điện kép (Dual-element Pyroelectric Sensor) gồm
+      2 khoang thu A và B.
+      * Khi phòng tĩnh lặng hoặc nhiệt độ môi trường đồng đều -> Khoang A và B nhận bức xạ
+        như nhau -> Hiệu điện thế vi sai giữa 2 khoang bằng 0.
+      * Khi có người bước ngang qua -> Cơ thể người quét qua khoang A trước rồi khoang B sau
+        -> Xuất hiện sự chênh lệch điện áp cực nhỏ (micro-Volt) giữa 2 khoang.
+    + IC chuyên dụng BISS0001 khuếch đại tín hiệu micro-Volt này qua 2 tầng Op-Amp và đưa
+      qua bộ so sánh cửa sổ (Window Comparator) để lọc bỏ các nhiễu nhiệt tĩnh.
+  - Tín hiệu tại chân OUT:
+    + Khi PHÁT HIỆN CHUYỂN ĐỘNG: Chân OUT xuất mức điện áp [3.3V] (MỨC CAO - HIGH).
+    + Khi KHÔNG CÓ CHUYỂN ĐỘNG: Chân OUT trở về mức [0V] (MỨC THẤP - LOW).
+    *Lưu ý*: Mặc dù nuôi bằng 5V VIN, nhưng IC 7133 trên board đã hạ áp tín hiệu OUT về
+    chuẩn 3.3V TTL nên an toàn tuyệt đối 100% cho chân GPIO của ESP32.
+
+4.4. Chân nào trên ESP32 tiếp nhận?
+  - Chân [GPIO 33] tiếp nhận tín hiệu OUT từ cảm biến PIR.
+    Đặc tính: Cấu hình chế độ `pinMode(33, INPUT)`.
+  - Chân [GPIO 4] nối với Nút bấm 12x12mm (với GND) để chuyển đổi chế độ hoạt động.
+
+4.5. ESP32 xử lý tiếp theo thế nào trong Firmware?
+  1. Giai đoạn Warm-up (Khởi động làm nóng 10 giây đầu):
+     Trong 10s sau khi bật nguồn, cảm biến PIR tự cân bằng nhiệt độ khoang thu.
+     Firmware duy trì cờ `isWarmingUp = true` và bỏ qua mọi tín hiệu để tránh báo động giả.
+  2. Máy trạng thái 2 Chế độ (Dual-Mode FSM):
+     - Chế độ 1: ĐÈN TỰ ĐỘNG TIẾT KIỆM NĂNG LƯỢNG (AUTO-LIGHT - Mặc định):
+       + Khi `digitalRead(33) == HIGH` (Có người):
+         -> Bật chân [GPIO 21] lên HIGH -> ĐÈN LED PHÒNG SÁNG.
+         -> Liên tục cập nhật mốc thời gian: `lastMotionTime = millis()`.
+       + Khi `digitalRead(33) == LOW` (Người rời khỏi phòng):
+         -> Firmware kích hoạt bộ đếm giữ sáng (Hold Time = 8 giây).
+         -> Nếu sau 8 giây không có bất kỳ cử động nào mới:
+            Kéo chân [GPIO 21] xuống LOW -> TẮT ĐÈN LED PHÒNG để tiết kiệm điện.
+     - Chế độ 2: BÁO ĐỘNG AN NINH CHỐNG TRỘM (ARMED SECURITY):
+       + Chuyển sang chế độ này khi bấm nút trên [GPIO 4] (Còi bíp 2 tiếng xác nhận ARM).
+       + Khi `digitalRead(33) == HIGH` (Phát hiện đột nhập):
+         -> Firmware kích hoạt bộ dao động nhịp 120ms:
+            Kéo đồng thời chân [GPIO 21] (Đèn) và [GPIO 22] (Còi Buzzer) chớp nháy
+            và hú còi cảnh báo liên tục để xua đuổi kẻ đột nhập.
+       + Bấm nút GPIO 4 lần nữa để ngắt báo động (DISARM - còi kêu 1 tiếng dài).
+
+================================================================================
+TỔNG KẾT BẢNG ÁNH XẠ CHÂN (PIN MAP SUMMARY)
+================================================================================
+
++-----------------+------------+---------------+----------------+-----------------------+
+| CẢM BIẾN        | CHÂN MODULE| ĐIỆN ÁP CẤP   | CHÂN ESP32     | LOẠI TÍN HIỆU & HÀM   |
++-----------------+------------+---------------+----------------+-----------------------+
+| LDR Ánh Sáng    | VCC        | 3.3V (3V3)    | 3V3            | Nguồn nuôi module     |
+|                 | GND        | 0V            | GND            | Mass chung            |
+|                 | AO         | 0V - 3.3V     | GPIO 34 (ADC1) | Analog, analogRead()  |
+|                 | DO         | 0V / 3.3V     | GPIO 35        | Digital, digitalRead()|
++-----------------+------------+---------------+----------------+-----------------------+
+| DHT11 Nhiệt Ẩm  | VCC        | 3.3V (3V3)    | 3V3            | Nguồn nuôi module     |
+|                 | GND        | 0V            | GND            | Mass chung            |
+|                 | DATA       | Xung 3.3V     | GPIO 19        | 1-Wire Single Bus     |
++-----------------+------------+---------------+----------------+-----------------------+
+| IR Vật Cản      | VCC        | 3.3V (3V3)    | 3V3            | Nguồn nuôi module     |
+|                 | GND        | 0V            | GND            | Mass chung            |
+|                 | OUT        | 0V / 3.3V     | GPIO 27        | Active LOW, Interrupt |
++-----------------+------------+---------------+----------------+-----------------------+
+| PIR Chuyển Động | VCC        | 5.0V (VIN) ⚠️ | VIN            | Bắt buộc 5V từ USB    |
+|                 | GND        | 0V            | GND            | Mass chung            |
+|                 | OUT        | 0V / 3.3V     | GPIO 33        | 3.3V TTL High=Motion  |
++-----------------+------------+---------------+----------------+-----------------------+
+================================================================================
