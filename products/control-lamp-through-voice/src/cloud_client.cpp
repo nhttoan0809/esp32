@@ -4,6 +4,7 @@
 #include <time.h>
 
 #include "app_config.h"
+#include "tls_ca.h"
 
 using namespace app_config;
 
@@ -58,7 +59,7 @@ void CloudClient::begin(const DeviceConfig &config, const char *deviceId,
   wsUrl_ = scheme + config_.serverHost + portPart + socketPath_;
 
   // Setup SSL and custom headers
-  webSocket_.setInsecure();
+  webSocket_.setCACert(SERVER_ROOT_CA);
   webSocket_.addHeader("Authorization", String("Bearer ") + deviceToken_);
   webSocket_.addHeader("ngrok-skip-browser-warning", "69420");
   webSocket_.addHeader("User-Agent", "ESP32-Smart-Lamp");
@@ -214,6 +215,16 @@ void CloudClient::startTransport() {
     reconnectAt_ = millis() + delayMs;
     Serial.printf("WSS_CONNECT_FAILED retry_ms=%lu\r\n",
                   static_cast<unsigned long>(delayMs));
+
+    // Remind user if WSS TLS handshake fails (on attempt 1 and periodically every 5 attempts)
+    if (config_.serverPort == HTTPS_PORT && (reconnectAttempt_ <= 1 || reconnectAttempt_ % 5 == 0)) {
+      Serial.println(F("--------------------------------------------------------------------------------"));
+      Serial.printf("[TLS_DIAG] ⚠️ WSS Handshake failed for host: %s\r\n", config_.serverHost.c_str());
+      Serial.println(F("[TLS_DIAG] 💡 If Cloudflare tunnel host changed or restarted, run to update Root CA:"));
+      Serial.printf("           python3 products/control-lamp-through-voice/scripts/update_tls_ca.py --host %s\r\n", config_.serverHost.c_str());
+      Serial.println(F("           pio run -d products/control-lamp-through-voice -e esp32dev -t upload"));
+      Serial.println(F("--------------------------------------------------------------------------------"));
+    }
   }
 }
 

@@ -7,20 +7,45 @@ Sản phẩm điều khiển **Bóng Đèn Thông Minh (Smart Lamp)** kết hợ
 
 ---
 
-## 1. Bản Đồ Phần Cứng & Pinout (ESP32 DevKit V1 30-Pin)
+## 1. Sơ Đồ Kết Nối Phần Cứng & Pinout
+
+### 1.1 Sơ đồ đấu nối thực tế (DC & AC 220V)
+
+```text
+Phía DC (Vi điều khiển ESP32 30-Pin - Điện áp thấp an toàn):
+ESP32 DevKit V1
+│
+├── GPIO 26 ──────────────────────────► IN1 Relay Module (Active LOW)
+├── GPIO 14 ──[Lamp Button]───────────► GND (INPUT_PULLUP, nhấn = LOW)
+├── GPIO 18 ──[220Ω]──[LED Vàng]─────► GND (Setup Portal)
+├── GPIO 21 ──[220Ω]──[LED Xanh lá]──► GND (Wi-Fi Connected)
+├── GPIO 22 ──[220Ω]──[LED Trắng]────► GND (Cloud WSS Ready)
+├── VIN (5V) ─────────────────────────► VCC Relay Module
+└── GND ──────────────────────────────► GND Relay Module
+
+Phía AC 220V (Điện áp cao nguy hiểm — Làm khi ĐÃ NGẮT NGUỒN ĐIỆN):
+[Ổ điện tường 220V]
+│
+├── Dây Pha (L) ──────────────► COM (Chân chung Relay)
+│                                    ↕ (Tiếp điểm đóng/ngắt cơ khí NO)
+│                               NO ───────────────► Dây 1 ──► [Bóng đèn 220V (realDevice)] ──► Dây 2
+└── Dây Nguội (N) ─────────────────────────────────────────────────────────────────────────────► Dây 2
+```
+
+### 1.2 Bảng phân bổ chân (Pinout Map)
 
 | GPIO | Thành Phần | Chế Độ | Mức Logic / Trạng Thái | Ghi Chú |
 |:---:|---|:---:|---|---|
+| **26** | Relay Module IN1 | OUTPUT | **Active LOW**: `LOW` = Relay Hút (Đóng COM-NO $\rightarrow$ Bật Đèn), `HIGH` = Relay Nhả (Hở COM-NO $\rightarrow$ Tắt Đèn) | Cách ly quang Optocoupler |
+| **14** | Nút Bấm Đèn (Manual Lamp) | INPUT_PULLUP | Nhấn = `LOW`. Nhấn ngắn: Toggle. Giữ ≥ 3s: Force-OFF | Phím tắt Wokwi: `L` |
 | **18** | LED Vàng (Setup Portal) | OUTPUT | `HIGH` = Setup Portal SoftAP đang mở | Nối tiếp trở 220Ω |
 | **21** | LED Xanh Lá (Wi-Fi) | OUTPUT | `HIGH` = ESP32 STA đã kết nối Wi-Fi | Nối tiếp trở 220Ω |
 | **22** | LED Trắng (Cloud WSS) | OUTPUT | `HIGH` = WSS Upgrade & Ready | Nối tiếp trở 220Ω |
-| **23** | LED Đỏ (`Real_Device`) | OUTPUT | `HIGH` = Bóng đèn đang BẬT (ON) | Đèn hiển thị mức an toàn DC |
-| **26** | Relay Module IN1 | OUTPUT | **Active LOW**: `LOW` = Relay Hút (ON), `HIGH` = Relay Nhả (OFF) | Điều khiển cuộn hút qua Optocoupler |
-| **14** | Nút Bấm Đèn (Manual Lamp) | INPUT_PULLUP | Nhấn = `LOW`. Nhấn ngắn: Toggle. Giữ ≥ 3s: Force-OFF | Phím tắt Wokwi: `L` |
+| — | **realDevice** (Bóng đèn 220V) | AC Load | **Nuôi bởi tiếp điểm Relay NO** (Không nối vào GPIO ESP32) | Trong Wokwi: tải sau Relay NO |
 
-> [!NOTE]
-> - **Mức an toàn DC:** Tạm thời chưa cắm nguồn điện 220V AC thật. LED Đỏ (GPIO 23) và Relay Module 5V (GPIO 26) hoạt động song song để kiểm thử logic, quan sát trực quan trên Wokwi/Board thật và lắng nghe tiếng "tách" relay nhảy.
-> - **Fail-Safe:** Khởi động mặc định là `OFF` (`GPIO 26 = HIGH` nhả tiếp điểm NO, `GPIO 23 = LOW`). Khi ESP32 mất nguồn, relay tự động ngắt tải.
+> [!IMPORTANT]
+> - **Fail-Safe tuyệt đối:** Mặc định khi khởi động hoặc khi ESP32 mất nguồn, relay luôn nhả tiếp điểm NO (`GPIO 26 = HIGH` do pullup/firmware init) $\rightarrow$ Bóng đèn 220V ngắt hoàn toàn khỏi dây pha L.
+> - **Cách ly hoàn toàn:** ESP32 không bao giờ tiếp xúc trực tiếp với điện lưới 220V, chỉ điều khiển qua cuộn coil và optocoupler của relay.
 
 ---
 
@@ -78,7 +103,15 @@ uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```bash
 cloudflared tunnel --url http://localhost:8000
 ```
-Lấy tên miền `xxxx.trycloudflare.com` để nhập vào Portal Wi-Fi của ESP32.
+Lấy tên miền `xxxx.trycloudflare.com` để nhập vào Portal Wi-Fi của ESP32 (`192.168.4.1`).
+
+> [!TIP]
+> **Khi Cloudflare Tunnel khởi động lại và sinh URL mới:**
+> Chạy script tự động hoá sau để cập nhật Root CA (`tls_ca.h`), cấu hình mặc định (`secrets.h`) và nạp lại vào ESP32 trong 1 câu lệnh:
+> ```bash
+> python3 products/control-lamp-through-voice/scripts/update_tls_ca.py --host xxxx.trycloudflare.com --upload --upload-port /dev/cu.usbserial-0001
+> ```
+
 
 ---
 

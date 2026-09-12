@@ -18,20 +18,26 @@ void DeviceController::begin() {
   prepareOutput(LED_WIFI_PIN, LOW);
   prepareOutput(LED_SERVER_PIN, LOW);
 
-  // Real Device (Active HIGH LED indicator) starts OFF
-  prepareOutput(REAL_DEVICE_PIN, LOW);
-
-  // Relay Module (Active LOW: HIGH = Coil de-energized = OFF) starts OFF
+  // Relay Module (Active LOW: HIGH = Coil de-energized = COM-NO Open = Lamp OFF)
   prepareOutput(RELAY_PIN, HIGH);
 
+  // Status LED representing real lamp on breadboard (Active HIGH: LOW = OFF, HIGH = ON)
+  prepareOutput(REAL_DEVICE_PIN, LOW);
+
+  // Configure button inputs with internal pull-up
   pinMode(LAMP_BUTTON_PIN, INPUT_PULLUP);
+  pinMode(ALT_BUTTON_PIN, INPUT_PULLUP);
 
   setupReady_ = false;
   wifiConnected_ = false;
   serverConnected_ = false;
   realDeviceOn_ = false;
 
-  Serial.println(F("[DEVICE] ⚡ Hardware controller initialized (Fail-Safe OFF)"));
+  Serial.println(F("[DEVICE] ⚡ Hardware controller initialized (Relay Fail-Safe OFF, Status LED OFF)"));
+  Serial.printf("[DEVICE] 🔘 Lamp Button listening on GPIO%u (primary) and GPIO%u (alternate)\r\n",
+                LAMP_BUTTON_PIN, ALT_BUTTON_PIN);
+  Serial.printf("[DEVICE] 💡 Output driving Relay GPIO%u (Active LOW) & Indicator LED GPIO%u (Active HIGH)\r\n",
+                RELAY_PIN, REAL_DEVICE_PIN);
 }
 
 void DeviceController::setSetupReady(bool ready) {
@@ -65,16 +71,17 @@ void DeviceController::setRealDevice(bool on) {
   if (realDeviceOn_ != on) {
     realDeviceOn_ = on;
 
-    // LED (Active HIGH): HIGH = ON
-    digitalWrite(REAL_DEVICE_PIN, on ? HIGH : LOW);
-
-    // Relay (Active LOW): LOW = ON, HIGH = OFF
+    // Relay (Active LOW): LOW = Coil energized (COM-NO Closed), HIGH = Coil off (COM-NO Open)
     digitalWrite(RELAY_PIN, on ? LOW : HIGH);
 
-    Serial.printf("[LAMP] 💡 State: %s (Relay=GPIO%u %s, LED=GPIO%u %s)\r\n",
-                  on ? "ON" : "OFF",
+    // Indicator LED (Active HIGH): HIGH = ON, LOW = OFF
+    digitalWrite(REAL_DEVICE_PIN, on ? HIGH : LOW);
+
+    Serial.printf("[RELAY] ⚡ Coil: %s (GPIO%u %s) | Status LED (GPIO%u %s) -> Lamp: %s\r\n",
+                  on ? "ENERGIZED" : "DE-ENERGIZED",
                   RELAY_PIN, on ? "LOW" : "HIGH",
-                  REAL_DEVICE_PIN, on ? "HIGH" : "LOW");
+                  REAL_DEVICE_PIN, on ? "HIGH" : "LOW",
+                  on ? "ON" : "OFF");
   }
 }
 
@@ -84,7 +91,7 @@ bool DeviceController::toggleRealDevice() {
 }
 
 void DeviceController::forceOff() {
-  Serial.println(F("[SAFETY] ⚠️ Force OFF triggered!"));
+  Serial.println(F("[SAFETY] ⚠️ Force OFF triggered! Opening Relay NO contact"));
   setRealDevice(false);
 }
 
