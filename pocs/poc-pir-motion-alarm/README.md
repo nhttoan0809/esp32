@@ -10,14 +10,45 @@ Bản Proof of Concept (POC) thực nghiệm ứng dụng **Module Cảm biến 
   - Nguồn cấp bắt buộc: **VIN (5V)** từ cổng USB để vi mạch xử lý tín hiệu BISS0001 và chip ổn áp 7133 hoạt động ổn định.
   - Ngõ ra `OUT`: Tín hiệu logic **3.3V TTL High** khi phát hiện bức xạ hồng ngoại cơ thể sống di chuyển, mức **0V Low** khi tĩnh. Nối an toàn vào **GPIO 33**.
   - Xử lý thời gian làm nóng quang học (Warm-up Period: $10\text{s}$ ban đầu để tránh báo động giả lúc khởi động).
-- **Máy trạng thái 2 chế độ (Dual-Mode FSM):**
-  - **Chế độ 1: Đèn tự động tiết kiệm điện (AUTO-LIGHT - Mặc định):**
-    - Khi có chuyển động: Bật đèn LED Vàng (GPIO 21) ngay lập tức và liên tục gia hạn thời gian sáng (`lastMotionTime = millis()`).
-    - Khi người rời đi: Giữ sáng thêm $8\text{s}$ (Hold Time) rồi tự động tắt.
-  - **Chế độ 2: Báo động chống trộm (ARMED SECURITY):**
-    - Nhấn nút bấm (GPIO 4) để kích hoạt. Còi bíp 2 tiếng xác nhận ARM.
-    - Khi phát hiện có người: Kích hoạt chớp đèn và còi Buzzer (GPIO 22) liên tục ($120\text{ms}$ nhịp cảnh báo).
-    - Nhấn nút lần nữa để giải phóng (DISARM - Còi kêu 1 tiếng dài).
+  - **Thông số 2 núm chỉnh phần cứng (Trimmer Potentiometers):**
+    - **Núm chỉnh độ nhạy (Sensitivity Adjust - Sx):**
+      - Dải cự ly: $3\text{m} - 7\text{m}$, góc quét $\approx 120^\circ$.
+      - Xoay theo chiều kim đồng hồ (CW): Tăng khoảng cách nhận diện (lên tối đa ~7m).
+      - Xoay ngược chiều kim đồng hồ (CCW): Giảm khoảng cách nhận diện (xuống tối thiểu ~3m).
+      - *Cấu hình phạm vi phần mềm (Software Range Profiles):* Do module PIR chỉ xuất tín hiệu logic số (0/1), ESP32 kết hợp bộ lọc thời lượng xung (*Duration Filter*) để cung cấp 3 mức phạm vi:
+        - **Mức 1: Cự ly GẦN (~3m):** Yêu cầu tín hiệu duy trì $\ge 400\text{ms}$ (Lọc triệt để báo giả do vật nuôi, rèm cửa).
+        - **Mức 2: TIÊU CHUẨN (~5m):** Yêu cầu tín hiệu duy trì $\ge 150\text{ms}$ (Cân bằng, mặc định).
+        - **Mức 3: Cự ly XA (~7m):** Kích hoạt tức thời khi xung đạt $\ge 40\text{ms}$ (Độ nhạy tối đa).
+        - *Cách chuyển mức:* Gõ phím `1`, `2`, `3` trên Serial Monitor HOẶC nhấn giữ nút bấm GPIO 4 trong $>1.2\text{s}$.
+    - **Núm chỉnh thời gian trễ (Time Delay Adjust - Tx):**
+      - Dải thời gian: $\approx 0.5\text{s} - 300\text{s}$ (5 phút), tuân theo công thức chip BISS0001: $Tx \approx 24576 \times R_{10} \times C_6$.
+      - Xoay theo chiều kim đồng hồ (CW): Tăng thời gian xung `OUT` giữ mức `HIGH` (tối đa 5 phút).
+      - Xoay ngược chiều kim đồng hồ (CCW): Giảm thời gian trễ về mức nhỏ nhất (~0.5s - 3s).
+      - *Đo lường tự động:* ESP32 tự động đo thời gian giữ mức HIGH thực tế khi xung kết thúc và in kết quả ra Serial.
+      - *Khuyến nghị căn chỉnh:* Vặn kịch kim ngược chiều kim đồng hồ (CCW) và gạt Jumper sang vị trí **H (Repeatable)** để ESP32 đo xung nhanh và làm chủ hoàn toàn giải thuật thời gian chờ (Hold Time) qua phần mềm.
+- **Cơ Chế Hoạt Động Của Nút Bấm & Phím Tắt Serial:**
+  - **Cơ chế phần cứng (INPUT_PULLUP):** Chân GPIO 4 được bật điện trở kéo lên nội bộ (~45kΩ lên 3.3V).
+    - Trạng thái nhả (Release): Mức logic `HIGH` (3.3V).
+    - Trạng thái nhấn (Press): Tiếp điểm cơ khí đóng xuống `GND`, tạo mức logic `LOW` (0V).
+  - **Hai thao tác nút bấm:**
+    - **Nhấn nhanh (< 1.2s):** Chuyển đổi chế độ hoạt động (AUTO-LIGHT $\leftrightarrow$ ARMED SECURITY).
+    - **Nhấn giữ (> 1.2s):** Xoay vòng đổi mức phạm vi độ nhạy ($1 \rightarrow 2 \rightarrow 3 \rightarrow 1$), còi bíp số tiếng tương ứng xác nhận.
+  - **Điều khiển qua Serial Monitor:**
+    - Gõ `1`, `2`, `3`: Thay đổi phạm vi độ nhạy (Gần 3m / Vừa 5m / Xa 7m).
+    - Gõ `t` hoặc `b`: Chạy chương trình chẩn đoán còi Buzzer (Phát 3 tần số 1500Hz, 2400Hz, 3200Hz).
+    - Gõ `m`: Chuyển chế độ hoạt động.
+    - Gõ `?`: In menu trợ giúp lệnh.
+  - **Máy trạng thái 2 chế độ (Dual-Mode FSM):**
+    - **Chế độ 1: Đèn tự động tiết kiệm điện (AUTO-LIGHT - Mặc định khi khởi động):**
+      - Khi có chuyển động: Bật đèn LED Vàng (GPIO 21) và liên tục gia hạn thời gian sáng (`lastMotionTime = millis()`).
+      - Khi người rời đi: Giữ sáng thêm $8\text{s}$ (Hold Time) rồi tự động tắt. Còi Buzzer ngắt hoàn toàn để giữ yên tĩnh.
+    - **Chế độ 2: Báo động chống trộm (ARMED SECURITY):**
+      - Kích hoạt bằng nút bấm hoặc phím `m` (Còi bíp 2 tiếng xác nhận ARM).
+      - Khi phát hiện có chuyển động: Kích hoạt đồng thời chớp đèn LED và hú còi Buzzer (GPIO 22) ở tần số $2500\text{Hz}$ với nhịp $120\text{ms}$.
+      - Nhấn nút lần nữa để giải phóng (DISARM về AUTO-LIGHT - Còi kêu 1 tiếng dài).
+- **Cơ chế Điều Khiển Còi Buzzer (Active & Passive):**
+  - Sử dụng hàm tạo xung âm thanh `tone(PIN_BUZZER, freq)` thay vì chỉ `digitalWrite(HIGH)` để tương thích 100% với cả **Passive Buzzer** (còi thụ động) lẫn **Active Buzzer** (còi chủ động).
+  - Tự động phát 2 tiếng bíp lúc khởi động (**Power-on Self Test**) để người dùng kiểm chứng phần cứng ngay khi cấp nguồn.
 
 ---
 
