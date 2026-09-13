@@ -25,6 +25,29 @@ Tài liệu này là quy chuẩn bắt buộc cho mọi tác vụ phát triển,
    - Mã linh kiện Wokwi: luôn có tiền tố `wokwi-` (ví dụ: `wokwi-led`, `wokwi-pushbutton`, `wokwi-resistor`).
 3. **Cổng kiểm chứng (Verification Gate):** Không bao giờ báo thành công chỉ vì code biên dịch không lỗi (`pio run` pass). Luôn phải quan sát được log Serial thực tế qua `wokwi-cli --expect-text` hoặc `pio device monitor`.
 4. **Tìm kiếm thông tin:** Khi cần search web hoặc tra cứu tài liệu ngoài, ưu tiên sử dụng Tavily CLI (`tvly`).
+5. **Mục tiêu Kép: Board thật là Ưu tiên Mặc định (Hardware-First Dual-Target Rule):**
+   - Mặc định biên dịch (`[env:esp32dev]`) luôn phải cấu hình cho **linh kiện phần cứng thật** có trong kit (ví dụ: DHT11).
+   - Nếu Wokwi dùng linh kiện thay thế (như `wokwi-dht22` thay cho DHT11), phải tạo môi trường riêng biệt `[env:wokwi]` trong `platformio.ini` với cờ định danh rõ ràng (ví dụ: `-DWOKWI_SIMULATION`).
+   - Tuyệt đối **không** dùng macro phủ định `!defined(...)` để gán linh kiện ảo Wokwi làm mặc định, tránh gây lỗi lệch driver khi nạp lên board thật.
+6. **Bắt buộc Ghi nhãn Trực quan trên Sơ đồ Wokwi (`diagram.json` Labels):**
+   - Mọi linh kiện ngoại vi, tương tác và hiển thị (LED, Pushbutton, Buzzer, Relay, Sensor, Potentiometer...) trong `diagram.json` **bắt buộc** phải có thuộc tính `"label"` trong `"attrs"`.
+   - Định dạng chuẩn: `"<TÊN LINH KIỆN / CHỨC NĂNG> (<CHÂN GPIO / NGUỒN>)"`.
+   - *Ví dụ chuẩn:*
+     - Sensor: `"attrs": { "label": "DHT11 (DATA: GPIO19)" }`
+     - LED: `"attrs": { "color": "green", "label": "COMFORT LED (GPIO23)" }`
+     - Button: `"attrs": { "color": "blue", "label": "MODE TOGGLE (GPIO4)" }`
+     - Relay: `"attrs": { "label": "RELAY FAN (IN: GPIO26)" }`
+   - Thuộc tính này tạo nhãn hiển thị trực quan ngay trên giao diện Wokwi, giúp người ráp mạch đối chiếu 1-1 chính xác tuyệt đối với breadboard thật.
+7. **Quy chuẩn Xác thực Sơ đồ Chân Ngoại vi (Hardware Pinout Verification Rule):**
+   - **Tuyệt đối không tự suy đoán thứ tự chân:** Các module cảm biến và ngoại vi (DHT11, PIR, IR, LDR, Relay, Chiết áp...) có nhiều biến thể pinout tùy thuộc nhà sản xuất bo mạch PCB. Luôn phải căn cứ vào **ký hiệu in trực tiếp trên bề mặt module thực tế** (ví dụ: `VCC`/`+`, `GND`/`-`, `OUT`/`S`/`DAT`) trước khi cắm dây và viết tài liệu.
+   - **Phân biệt Module đóng sẵn bo mạch vs Linh kiện rời trần:**
+     - Nhiều module trong kit đã tích hợp sẵn mạch phụ trợ (điện trở kéo pull-up, tụ lọc, IC so sánh) và có số lượng chân khác với linh kiện trần trong datasheet gốc hoặc part Wokwi (ví dụ: Module DHT11 thực tế có 3 chân, trong khi linh kiện trần và part Wokwi có 4 chân với chân `NC` bỏ trống).
+     - Chi tiết cấu hình chân cụ thể cho từng loại cảm biến trong bộ Kit được chuẩn hóa và tra cứu tại [`docs/hardware/KIT-COMPONENTS-REFERENCE.md`](file:///Users/toannguyen/Documents/esp32-learning/docs/hardware/KIT-COMPONENTS-REFERENCE.md), tránh quy nạp đặc tính của một linh kiện riêng lẻ thành quy tắc chung cho toàn bộ linh kiện khác.
+   - **Chuẩn hóa Bảng Ánh xạ Chân trong README của mỗi POC:** Bảng phân bổ chân (Pinout Map) trong `README.md` bắt buộc phải đối chiếu rõ ràng:
+     1. Chân vi điều khiển ESP32 DevKit V1 (GPIO / Nguồn).
+     2. Ký hiệu in thực tế trên bo mạch Module (Physical Pin Label).
+     3. Chân tương ứng trên sơ đồ mô phỏng Wokwi (`diagram.json`).
+     4. Chức năng kỹ thuật và lưu ý an toàn.
 
 ---
 

@@ -24,8 +24,16 @@ Tài liệu này tổng hợp toàn bộ các module, cảm biến và linh ki�
 ### 2.1 Cảm biến Nhiệt độ & Độ ẩm DHT11
 - **Dải đo nhiệt độ:** 0°C đến 50°C (sai số ±2°C).
 - **Dải đo độ ẩm:** 20% đến 90% RH (sai số ±5%).
-- **Tần số lấy mẫu:** Tối đa 1 Hz (1 giây lấy mẫu 1 lần).
-- **Chân nối:** VCC (3.3V hoặc 5V), DATA (nối vào bất kỳ GPIO tự do, cần pull-up 4.7k–10k nếu module chưa tích hợp), GND.
+- **Tần số lấy mẫu:** Tối đa 1 Hz (chu kỳ đọc khuyến nghị >= 2.0s bằng `millis()`).
+- **Giao thức:** Single-Bus 1-Wire (Gửi xung Start >= 18ms, nhận 40-bit dữ liệu).
+- **Đặc điểm Module 3 Chân trong Kit (Khác với chip trần 4 chân):**
+  - Cảm biến trong kit là **Breakout Module 3 chân** đã tích hợp sẵn điện trở kéo pull-up 10kΩ và tụ lọc nguồn (không cần gắn thêm trở ngoài).
+  - Chuẩn sơ đồ chân **Kiểu A**:
+    - **`S`** (Signal): Nối vào GPIO tự do (mặc định trong POC là **GPIO 19**).
+    - **`+`** (VCC): Nối vào **3V3** (hoặc **VIN / 5V** nếu dùng module clone bị thiếu áp).
+    - **`-`** (GND): Nối vào **GND** chung.
+  - *Lưu ý mô phỏng Wokwi:* Wokwi chỉ có chip ảo `wokwi-dht22` (dạng linh kiện trần 4 chân: `VCC`, `SDA`, `NC`, `GND`). Khi đấu nối Wokwi chỉ dùng 3 chân (`VCC`, `SDA`, `GND`) và bỏ trống chân `NC`.
+  - ⚠️ **Cảnh báo an toàn:** Không cắm nhầm chân `S` vào `3V3` và `+` vào GPIO vì sẽ làm chân tín hiệu bị kéo cứng vào nguồn 3.3V, khiến firmware không nhận diện được cảm biến.
 
 ### 2.2 Cảm biến Chuyển động hồng ngoại thụ động PIR HC-SR501
 - **Điện áp cấp:** 5V (nối vào chân VIN của ESP32 để đủ áp cho IC BISS0001).

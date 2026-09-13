@@ -9,7 +9,7 @@
       "id": "dht1",
       "top": -140,
       "left": 230,
-      "attrs": {}
+      "attrs": { "label": "DHT11 (DATA: GPIO19)" }
     },
     {
       "type": "wokwi-resistor",
@@ -23,7 +23,7 @@
       "id": "led_g",
       "top": 40,
       "left": 310,
-      "attrs": { "color": "green" }
+      "attrs": { "color": "green", "label": "COMFORT LED (GPIO23)" }
     },
     {
       "type": "wokwi-resistor",
@@ -37,7 +37,7 @@
       "id": "led_y",
       "top": 80,
       "left": 310,
-      "attrs": { "color": "yellow" }
+      "attrs": { "color": "yellow", "label": "MOLD ALERT (GPIO25)" }
     },
     {
       "type": "wokwi-resistor",
@@ -51,7 +51,7 @@
       "id": "led_r",
       "top": 120,
       "left": 310,
-      "attrs": { "color": "red" }
+      "attrs": { "color": "red", "label": "HEAT ALERT (GPIO26)" }
     }
   ],
   "connections": [

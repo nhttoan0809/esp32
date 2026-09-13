@@ -18,9 +18,9 @@ static const uint8_t PIN_LED_COMFORT = 23; // Xanh lá
 static const uint8_t PIN_LED_MOLD    = 25; // Vàng (Cảnh báo nồm ẩm)
 static const uint8_t PIN_LED_HEAT    = 26; // Đỏ (Cảnh báo quá nhiệt)
 
-// Trên Wokwi mô phỏng dùng DHT22, trên board thật dùng DHT11
-// Thư viện Adafruit hỗ trợ chuyển đổi linh hoạt
-#if defined(WOKWI_SIMULATION) || !defined(REAL_HARDWARE_DHT11)
+// Mặc định cho board thật là DHT11 (đúng với linh kiện thực tế của POC)
+// Chỉ chuyển sang DHT22 khi biên dịch cho môi trường mô phỏng Wokwi
+#if defined(WOKWI_SIMULATION)
   #define SENSOR_DHT_TYPE DHT22
 #else
   #define SENSOR_DHT_TYPE DHT11
@@ -51,6 +51,7 @@ void setup() {
   digitalWrite(PIN_LED_MOLD, LOW);
   digitalWrite(PIN_LED_HEAT, LOW);
 
+  // Khởi tạo cảm biến
   dht.begin();
 }
 
@@ -65,7 +66,8 @@ void loop() {
 
     // Kiểm tra tính toàn vẹn dữ liệu
     if (isnan(humidity) || isnan(temperature)) {
-      Serial.printf("[%6lu ms] [ERROR] Không đọc được dữ liệu từ cảm biến DHT!\n", now);
+      int pinLevel = digitalRead(PIN_DHT_DATA);
+      Serial.printf("[%6lu ms] [ERROR] Không đọc được dữ liệu từ DHT11 (GPIO %u hiện tại mức %d)!\n", now, PIN_DHT_DATA, pinLevel);
       return;
     }
 

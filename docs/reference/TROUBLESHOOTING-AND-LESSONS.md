@@ -72,7 +72,7 @@ Tài liệu này đúc kết toàn bộ các bài học kinh nghiệm sâu sắc
 ### 5.1 Xoá và Cập nhật NVS khi Đổi Server Host
 Khi ESP32 đã lưu thông tin Wi-Fi/Server cũ vào NVS, nó sẽ tự động kết nối và bỏ qua Portal. Áp dụng 3 phương án:
 1. **Dùng lệnh CLI (Khuyên dùng):** `pio run -d pocs/poc5-cloud-device -e esp32dev -t erase --upload-port /dev/cu.usbserial-XXXX` để format sạch Flash trong 2 giây.
-2. **Factory Reset Nút bấm:** Nhấn giữ nút GPIO 25 trong $\ge 5$ giây (`wm.resetSettings()`, `configStore.clear()`).
+2. **Factory Reset Nút bấm:** Nhấn giữ nút GPIO 25 trong >= 5 giây (`wm.resetSettings()`, `configStore.clear()`).
 3. **On-Demand Portal:** Nhấn ngắn nút GPIO 25 để mở lại Portal sửa Server Host mà không mất Wi-Fi.
 
 ### 5.2 Xử lý Tệp Dead Code trong PlatformIO
@@ -92,6 +92,26 @@ Khi ESP32 đã lưu thông tin Wi-Fi/Server cũ vào NVS, nó sẽ tự động 
 | **`WSS_CONNECT_FAILED` ngay lập tức** | `WiFiClientSecure` cố xác thực với CA rỗng | Gọi `webSocket.setInsecure()` hoặc nạp đúng CA Cert |
 | **`WSS_HELLO_SENT` xong bị ngắt kết nối** | JSON thiếu trường (`firmware`, `device_id`) khiến Pydantic báo lỗi | Bổ sung đầy đủ các trường theo đúng Model trên Backend |
 | **Nhấn toggle trên Dashboard làm WSS bị disconnect** | JSON Schema mismatch (`on` vs `desired.on`) | Cập nhật firmware parse cả flat `on` và nested `desired.on` |
-| **Không đổi được Server Host mới** | NVS vẫn đang lưu cấu hình Server cũ | Chạy lệnh `pio run -t erase` hoặc nhấn giữ nút GPIO 25 $\ge 5$s |
+| **Không đổi được Server Host mới** | NVS vẫn đang lưu cấu hình Server cũ | Chạy lệnh `pio run -t erase` hoặc nhấn giữ nút GPIO 25 >= 5s |
 | **Serial in ký tự lạ / rác khi boot** | Baud rate không khớp | Cấu hình `Serial.begin(115200)` và `monitor_speed = 115200` |
-| **ESP32 liên tục reset khi bật Wi-Fi** | Sụt áp nguồn điện (Brownout Reset) | Đổi cáp USB chất lượng cao, cấp đủ nguồn $\ge 500\text{mA}$ |
+| **ESP32 liên tục reset khi bật Wi-Fi** | Sụt áp nguồn điện (Brownout Reset) | Đổi cáp USB chất lượng cao, cấp đủ nguồn >= 500mA |
+| **DHT11 timeout: `Không đọc được dữ liệu từ cảm biến`** | 1. Nhầm thứ tự chân Module 3 chân (đấu nhầm `S` vào 3V3).<br>2. Build nhầm driver DHT22 thay vì DHT11. | 1. Cắm chuẩn Kiểu A: `S` (Data) - `+` (VCC) - `-` (GND).<br>2. Cấu hình mặc định firmware là `DHT11`, chỉ dùng `DHT22` cho Wokwi qua cờ `-DWOKWI_SIMULATION`. |
+
+---
+
+## 7. Bài học về Cảm biến & Ngoại vi Phần cứng (Sensors & Peripherals)
+
+### 7.1 Sự cố Module DHT11: Nhầm lẫn Chân cắm & Driver Giữa Board thật và Mô phỏng
+- **Triệu chứng:** Serial Monitor in lỗi `[ERROR] Không đọc được dữ liệu từ cảm biến DHT!` hoặc `DHT timeout waiting for start signal high pulse` lặp đi lặp lại mỗi chu kỳ đo. Đo mức logic chân GPIO luôn đọc giá trị `1` (HIGH) nhưng không hề có xung phản hồi (`Pulse Transitions: 0`).
+- **Nguyên nhân 1 (Phần cứng):** Đấu nhầm thứ tự chân Module 3 chân:
+  - Cảm biến trong Kit thí nghiệm là **Module 3 chân chuẩn Kiểu A: `S` (Signal) — `+` (VCC) — `-` (GND)**.
+  - Nếu người dùng cắm theo thói quen (tưởng chân `+` ở ngoài cùng), vô tình cắm chân `S` vào `3V3` và chân `+` vào GPIO. Khi đó chân tín hiệu DATA bị nối cứng vào nguồn 3.3V qua trở pull-up nội, cảm biến không thể kéo chân xuống mức LOW để trả lời xung Start Signal từ ESP32.
+- **Nguyên nhân 2 (Phần mềm):** Code sử dụng macro phủ định `!defined(REAL_HARDWARE_DHT11)` khiến mọi lần build bình thường đều tự gán driver `DHT22`. Vì timing xung bắt tay Start Signal của DHT22 (1ms - 10ms) ngắn hơn yêu cầu tối thiểu của DHT11 (18ms), cảm biến DHT11 vật lý không được đánh thức.
+- **Kinh nghiệm cốt lõi:**
+  1. **Hardware-First Defaulting:** Mọi firmware phải lấy **Board thật làm mục tiêu mặc định**. Môi trường mô phỏng Wokwi phải tách thành environment riêng `[env:wokwi]` với cờ tường minh `-DWOKWI_SIMULATION`.
+  2. **Quy chuẩn chân Kiểu A:** Luôn kiểm tra chữ in trên mặt mạch PCB của Module DHT11:
+     - `S` -> GPIO (Data 1-Wire, đã có sẵn trở kéo 10kΩ).
+     - `+` -> 3V3 (hoặc VIN 5V nếu sensor bị sụt áp).
+     - `-` -> GND.
+  3. **Wokwi Labels:** Luôn đặt thuộc tính `"label"` trong `diagram.json` để người dùng đối chiếu trực quan 1-1 giữa sơ đồ ảo và board mạch thật.
+
