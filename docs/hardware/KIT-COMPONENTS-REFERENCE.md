@@ -47,9 +47,17 @@ Tài liệu này tổng hợp toàn bộ các module, cảm biến và linh ki�
 - **Điện áp cấp:** 3.3V – 5V.
 
 ### 2.4 Module Quang trở (LDR Light Sensor with LM393)
-- **Ngõ ra:**
-  - `DO` (Digital Out): Báo mức logic dựa trên ngưỡng cài đặt bằng biến trở tinh chỉnh.
-  - `AO` (Analog Out): Điện áp tương tự thay đổi tỷ lệ nghịch với cường độ ánh sáng (nối vào kênh ADC1 của ESP32: GPIO 32, 33, 34, 35, 36, 39).
+- **Đặc điểm phần cứng thực tế trong bộ Kit:**
+  - **Biến thể Module 3 Chân (Phổ biến nhất trong Kit):**
+    - Ký hiệu in trên PCB từ trái sang phải: **`DO` - `GND` - `VCC`**.
+    - **`DO`** (Digital Out): Tín hiệu số TTL (0V / 3.3V) từ ngõ ra IC so sánh LM393.
+    - **`GND`**: Nối đất chung.
+    - **`VCC`**: Cấp nguồn 3.3V (hoặc 5V).
+    - **Không có chân `AO`**: Ngưỡng sáng/tối được thiết lập trực tiếp thông qua biến trở vi chỉnh (Trimpot màu xanh) trên module.
+    - Mức logic `DO`: Khi đủ sáng $\rightarrow$ `LOW` (LED báo tín hiệu trên bo mạch sáng); Khi trời tối $\rightarrow$ `HIGH` (LED báo tín hiệu tắt).
+  - **Biến thể Module 4 Chân:**
+    - Có thêm chân **`AO`** (Analog Out): Điện áp tương tự thay đổi tỷ lệ nghịch với cường độ ánh sáng (nối vào kênh ADC1 của ESP32: GPIO 32, 33, 34, 35, 36, 39).
+- **Lưu ý mô phỏng Wokwi:** Part `wokwi-photoresistor-sensor` có sẵn cả chân `AO` và `DO`. Khi mô phỏng cho module 3 chân thực tế, chỉ cần kết nối chân `DO` vào GPIO ngõ vào của ESP32.
 
 ---
 

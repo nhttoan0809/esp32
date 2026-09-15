@@ -9,27 +9,26 @@
       "id": "ldr1",
       "top": -130,
       "left": 230,
-      "attrs": {}
+      "attrs": { "label": "LDR MODULE 3-PIN (DO: GPIO35)" }
     },
     {
       "type": "wokwi-resistor",
       "id": "r1",
       "top": 130,
       "left": 230,
-      "attrs": { "value": "220" }
+      "attrs": { "value": "220", "label": "RESISTOR 220 OHM" }
     },
     {
       "type": "wokwi-led",
       "id": "led1",
       "top": 110,
       "left": 330,
-      "attrs": { "color": "yellow" }
+      "attrs": { "color": "yellow", "label": "SMART LIGHT (GPIO18)" }
     }
   ],
   "connections": [
     [ "ldr1:VCC", "esp:3V3", "red", [ "h-20", "v120" ] ],
     [ "ldr1:GND", "esp:GND.2", "black", [ "h-30", "v100" ] ],
-    [ "ldr1:AO", "esp:D34", "gold", [ "h-50", "v80" ] ],
     [ "ldr1:DO", "esp:D35", "blue", [ "h-60", "v100" ] ],
     [ "esp:D18", "r1:1", "orange", [ "h20" ] ],
     [ "r1:2", "led1:A", "red", [ "h10" ] ],
