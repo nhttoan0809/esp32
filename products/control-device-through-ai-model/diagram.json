@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "author": "toannguyen",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-v1", "id": "esp", "top": 10, "left": 10, "attrs": {} },
+    { "type": "wokwi-resistor", "id": "r18", "top": -120, "left": 230, "attrs": { "value": "220" } },
+    { "type": "wokwi-led", "id": "ledSetup", "top": -140, "left": 330, "attrs": { "color": "yellow", "label": "SETUP PORTAL (D18)" } },
+    { "type": "wokwi-resistor", "id": "r21", "top": -30, "left": 230, "attrs": { "value": "220" } },
+    { "type": "wokwi-led", "id": "ledWifi", "top": -50, "left": 330, "attrs": { "color": "green", "label": "WIFI STA (D21)" } },
+    { "type": "wokwi-resistor", "id": "r22", "top": 45, "left": 230, "attrs": { "value": "220" } },
+    { "type": "wokwi-led", "id": "ledServer", "top": 25, "left": 330, "attrs": { "color": "white", "label": "CLOUD WSS (D22)" } },
+    { "type": "wokwi-relay-module", "id": "relay1", "top": 140, "left": 230, "attrs": { "transistor": "pnp" } },
+    { "type": "wokwi-resistor", "id": "rLoad", "top": 260, "left": 260, "attrs": { "value": "220" } },
+    { "type": "wokwi-led", "id": "realDevice", "top": 240, "left": 360, "attrs": { "color": "yellow", "label": "REAL 220V LAMP (via Relay NO)" } },
+    { "type": "wokwi-pushbutton", "id": "lampButton", "top": 20, "left": -120, "attrs": { "color": "red", "label": "LAMP TOGGLE (L)", "key": "l" } }
+  ],
+  "connections": [
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+    [ "esp:D18", "r18:1", "yellow", [ "h0" ] ],
+    [ "r18:2", "ledSetup:A", "yellow", [ "h0" ] ],
+    [ "ledSetup:C", "esp:GND.1", "black", [] ],
+    [ "esp:D21", "r21:1", "green", [ "h0" ] ],
+    [ "r21:2", "ledWifi:A", "green", [ "h0" ] ],
+    [ "ledWifi:C", "esp:GND.1", "black", [] ],
+    [ "esp:D22", "r22:1", "white", [ "h0" ] ],
+    [ "r22:2", "ledServer:A", "white", [ "h0" ] ],
+    [ "ledServer:C", "esp:GND.1", "black", [] ],
+    [ "esp:D26", "relay1:IN", "blue", [ "h0" ] ],
+    [ "esp:VIN", "relay1:VCC", "red", [ "v20", "h0" ] ],
+    [ "esp:GND.1", "relay1:GND", "black", [ "v30", "h0" ] ],
+    [ "relay1:COM", "esp:VIN", "red", [ "v10", "h0" ] ],
+    [ "relay1:NO", "rLoad:1", "orange", [ "h0" ] ],
+    [ "rLoad:2", "realDevice:A", "orange", [ "h0" ] ],
+    [ "realDevice:C", "esp:GND.1", "black", [] ],
+    [ "esp:D14", "lampButton:1.l", "magenta", [] ],
+    [ "lampButton:2.l", "esp:GND.1", "black", [] ]
+  ]
+}
