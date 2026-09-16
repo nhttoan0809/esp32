@@ -2,9 +2,10 @@
 .vscode
 .DS_Store
 include/secrets.h
-server/.venv
-server/.env
-server/__pycache__
-server/*/__pycache__
-server/*/*/__pycache__
-server/.pytest_cache
+web/node_modules
+web/.next
+web/.env
+web/.env.local
+web/.env.*.local
+web/out
+

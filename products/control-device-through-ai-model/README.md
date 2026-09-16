@@ -55,17 +55,20 @@ Hệ thống hoạt động theo mô hình **Always-Listening State Machine** tr
 
 1. **Giai đoạn 1 — Chờ Wake Word (Sleeping):**
    - Trình duyệt chạy chế độ nền, tiêu thụ ít CPU và lắng nghe từ khóa kích hoạt:
-     - **Wake Word:** `"Wake Up"`
+     - **Wake Word:** `"Wake Up"`, `"Hey Lamp"`, `"Smart Lamp"`
+   - **Hỗ trợ lệnh trực tiếp:** `"Turn on"`, `"Turn off"`, `"Toggle"`
+   - **Hỗ trợ lệnh 1 hơi:** `"Wake up turn on"`, `"Wake up turn off"`
 2. **Giai đoạn 2 — Cửa sổ nhận lệnh 8 giây (Awake):**
-   - Khi phát hiện `"Wake Up"`:
+   - Khi phát hiện từ đánh thức:
      - Phát chuông chào đón (`Chime Tone` qua Web Audio API).
      - Hiển thị badge đếm ngược 8 giây (`8s countdown`) và dải sóng âm chuyển động (`soundwaves`).
    - Các câu lệnh được hỗ trợ:
      - **Đảo trạng thái:** `"Change status"` hoặc `"Toggle"`
      - **Bật đèn:** `"Turn on"` hoặc `"Light on"`
      - **Tắt đèn:** `"Turn off"` hoặc `"Light off"`
-3. **Thực thi (Executing):**
+3. **Thực thi (Executing) & Chống Lặp Lệnh:**
    - Tự động gọi API `PUT /api/devices/{id}/state` cập nhật trạng thái lên Cloud và gửi xuống ESP32.
+   - Cơ chế khóa chống dội lệnh (Debounce Cooldown 1.5s).
    - Phát âm báo thành công (`Success Tone`) và tự động quay về trạng thái `Sleeping`.
    - Nếu quá 8 giây không có lệnh: phát âm báo hết giờ (`Timeout Tone`) và quay về `Sleeping`.
 
@@ -79,20 +82,25 @@ Hệ thống hoạt động theo mô hình **Always-Listening State Machine** tr
 
 ---
 
-## 4. Hướng Dẫn Khởi Chạy Backend Server (FastAPI)
+## 4. Hướng Dẫn Khởi Chạy Backend Server (Next.js & TypeScript)
 
 ```bash
-cd products/control-lamp-through-voice/server
+cd products/control-device-through-ai-model/web
 
 # 1. Cài đặt dependencies
-pip install -r requirements.txt
+pnpm install
 
-# 2. Thiết lập biến môi trường
+# 2. Thiết lập biến môi trường (hoặc sao chép từ .env.example)
 export LAMP_DASHBOARD_API_KEY='lamp-dashboard-secret'
 export LAMP_DEVICE_TOKENS_JSON='{"esp32-smart-lamp":"lamp-secret-token"}'
+export PORT=8000
 
-# 3. Khởi động server
-uvicorn app.main:app --host 127.0.0.1 --port 8000
+# 3. Khởi động server phát triển (Custom Server hỗ trợ WebSocket)
+pnpm dev
+
+# Hoặc build và khởi chạy bản production
+pnpm build
+pnpm start
 ```
 
 - Web Dashboard: `http://127.0.0.1:8000/dashboard`
@@ -109,7 +117,7 @@ Lấy tên miền `xxxx.trycloudflare.com` để nhập vào Portal Wi-Fi của 
 > **Khi Cloudflare Tunnel khởi động lại và sinh URL mới:**
 > Chạy script tự động hoá sau để cập nhật Root CA (`tls_ca.h`), cấu hình mặc định (`secrets.h`) và nạp lại vào ESP32 trong 1 câu lệnh:
 > ```bash
-> python3 products/control-lamp-through-voice/scripts/update_tls_ca.py --host xxxx.trycloudflare.com --upload --upload-port /dev/cu.usbserial-0001
+> python3 products/control-device-through-ai-model/scripts/update_tls_ca.py --host xxxx.trycloudflare.com --upload --upload-port /dev/cu.usbserial-0001
 > ```
 
 
@@ -121,24 +129,36 @@ Lấy tên miền `xxxx.trycloudflare.com` để nhập vào Portal Wi-Fi của 
 Từ thư mục gốc repository:
 ```bash
 # Build firmware
-pio run -d products/control-lamp-through-voice -e esp32dev
+pio run -d products/control-device-through-ai-model -e esp32dev
 
 # Kiểm tra binary artifact
-test -f products/control-lamp-through-voice/.pio/build/esp32dev/firmware.bin && echo "BIN OK"
+test -f products/control-device-through-ai-model/.pio/build/esp32dev/firmware.bin && echo "BIN OK"
 ```
 
 ### 5.2 Kiểm tra sơ đồ mạch Wokwi
 ```bash
 # Lint cú pháp JSON
-node -e 'JSON.parse(require("fs").readFileSync("products/control-lamp-through-voice/diagram.json", "utf8"))' && echo "JSON OK"
+node -e 'JSON.parse(require("fs").readFileSync("products/control-device-through-ai-model/diagram.json", "utf8"))' && echo "JSON OK"
 
 # Lint sơ đồ qua wokwi-cli
-wokwi-cli lint products/control-lamp-through-voice
+wokwi-cli lint products/control-device-through-ai-model
 ```
 
-### 5.3 Chạy Unit Test Backend
+### 5.3 Chạy Kiểm Thử & Kiểm Tra Cú Pháp Toàn Diện (Next.js)
 ```bash
-pytest products/control-lamp-through-voice/server/tests
+cd products/control-device-through-ai-model/web
+
+# Chạy toàn bộ Unit & Integration tests (Vitest)
+pnpm test
+
+# Kiểm tra TypeScript type checking (Build-time syntax check)
+pnpm type-check
+
+# Kiểm tra ESLint
+pnpm lint
+
+# Chạy toàn bộ pipeline kiểm chứng (type-check, lint, test, build)
+pnpm check
 ```
 
 ### 5.4 Nạp code lên Board thật
@@ -147,7 +167,7 @@ pytest products/control-lamp-through-voice/server/tests
 pio device list
 
 # Nạp code
-pio run -d products/control-lamp-through-voice -e esp32dev -t upload --upload-port /dev/cu.usbserial-XXXX
+pio run -d products/control-device-through-ai-model -e esp32dev -t upload --upload-port /dev/cu.usbserial-XXXX
 
 # Theo dõi Serial Monitor
 pio device monitor -p /dev/cu.usbserial-XXXX -b 115200
