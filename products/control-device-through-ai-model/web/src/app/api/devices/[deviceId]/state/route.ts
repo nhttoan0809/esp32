@@ -57,7 +57,10 @@ export async function PUT(
     };
     return NextResponse.json(response);
   } catch (error) {
-    if (error instanceof DeviceOfflineError) {
+    const isErrorNamed = (name: string) =>
+      error instanceof Error && (error.name === name || error.constructor.name === name);
+
+    if (error instanceof DeviceOfflineError || isErrorNamed("DeviceOfflineError")) {
       await registry.queueState(deviceId, parsed.data.on);
       const response: SetStateResponse = {
         device_id: deviceId,
@@ -69,21 +72,21 @@ export async function PUT(
       return NextResponse.json(response);
     }
 
-    if (error instanceof DeviceDisconnectedError) {
+    if (error instanceof DeviceDisconnectedError || isErrorNamed("DeviceDisconnectedError")) {
       return NextResponse.json(
         { detail: "device_disconnected" },
         { status: 503 }
       );
     }
 
-    if (error instanceof DeviceAckTimeoutError) {
+    if (error instanceof DeviceAckTimeoutError || isErrorNamed("DeviceAckTimeoutError")) {
       return NextResponse.json(
         { detail: "device_ack_timeout" },
         { status: 504 }
       );
     }
 
-    if (error instanceof DeviceDidNotApplyError) {
+    if (error instanceof DeviceDidNotApplyError || isErrorNamed("DeviceDidNotApplyError")) {
       return NextResponse.json(
         { detail: "device_did_not_apply_state" },
         { status: 502 }

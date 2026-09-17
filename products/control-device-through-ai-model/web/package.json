@@ -13,6 +13,9 @@
     "check": "pnpm type-check && pnpm lint && pnpm test && pnpm build"
   },
   "dependencies": {
+    "@ai-sdk/openai": "^4.0.69",
+    "@ai-sdk/react": "^4.0.108",
+    "ai": "^7.0.105",
     "next": "16.3.5",
     "react": "19.2.8",
     "react-dom": "19.2.8",

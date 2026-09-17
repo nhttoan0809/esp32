@@ -74,4 +74,32 @@ describe("Voice Matcher (English Only)", () => {
     expect(detectCommand("off", { allowSingleWords: true })).toBe("off");
     expect(detectCommand("toggle", { allowSingleWords: true })).toBe("toggle");
   });
+
+  it("detects Vietnamese wake words and single-breath commands", () => {
+    expect(detectWakeWord("trợ lý ơi").detected).toBe(true);
+    expect(detectWakeWord("trợ lý ơi").remainder).toBe("");
+
+    expect(detectWakeWord("đèn ơi").detected).toBe(true);
+    expect(detectWakeWord("xin chào").detected).toBe(true);
+
+    const singleBreath = detectWakeWord("trợ lý ơi bật đèn phòng khách lên");
+    expect(singleBreath.detected).toBe(true);
+    expect(singleBreath.remainder).toBe("bật đèn phòng khách lên");
+
+    const singleBreath2 = detectWakeWord("đèn ơi tắt đèn đi");
+    expect(singleBreath2.detected).toBe(true);
+    expect(singleBreath2.remainder).toBe("tắt đèn đi");
+  });
+
+  it("detects Vietnamese direct commands", () => {
+    expect(detectCommand("bật đèn")).toBe("on");
+    expect(detectCommand("bật đèn lên")).toBe("on");
+    expect(detectCommand("tắt đèn")).toBe("off");
+    expect(detectCommand("tắt đèn đi")).toBe("off");
+    expect(detectCommand("đổi trạng thái đèn")).toBe("toggle");
+
+    // Negative intent in Vietnamese
+    expect(detectCommand("đừng bật đèn")).toBeNull();
+    expect(detectCommand("không tắt đèn")).toBeNull();
+  });
 });

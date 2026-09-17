@@ -3,9 +3,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useDevices } from "@/hooks/useDevices";
-import { useVoice } from "@/hooks/useVoice";
+import { useAIVoice } from "@/hooks/useAIVoice";
 import { DeviceCard } from "@/components/DeviceCard";
-import { VoiceWidget } from "@/components/VoiceWidget";
+import { AIVoiceWidget } from "@/components/AIVoiceWidget";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -35,56 +35,31 @@ export default function DashboardPage() {
     }
   }, [apiKey, router]);
 
-  const { devices, loading, pendingIds, toggleDevice, setDeviceState } = useDevices(
+  const { devices, loading, pendingIds, toggleDevice, refreshDevices } = useDevices(
     apiKey,
     handleUnauthorized
   );
 
-  const handleExecuteVoiceCommand = useCallback(
-    async (desiredOn: boolean): Promise<boolean> => {
-      if (devices.length === 0) {
-        showToast("No devices available to control");
-        return false;
-      }
-      const target = devices.find((d) => d.online) || devices[0];
-      if (!target) return false;
-      const ok = await setDeviceState(target.device_id, desiredOn);
-      if (!target.online) {
-        showToast(`Device ${target.device_id} is offline. Desired state queued.`);
-      }
-      return ok;
-    },
-    [devices, setDeviceState, showToast]
-  );
-
-  const handleToggleVoiceCommand = useCallback(async (): Promise<boolean> => {
-    if (devices.length === 0) {
-      showToast("No devices available");
-      return false;
-    }
-    const target = devices.find((d) => d.online) || devices[0];
-    if (!target) return false;
-    const ok = await toggleDevice(target.device_id, Boolean(target.on));
-    if (!target.online) {
-      showToast(`Device ${target.device_id} is offline. Desired state queued.`);
-    }
-    return ok;
-  }, [devices, toggleDevice, showToast]);
-
   const {
     voiceState,
-    transcript,
     liveTranscript,
     countdown,
     supported,
     isListening,
+    messages,
+    lastAssistantText,
+    status,
+    modelKey,
+    setModelKey,
+    ttsEnabled,
+    setTtsEnabled,
+    language,
+    setLanguage,
     toggleListening,
     triggerWakeUp,
-    simulateCommand,
-  } = useVoice({
-    onExecuteCommand: handleExecuteVoiceCommand,
-    onToggleCommand: handleToggleVoiceCommand,
+  } = useAIVoice({
     onShowToast: showToast,
+    onDevicesChanged: refreshDevices,
   });
 
   const handleLogout = () => {
@@ -174,18 +149,25 @@ export default function DashboardPage() {
           </div>
         </header>
 
-        {/* Voice Control Section */}
+        {/* AI Voice Control Section */}
         <section className="mb-8">
-          <VoiceWidget
+          <AIVoiceWidget
             voiceState={voiceState}
-            transcript={transcript}
             liveTranscript={liveTranscript}
             countdown={countdown}
             isListening={isListening}
-            onToggleListening={toggleListening}
             supported={supported}
+            messages={messages}
+            lastAssistantText={lastAssistantText}
+            status={status}
+            modelKey={modelKey}
+            ttsEnabled={ttsEnabled}
+            language={language}
+            onSetLanguage={setLanguage}
+            onSetModelKey={setModelKey}
+            onSetTtsEnabled={setTtsEnabled}
+            onToggleListening={toggleListening}
             onTriggerWakeUp={triggerWakeUp}
-            onSimulateCommand={simulateCommand}
           />
         </section>
 

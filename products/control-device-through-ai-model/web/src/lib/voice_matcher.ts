@@ -11,14 +11,29 @@ export function cleanSpeechText(str: string): string {
     .trim();
 }
 
+// Sort wake words by length descending to match longer phrases first (e.g. "trợ lý ơi" before "trợ lý")
 const WAKE_WORDS = [
-  "wake up",
-  "hey lamp",
   "smart lamp",
   "hello lamp",
-  "hello",
+  "hey lamp",
+  "wake up",
   "alexa",
-];
+  "hello",
+  // Vietnamese wake phrases
+  "trợ lý ơi",
+  "tro ly oi",
+  "trợ lý",
+  "đèn ơi",
+  "den oi",
+  "ơi đèn",
+  "oi den",
+  "ê đèn",
+  "e den",
+  "hey đèn",
+  "hey den",
+  "bật mic",
+  "xin chào",
+].sort((a, b) => b.length - a.length);
 
 export function detectWakeWord(text: string): {
   detected: boolean;
@@ -40,7 +55,21 @@ export function detectWakeWord(text: string): {
   return { detected: false, remainder: "" };
 }
 
-const NEGATION_WORDS = ["don't", "dont", "do not", "never", "not", "no"];
+const NEGATION_WORDS = [
+  "don't",
+  "dont",
+  "do not",
+  "never",
+  "not",
+  "no",
+  // Vietnamese negations
+  "đừng",
+  "dung",
+  "không",
+  "khong",
+  "chớ",
+  "cho",
+];
 
 const TOGGLE_PHRASES = [
   "change status",
@@ -49,6 +78,13 @@ const TOGGLE_PHRASES = [
   "toggle lamp",
   "toggle light",
   "toggle",
+  // Vietnamese
+  "đổi trạng thái đèn",
+  "doi trang thai den",
+  "đổi trạng thái",
+  "doi trang thai",
+  "chuyển đèn",
+  "chuyen den",
 ];
 
 const TURN_ON_PHRASES = [
@@ -61,6 +97,19 @@ const TURN_ON_PHRASES = [
   "lamp on",
   "power on",
   "switch on",
+  // Vietnamese
+  "bật đèn lên",
+  "bat den len",
+  "bật đèn đi",
+  "bat den di",
+  "bật đèn",
+  "bat den",
+  "mở đèn",
+  "mo den",
+  "bật công tắc",
+  "bat cong tac",
+  "bật điện",
+  "bat dien",
 ];
 
 const TURN_OFF_PHRASES = [
@@ -73,6 +122,19 @@ const TURN_OFF_PHRASES = [
   "lamp off",
   "power off",
   "switch off",
+  // Vietnamese
+  "tắt đèn đi",
+  "tat den di",
+  "tắt đèn lên",
+  "tat den len",
+  "tắt đèn",
+  "tat den",
+  "đóng đèn",
+  "dong den",
+  "tắt công tắc",
+  "tat cong tac",
+  "tắt điện",
+  "tat dien",
 ];
 
 export interface DetectCommandOptions {
