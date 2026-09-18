@@ -86,6 +86,27 @@ class MockUtterance {
   }
 }
 
+let latestAudio: MockAudio | null = null;
+
+class MockAudio {
+  src: string;
+  onplay: (() => void) | null = null;
+  onended: (() => void) | null = null;
+  onerror: (() => void) | null = null;
+  currentTime = 0;
+  pause = vi.fn();
+  play = vi.fn().mockImplementation(async () => {
+    this.onplay?.();
+  });
+  constructor(src: string) {
+    this.src = src;
+    MockAudio.register(this);
+  }
+  static register(instance: MockAudio) {
+    latestAudio = instance;
+  }
+}
+
 describe("useAIVoice Hook", () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -102,6 +123,24 @@ describe("useAIVoice Hook", () => {
       cancel: vi.fn(),
     };
     (window as unknown as { SpeechSynthesisUtterance: unknown }).SpeechSynthesisUtterance = MockUtterance;
+
+    // Mock Audio & fetch for Edge TTS
+    latestAudio = null;
+    (window as unknown as { Audio: unknown }).Audio = MockAudio;
+    global.Audio = MockAudio as unknown as typeof Audio;
+    if (typeof URL.createObjectURL === "undefined") {
+      URL.createObjectURL = vi.fn().mockReturnValue("blob:mock-audio-url");
+      URL.revokeObjectURL = vi.fn();
+    } else {
+      vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:mock-audio-url");
+      vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+    }
+
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      blob: async () => new Blob(["mock-mp3"], { type: "audio/mpeg" }),
+    } as unknown as Response);
   });
 
   afterEach(() => {
@@ -260,7 +299,7 @@ describe("useAIVoice Hook", () => {
     expect(mockSendMessage).toHaveBeenCalledWith({ text: "turn off the light" });
   });
 
-  it("handles AI response completion, enters AWAKE and starts countdown ONLY AFTER response finishes", () => {
+  it("handles AI response completion, enters AWAKE and starts countdown ONLY AFTER response finishes", async () => {
     const onShowToast = vi.fn();
     const onDevicesChanged = vi.fn();
     const { result } = renderHook(() =>
@@ -280,7 +319,7 @@ describe("useAIVoice Hook", () => {
     expect(result.current.countdown).toBeNull();
 
     // Simulate AI response finishing stream
-    act(() => {
+    await act(async () => {
       mockChatOnFinish?.({
         message: {
           parts: [{ type: "text", text: "Đã bật đèn thành công." }],
@@ -294,9 +333,13 @@ describe("useAIVoice Hook", () => {
     // While speaking response, countdown is still not running
     expect(result.current.countdown).toBeNull();
 
-    // NOW simulate speech synthesis completing
+    // NOW simulate speech/audio completing
     act(() => {
-      latestUtterance?.onend?.();
+      if (latestAudio?.onended) {
+        latestAudio.onended();
+      } else {
+        latestUtterance?.onend?.();
+      }
     });
 
     // CRITICAL: Countdown starts ONLY AFTER response is completely finished and spoken!
@@ -312,7 +355,7 @@ describe("useAIVoice Hook", () => {
     expect(mockPlayTimeoutChime).toHaveBeenCalled();
   });
 
-  it("accepts follow-up command during post-response countdown", () => {
+  it("accepts follow-up command during post-response countdown", async () => {
     const onShowToast = vi.fn();
     const { result } = renderHook(() => useAIVoice({ onShowToast }));
 
@@ -321,14 +364,18 @@ describe("useAIVoice Hook", () => {
       result.current.sendToAgent("bật đèn");
     });
 
-    act(() => {
+    await act(async () => {
       mockChatOnFinish?.({
         message: { parts: [{ type: "text", text: "Đã bật đèn." }] },
       });
     });
 
     act(() => {
-      latestUtterance?.onend?.();
+      if (latestAudio?.onended) {
+        latestAudio.onended();
+      } else {
+        latestUtterance?.onend?.();
+      }
     });
 
     expect(result.current.voiceState).toBe("AWAKE");
@@ -392,5 +439,62 @@ describe("useAIVoice Hook", () => {
 
     expect(result.current.voiceState).toBe("SLEEPING");
     expect(onShowToast).toHaveBeenCalledWith(expect.stringContaining("AI connection timeout"));
+  });
+
+  it("falls back to browser SpeechSynthesis if /api/tts fails", async () => {
+    (global.fetch as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error("Network offline")
+    );
+
+    const onShowToast = vi.fn();
+    const { result } = renderHook(() => useAIVoice({ onShowToast }));
+
+    act(() => {
+      result.current.startListening();
+      result.current.sendToAgent("bật đèn");
+    });
+
+    await act(async () => {
+      mockChatOnFinish?.({
+        message: { parts: [{ type: "text", text: "Đã bật đèn qua fallback." }] },
+      });
+    });
+
+    expect(result.current.voiceState).toBe("SPEAKING");
+    expect(latestUtterance).not.toBeNull();
+    expect(latestUtterance?.text).toBe("Đã bật đèn qua fallback.");
+
+    act(() => {
+      latestUtterance?.onend?.();
+    });
+
+    expect(result.current.voiceState).toBe("AWAKE");
+    expect(result.current.countdown).toBe(8);
+  });
+
+  it("supports switching ttsVoice and selecting browser-native directly", async () => {
+    const onShowToast = vi.fn();
+    const { result } = renderHook(() => useAIVoice({ onShowToast }));
+
+    act(() => {
+      result.current.setTtsVoice("browser-native");
+    });
+    expect(result.current.ttsVoice).toBe("browser-native");
+
+    act(() => {
+      result.current.startListening();
+      result.current.sendToAgent("bật đèn");
+    });
+
+    await act(async () => {
+      mockChatOnFinish?.({
+        message: { parts: [{ type: "text", text: "Chế độ browser native." }] },
+      });
+    });
+
+    expect(result.current.voiceState).toBe("SPEAKING");
+    expect(latestUtterance?.text).toBe("Chế độ browser native.");
+    // Fetch should not have been called because browser-native was selected
+    expect(global.fetch).not.toHaveBeenCalled();
   });
 });

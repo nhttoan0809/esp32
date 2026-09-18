@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import type { AIVoiceState, VoiceLanguage } from "@/hooks/useAIVoice";
+import type { AIVoiceState, VoiceLanguage, TTSVoiceKey } from "@/hooks/useAIVoice";
 import type { ModelKey } from "@/lib/ai/ai-config";
 import type { UIMessage } from "ai";
 
@@ -23,6 +23,15 @@ const MODEL_OPTIONS: { key: ModelKey; label: string; description: string }[] = [
   },
 ];
 
+const TTS_VOICE_OPTIONS: { key: TTSVoiceKey; label: string }[] = [
+  { key: "auto", label: "✨ Auto (Hoài My / Aria)" },
+  { key: "vi-VN-HoaiMyNeural", label: "🇻🇳 Hoài My (Nữ - Edge)" },
+  { key: "vi-VN-NamMinhNeural", label: "🇻🇳 Nam Minh (Nam - Edge)" },
+  { key: "en-US-AriaNeural", label: "🇺🇸 Aria (Nữ - Edge)" },
+  { key: "en-US-GuyNeural", label: "🇺🇸 Guy (Nam - Edge)" },
+  { key: "browser-native", label: "🌐 Browser Native" },
+];
+
 interface AIVoiceWidgetProps {
   voiceState: AIVoiceState;
   liveTranscript: string;
@@ -34,10 +43,12 @@ interface AIVoiceWidgetProps {
   status: string;
   modelKey: ModelKey;
   ttsEnabled: boolean;
+  ttsVoice: TTSVoiceKey;
   language: VoiceLanguage;
   onSetLanguage: (lang: VoiceLanguage) => void;
   onSetModelKey: (key: ModelKey) => void;
   onSetTtsEnabled: (enabled: boolean) => void;
+  onSetTtsVoice: (voice: TTSVoiceKey) => void;
   onToggleListening: () => void;
   onTriggerWakeUp: () => void;
 }
@@ -53,10 +64,12 @@ export function AIVoiceWidget({
   status,
   modelKey,
   ttsEnabled,
+  ttsVoice,
   language,
   onSetLanguage,
   onSetModelKey,
   onSetTtsEnabled,
+  onSetTtsVoice,
   onToggleListening,
   onTriggerWakeUp,
 }: AIVoiceWidgetProps) {
@@ -85,7 +98,7 @@ export function AIVoiceWidget({
       case "PROCESSING":
         return "AI THINKING...";
       case "SPEAKING":
-        return "SPEAKING...";
+        return ttsVoice === "browser-native" ? "SPEAKING (Native)..." : "SPEAKING (Edge TTS)...";
       case "INACTIVE":
       default:
         return "OFF";
@@ -280,6 +293,23 @@ export function AIVoiceWidget({
             <span>{ttsEnabled ? "🔊" : "🔇"}</span>
             <span>TTS {ttsEnabled ? "On" : "Off"}</span>
           </button>
+
+          {/* Voice Selector when TTS is enabled */}
+          {ttsEnabled && (
+            <select
+              id="tts-voice-select"
+              value={ttsVoice}
+              aria-label="Select TTS voice"
+              onChange={(e) => onSetTtsVoice(e.target.value as TTSVoiceKey)}
+              className="rounded-lg border border-white/10 bg-slate-800/80 px-2 py-1.5 text-xs text-slate-200 outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30"
+            >
+              {TTS_VOICE_OPTIONS.map((opt) => (
+                <option key={opt.key} value={opt.key}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 

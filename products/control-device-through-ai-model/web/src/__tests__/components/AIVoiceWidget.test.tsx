@@ -15,10 +15,12 @@ describe("AIVoiceWidget", () => {
     status: "ready",
     modelKey: "sglang-qwen38-27b" as const,
     ttsEnabled: true,
+    ttsVoice: "auto" as const,
     language: "vi-VN" as const,
     onSetLanguage: vi.fn(),
     onSetModelKey: vi.fn(),
     onSetTtsEnabled: vi.fn(),
+    onSetTtsVoice: vi.fn(),
     onToggleListening: vi.fn(),
     onTriggerWakeUp: vi.fn(),
   };
@@ -83,9 +85,17 @@ describe("AIVoiceWidget", () => {
   it("allows selecting a different model from the dropdown", () => {
     render(<AIVoiceWidget {...defaultProps} />);
 
-    const select = screen.getByRole("combobox");
+    const select = screen.getByLabelText(/model/i);
     fireEvent.change(select, { target: { value: "ollama-qwen3-4b" } });
     expect(defaultProps.onSetModelKey).toHaveBeenCalledWith("ollama-qwen3-4b");
+  });
+
+  it("allows selecting a different TTS voice from dropdown", () => {
+    render(<AIVoiceWidget {...defaultProps} ttsEnabled={true} />);
+
+    const voiceSelect = screen.getByLabelText(/select tts voice/i);
+    fireEvent.change(voiceSelect, { target: { value: "vi-VN-NamMinhNeural" } });
+    expect(defaultProps.onSetTtsVoice).toHaveBeenCalledWith("vi-VN-NamMinhNeural");
   });
 
   it("toggles speech recognition language", () => {

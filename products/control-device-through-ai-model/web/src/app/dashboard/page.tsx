@@ -53,6 +53,8 @@ export default function DashboardPage() {
     setModelKey,
     ttsEnabled,
     setTtsEnabled,
+    ttsVoice,
+    setTtsVoice,
     language,
     setLanguage,
     toggleListening,
@@ -162,10 +164,12 @@ export default function DashboardPage() {
             status={status}
             modelKey={modelKey}
             ttsEnabled={ttsEnabled}
+            ttsVoice={ttsVoice}
             language={language}
             onSetLanguage={setLanguage}
             onSetModelKey={setModelKey}
             onSetTtsEnabled={setTtsEnabled}
+            onSetTtsVoice={setTtsVoice}
             onToggleListening={toggleListening}
             onTriggerWakeUp={triggerWakeUp}
           />

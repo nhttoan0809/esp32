@@ -16,6 +16,14 @@ export type AIVoiceState =
 
 export type VoiceLanguage = "vi-VN" | "en-US";
 
+export type TTSVoiceKey =
+  | "auto"
+  | "vi-VN-HoaiMyNeural"
+  | "vi-VN-NamMinhNeural"
+  | "en-US-AriaNeural"
+  | "en-US-GuyNeural"
+  | "browser-native";
+
 interface SpeechRecognitionEvent {
   resultIndex: number;
   results: {
@@ -50,6 +58,7 @@ export function useAIVoice({ onShowToast, onDevicesChanged }: UseAIVoiceOptions)
   const [countdown, setCountdown] = useState<number | null>(null);
   const [modelKey, setModelKey] = useState<ModelKey>("sglang-qwen38-27b");
   const [ttsEnabled, setTtsEnabled] = useState<boolean>(true);
+  const [ttsVoice, setTtsVoice] = useState<TTSVoiceKey>("auto");
   const [language, setLanguageState] = useState<VoiceLanguage>("vi-VN");
 
   const [supported] = useState<boolean>(() => {
@@ -87,6 +96,18 @@ export function useAIVoice({ onShowToast, onDevicesChanged }: UseAIVoiceOptions)
   const ignoreUntilRef = useRef<number>(0);
   const isListeningRef = useRef<boolean>(false);
   const startSessionRef = useRef<() => void>(() => {});
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
+
+  const cancelSpeech = useCallback(() => {
+    if (audioElementRef.current) {
+      audioElementRef.current.pause();
+      audioElementRef.current.src = "";
+      audioElementRef.current = null;
+    }
+    if (typeof window !== "undefined") {
+      window.speechSynthesis?.cancel();
+    }
+  }, []);
 
   // --- Timers & Cleansers ---
   const clearCountdown = useCallback(() => {
@@ -149,9 +170,9 @@ export function useAIVoice({ onShowToast, onDevicesChanged }: UseAIVoiceOptions)
     [clearCountdown, clearSpeechDebounceTimer, playWakeChime, playTimeoutChime, resumeAudio]
   );
 
-  // --- TTS: Speak agent response ---
+  // --- TTS: Speak agent response (Edge Neural TTS + Fallback) ---
   const speakText = useCallback(
-    (text: string) => {
+    async (text: string) => {
       const finishSpeech = () => {
         // Cooldown period (1.2s) to avoid computer speaker echo picking up on mic
         ignoreUntilRef.current = Date.now() + 1200;
@@ -174,29 +195,101 @@ export function useAIVoice({ onShowToast, onDevicesChanged }: UseAIVoiceOptions)
         finishSpeech();
         return;
       }
-      const synth = window.speechSynthesis;
-      if (!synth) {
-        finishSpeech();
+
+      // Cancel any ongoing audio or speech
+      cancelSpeech();
+
+      const hasVietnamese =
+        /[àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ]/i.test(
+          text
+        );
+
+      const playWithBrowserSynth = () => {
+        const synth = window.speechSynthesis;
+        if (!synth) {
+          finishSpeech();
+          return;
+        }
+        synth.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang =
+          hasVietnamese || languageRef.current === "vi-VN" ? "vi-VN" : "en-US";
+        utterance.rate = 1.05;
+        utterance.pitch = 1.0;
+        utterance.onend = finishSpeech;
+        utterance.onerror = finishSpeech;
+        setVoiceState("SPEAKING");
+        synth.speak(utterance);
+      };
+
+      // If user selected browser native engine explicitly, bypass Edge TTS
+      if (ttsVoice === "browser-native") {
+        playWithBrowserSynth();
         return;
       }
 
-      synth.cancel();
+      // Determine voice to use
+      let voiceToUse = ttsVoice;
+      if (voiceToUse === "auto") {
+        voiceToUse =
+          hasVietnamese || languageRef.current === "vi-VN"
+            ? "vi-VN-HoaiMyNeural"
+            : "en-US-AriaNeural";
+      }
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      const hasVietnamese = /[àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ]/i.test(
-        text
-      );
-      utterance.lang = hasVietnamese || languageRef.current === "vi-VN" ? "vi-VN" : "en-US";
-      utterance.rate = 1.05;
-      utterance.pitch = 1.0;
+      try {
+        setVoiceState("SPEAKING");
+        const res = await fetch("/api/tts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            text,
+            voice: voiceToUse,
+          }),
+        });
 
-      utterance.onend = finishSpeech;
-      utterance.onerror = finishSpeech;
+        if (!res.ok) {
+          throw new Error(`TTS API failed with status ${res.status}`);
+        }
 
-      setVoiceState("SPEAKING");
-      synth.speak(utterance);
+        const blob = await res.blob();
+        const audioUrl = URL.createObjectURL(blob);
+        const audio = new Audio(audioUrl);
+        audioElementRef.current = audio;
+
+        let finished = false;
+        const handleFinish = () => {
+          if (finished) return;
+          finished = true;
+          URL.revokeObjectURL(audioUrl);
+          if (audioElementRef.current === audio) {
+            audioElementRef.current = null;
+          }
+          finishSpeech();
+        };
+
+        audio.onended = handleFinish;
+        audio.onerror = () => {
+          console.warn(
+            "[TTS] Audio playback error, falling back to browser synthesis"
+          );
+          URL.revokeObjectURL(audioUrl);
+          if (audioElementRef.current === audio) {
+            audioElementRef.current = null;
+          }
+          playWithBrowserSynth();
+        };
+
+        await audio.play();
+      } catch (err) {
+        console.warn(
+          "[TTS] Edge TTS synthesis failed, falling back to browser synthesis:",
+          err
+        );
+        playWithBrowserSynth();
+      }
     },
-    [enterAwakeState, ttsEnabled]
+    [cancelSpeech, enterAwakeState, ttsEnabled, ttsVoice]
   );
 
   const onFinishRef = useRef<(options: { message: UIMessage }) => void>(() => {});
@@ -415,6 +508,7 @@ export function useAIVoice({ onShowToast, onDevicesChanged }: UseAIVoiceOptions)
         if (SLEEP_PHRASES.some((p) => command === p || command.startsWith(p))) {
           clearCountdown();
           clearSpeechDebounceTimer();
+          cancelSpeech();
           playTimeoutChime();
           setVoiceState("SLEEPING");
           setLiveTranscript("");
@@ -443,6 +537,7 @@ export function useAIVoice({ onShowToast, onDevicesChanged }: UseAIVoiceOptions)
     [
       clearCountdown,
       clearSpeechDebounceTimer,
+      cancelSpeech,
       enterAwakeState,
       playTimeoutChime,
       playWakeChime,
@@ -585,10 +680,7 @@ export function useAIVoice({ onShowToast, onDevicesChanged }: UseAIVoiceOptions)
     clearRestartTimer();
     clearCountdown();
     clearSpeechDebounceTimer();
-
-    if (typeof window !== "undefined") {
-      window.speechSynthesis?.cancel();
-    }
+    cancelSpeech();
 
     if (recognitionRef.current) {
       try {
@@ -602,7 +694,7 @@ export function useAIVoice({ onShowToast, onDevicesChanged }: UseAIVoiceOptions)
     setVoiceState("INACTIVE");
     setLiveTranscript("");
     optionsRef.current.onShowToast("Voice control stopped");
-  }, [clearCountdown, clearRestartTimer, clearSpeechDebounceTimer]);
+  }, [clearCountdown, clearRestartTimer, clearSpeechDebounceTimer, cancelSpeech]);
 
   const toggleListening = useCallback(() => {
     if (isListeningRef.current) {
@@ -630,9 +722,7 @@ export function useAIVoice({ onShowToast, onDevicesChanged }: UseAIVoiceOptions)
       clearCountdown();
       clearRestartTimer();
       clearSpeechDebounceTimer();
-      if (typeof window !== "undefined") {
-        window.speechSynthesis?.cancel();
-      }
+      cancelSpeech();
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
@@ -641,7 +731,7 @@ export function useAIVoice({ onShowToast, onDevicesChanged }: UseAIVoiceOptions)
         }
       }
     };
-  }, [clearCountdown, clearRestartTimer, clearSpeechDebounceTimer]);
+  }, [clearCountdown, clearRestartTimer, clearSpeechDebounceTimer, cancelSpeech]);
 
   return {
     voiceState,
@@ -656,6 +746,8 @@ export function useAIVoice({ onShowToast, onDevicesChanged }: UseAIVoiceOptions)
     setModelKey,
     ttsEnabled,
     setTtsEnabled,
+    ttsVoice,
+    setTtsVoice,
     language,
     setLanguage,
     startListening,
