@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "author": "toannguyen",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-v1", "id": "esp", "top": 0, "left": 0, "attrs": {} },
+    {
+      "type": "wokwi-dht22",
+      "id": "dht1",
+      "top": -140,
+      "left": 230,
+      "attrs": { "label": "DHT11 (DATA: GPIO19)" }
+    },
+    {
+      "type": "board-ssd1306",
+      "id": "oled1",
+      "top": -140,
+      "left": -120,
+      "attrs": { "i2cAddress": "0x3c", "label": "OLED SSD1306 (I2C: GPIO21/22)" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_comfort",
+      "top": 60,
+      "left": 220,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_comfort",
+      "top": 40,
+      "left": 310,
+      "attrs": { "color": "green", "label": "COMFORT LED (GPIO15)" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_alert",
+      "top": 120,
+      "left": 220,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_alert",
+      "top": 100,
+      "left": 310,
+      "attrs": { "color": "red", "label": "ALERT LED (GPIO13)" }
+    }
+  ],
+  "connections": [
+    [ "dht1:VCC", "esp:3V3", "red", [ "h-20", "v120" ] ],
+    [ "dht1:GND", "esp:GND.2", "black", [ "h-30", "v100" ] ],
+    [ "dht1:SDA", "esp:D19", "gold", [ "h-50", "v80" ] ],
+    [ "oled1:VCC", "esp:3V3", "red", [ "v20", "h60" ] ],
+    [ "oled1:GND", "esp:GND.1", "black", [ "v30", "h50" ] ],
+    [ "oled1:SDA", "esp:D21", "blue", [ "v40", "h80" ] ],
+    [ "oled1:SCL", "esp:D22", "yellow", [ "v50", "h90" ] ],
+    [ "esp:D15", "r_comfort:1", "green", [ "h20" ] ],
+    [ "r_comfort:2", "led_comfort:A", "green", [ "h10" ] ],
+    [ "led_comfort:C", "esp:GND.2", "black", [ "v40", "h-120" ] ],
+    [ "esp:D13", "r_alert:1", "red", [ "h20" ] ],
+    [ "r_alert:2", "led_alert:A", "red", [ "h10" ] ],
+    [ "led_alert:C", "esp:GND.1", "black", [ "v40", "h-140" ] ],
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ]
+  ]
+}

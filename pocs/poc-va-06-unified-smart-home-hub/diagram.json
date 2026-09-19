@@ -1,0 +1,201 @@
+{
+  "version": 1,
+  "author": "toannguyen",
+  "editor": "wokwi",
+  "parts": [
+    { "type": "board-esp32-devkit-v1", "id": "esp", "top": 60, "left": 0, "attrs": {} },
+    {
+      "type": "board-ssd1306",
+      "id": "oled1",
+      "top": -150,
+      "left": 20,
+      "attrs": { "i2cAddress": "0x3c", "label": "OLED SSD1306 (I2C: GPIO21/22)" }
+    },
+    {
+      "type": "wokwi-dht22",
+      "id": "dht1",
+      "top": -150,
+      "left": 280,
+      "attrs": { "label": "DHT11 (DATA: GPIO19)" }
+    },
+    {
+      "type": "wokwi-relay-module",
+      "id": "relay1",
+      "top": 20,
+      "left": 280,
+      "attrs": { "label": "RELAY LAMP (IN: GPIO5)" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_lamp_load",
+      "top": 35,
+      "left": 370,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_lamp_load",
+      "top": 15,
+      "left": 450,
+      "attrs": { "color": "white", "label": "MAIN LAMP (LOAD SIM)" }
+    },
+
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_mode",
+      "top": 150,
+      "left": 160,
+      "attrs": { "color": "blue", "label": "MODE TOGGLE (GPIO4)" }
+    },
+    {
+      "type": "wokwi-photoresistor-sensor",
+      "id": "ldr1",
+      "top": -30,
+      "left": -300,
+      "attrs": { "label": "LDR SENSOR (DO: GPIO35)" }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot1",
+      "top": 90,
+      "left": -300,
+      "attrs": { "label": "POTENTIOMETER (ADC1: GPIO34)" }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_lamp",
+      "top": 150,
+      "left": -160,
+      "attrs": { "color": "green", "label": "LAMP TOGGLE (GPIO14)" }
+    },
+    {
+      "type": "wokwi-pir-motion-sensor",
+      "id": "pir1",
+      "top": 210,
+      "left": -300,
+      "attrs": { "label": "PIR MOTION (OUT: GPIO33)" }
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "bz1",
+      "top": 330,
+      "left": -300,
+      "attrs": { "label": "ALARM BUZZER (GPIO27)" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_cloud",
+      "top": 260,
+      "left": 150,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_cloud",
+      "top": 240,
+      "left": 240,
+      "attrs": { "color": "blue", "label": "CLOUD LED (GPIO23)" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_dimmer",
+      "top": 330,
+      "left": 150,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_dimmer",
+      "top": 310,
+      "left": 240,
+      "attrs": { "color": "yellow", "label": "DIMMER LED (PWM: GPIO18)" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_comfort",
+      "top": 400,
+      "left": 150,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_comfort",
+      "top": 380,
+      "left": 240,
+      "attrs": { "color": "green", "label": "COMFORT LED (GPIO15)" }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_alert",
+      "top": 470,
+      "left": 150,
+      "attrs": { "value": "220" }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_alert",
+      "top": 450,
+      "left": 240,
+      "attrs": { "color": "red", "label": "ALERT LED (GPIO13)" }
+    }
+  ],
+  "connections": [
+    [ "oled1:SDA", "esp:D21", "blue", [ "v40", "h-20" ] ],
+    [ "oled1:SCL", "esp:D22", "yellow", [ "v30", "h-10" ] ],
+    [ "oled1:VCC", "esp:3V3", "red", [ "v20", "h80", "v280", "h-80" ] ],
+    [ "oled1:GND", "esp:GND.2", "black", [ "v10", "h90", "v270", "h-90" ] ],
+
+    [ "dht1:SDA", "esp:D19", "gold", [ "v60", "h-210" ] ],
+    [ "dht1:VCC", "esp:3V3", "red", [ "v80", "h-220" ] ],
+    [ "dht1:GND", "esp:GND.2", "black", [ "v100", "h-230" ] ],
+
+    [ "relay1:IN", "esp:D5", "blue", [ "h-60", "v50" ] ],
+    [ "relay1:GND", "esp:GND.2", "black", [ "h-70", "v100" ] ],
+    [ "relay1:VCC", "esp:VIN", "red", [ "h-50", "v120", "h-260" ] ],
+    [ "relay1:COM", "relay1:VCC", "red", [ "h15", "v-35", "h-100" ] ],
+    [ "relay1:NO", "r_lamp_load:1", "orange", [ "h20" ] ],
+    [ "r_lamp_load:2", "led_lamp_load:A", "orange", [ "h10" ] ],
+    [ "led_lamp_load:C", "relay1:GND", "black", [ "v45", "h-190" ] ],
+
+
+    [ "btn_mode:1.l", "esp:D4", "blue", [ "h-60" ] ],
+    [ "btn_mode:2.l", "esp:GND.2", "black", [ "h-50", "v15" ] ],
+
+    [ "btn_lamp:1.r", "esp:D14", "green", [ "h60" ] ],
+    [ "btn_lamp:2.r", "esp:GND.1", "black", [ "h50", "v15" ] ],
+
+    [ "ldr1:DO", "esp:D35", "blue", [ "h140", "v95" ] ],
+    [ "ldr1:GND", "esp:GND.1", "black", [ "h120", "v210" ] ],
+    [ "ldr1:VCC", "esp:3V3", "red", [ "v-90", "h360", "v280", "h-40" ] ],
+
+    [ "pot1:SIG", "esp:D34", "gold", [ "h140", "v-15" ] ],
+    [ "pot1:GND", "esp:GND.1", "black", [ "h110", "v100" ] ],
+    [ "pot1:VCC", "esp:3V3", "red", [ "v-150", "h350", "v270", "h-30" ] ],
+
+    [ "pir1:OUT", "esp:D33", "gold", [ "h140", "v-100" ] ],
+    [ "pir1:GND", "esp:GND.1", "black", [ "h100", "v-15" ] ],
+    [ "pir1:VCC", "esp:VIN", "red", [ "h90", "v-5" ] ],
+
+    [ "bz1:1", "esp:D27", "orange", [ "h140", "v-175" ] ],
+    [ "bz1:2", "esp:GND.1", "black", [ "h100", "v-125" ] ],
+
+    [ "esp:D23", "r_cloud:1", "blue", [ "h30", "v180", "h70" ] ],
+    [ "r_cloud:2", "led_cloud:A", "blue", [ "h10" ] ],
+    [ "led_cloud:C", "esp:GND.2", "black", [ "h20", "v-60", "h-210" ] ],
+
+    [ "esp:D18", "r_dimmer:1", "orange", [ "h35", "v190", "h65" ] ],
+    [ "r_dimmer:2", "led_dimmer:A", "orange", [ "h10" ] ],
+    [ "led_dimmer:C", "esp:GND.2", "black", [ "h20", "v-130", "h-210" ] ],
+
+    [ "esp:D15", "r_comfort:1", "green", [ "h30", "v205", "h70" ] ],
+    [ "r_comfort:2", "led_comfort:A", "green", [ "h10" ] ],
+    [ "led_comfort:C", "esp:GND.2", "black", [ "h20", "v-200", "h-210" ] ],
+
+    [ "esp:D13", "r_alert:1", "red", [ "h-25", "v285", "h130" ] ],
+    [ "r_alert:2", "led_alert:A", "red", [ "h10" ] ],
+    [ "led_alert:C", "esp:GND.2", "black", [ "h20", "v-270", "h-210" ] ],
+
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ]
+  ]
+}
