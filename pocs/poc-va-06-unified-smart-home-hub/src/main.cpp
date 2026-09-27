@@ -5,6 +5,7 @@
 
 #include "app_config.h"
 #include "device_config.h"
+#include "config_store.h"
 #include "secrets.h"
 #include "display_manager.h"
 #include "cloud_client.h"
@@ -24,6 +25,7 @@ using namespace app_config;
 DHT dht(PIN_DHT_DATA, DHT_TYPE);
 DisplayManager displayManager;
 CloudClient cloudClient;
+ConfigStore configStore;
 DeviceConfig deviceConfig;
 SystemState systemState;
 
@@ -42,19 +44,48 @@ int lastPotRaw = -999;
 uint32_t alarmStartedAt = 0;
 constexpr uint32_t ALARM_DURATION_MS = 3000;
 
+uint8_t lastActiveBrightness = 70; // Memory of last active brightness (1-100%)
+
+void applySmartLamp(bool power, uint8_t brightness) {
+  systemState.lampOn = power;
+  if (power) {
+    if (brightness == 0) {
+      brightness = (lastActiveBrightness > 0) ? lastActiveBrightness : 70;
+    }
+    lastActiveBrightness = brightness;
+    systemState.ledBrightness = brightness;
+    systemState.memoryBrightness = lastActiveBrightness;
+
+    // 1. Close Relay to connect Cathode to GND (Relay Active-LOW: LOW = ON)
+    digitalWrite(PIN_RELAY, LOW);
+
+    // 2. Output PWM duty cycle on GPIO 18
+    const uint32_t duty = (static_cast<uint32_t>(brightness) * 255) / 100;
+    ledcWrite(LEDC_CHANNEL, duty);
+    Serial.printf("[SMART_LAMP] ON (Relay CLOSED, PWM=%u%%, duty=%u)\r\n", brightness, duty);
+  } else {
+    systemState.ledBrightness = 0;
+    systemState.memoryBrightness = lastActiveBrightness;
+
+    // 1. Set PWM to 0
+    ledcWrite(LEDC_CHANNEL, 0);
+
+    // 2. Open Relay (Air-gap cutoff, Relay Active-LOW: HIGH = OFF)
+    digitalWrite(PIN_RELAY, HIGH);
+    Serial.printf("[SMART_LAMP] OFF (Relay OPEN 0W Cutoff, Mem=%u%%)\r\n", lastActiveBrightness);
+  }
+}
+
 void setRelayState(bool on) {
-  systemState.lampOn = on;
-  // Relay IN1 is Active LOW
-  digitalWrite(PIN_RELAY, on ? LOW : HIGH);
-  Serial.printf("[RELAY] Lamp is now: %s\r\n", on ? "ON" : "OFF");
+  applySmartLamp(on, on ? lastActiveBrightness : 0);
 }
 
 void setDimmerBrightness(uint8_t percent) {
-  if (percent > 100) percent = 100;
-  systemState.ledBrightness = percent;
-  const uint32_t duty = (static_cast<uint32_t>(percent) * 255) / 100;
-  ledcWrite(LEDC_CHANNEL, duty);
-  Serial.printf("[PWM] Dimmer LED brightness set to: %u%% (duty=%u)\r\n", percent, duty);
+  if (percent > 0) {
+    applySmartLamp(true, percent);
+  } else {
+    applySmartLamp(false, 0);
+  }
 }
 
 void triggerAlarm() {
@@ -92,21 +123,41 @@ void setupPins() {
   setRelayState(false);
   digitalWrite(PIN_LED_ALERT, LOW);
   digitalWrite(PIN_LED_COMFORT, LOW);
-  digitalWrite(PIN_LED_CLOUD, LOW);
   digitalWrite(PIN_BUZZER, LOW);
+
+  // Self-test Blue LED: blink 3 times quickly to verify circuit & pin
+  for (int i = 0; i < 3; i++) {
+    digitalWrite(PIN_LED_CLOUD, HIGH);
+    delay(80);
+    digitalWrite(PIN_LED_CLOUD, LOW);
+    delay(80);
+  }
 
   // Initialize LEDC PWM for Dimmer LED (GPIO 18)
   ledcSetup(LEDC_CHANNEL, LEDC_FREQ_HZ, LEDC_RES_BITS);
   ledcAttachPin(PIN_LED_DIMMER, LEDC_CHANNEL);
-  setDimmerBrightness(50); // Default 50%
+  applySmartLamp(false, 0); // Default OFF on boot
 }
 
 void setupNetwork() {
   displayManager.showBootScreen("Connecting WiFi...");
 
+  // 1. Reset Wi-Fi STA to clear any previous dangling connection attempts
+  WiFi.mode(WIFI_STA);
+  WiFi.disconnect(true);
+  delay(100);
+
+  // 2. Load stored config from Flash NVS
+  DeviceConfig stored;
+  const bool hasStored = configStore.load(stored);
+  if (hasStored) {
+    Serial.printf("[NVS] Loaded Server config: %s:%u%s\r\n",
+                  stored.serverHost.c_str(), stored.serverPort, stored.serverPath.c_str());
+  }
+
+#ifdef WOKWI_SIMULATION
   if (WOKWI_PRECONFIG_ENABLED) {
     Serial.printf("[WIFI] Connecting preconfigured SSID: %s\r\n", WOKWI_PRECONFIG_SSID);
-    WiFi.mode(WIFI_STA);
     WiFi.begin(WOKWI_PRECONFIG_SSID, WOKWI_PRECONFIG_PASSWORD);
 
     const uint32_t timeout = millis() + 10000;
@@ -128,24 +179,87 @@ void setupNetwork() {
       return;
     }
   }
+#endif
 
-  // WiFiManager captive portal for real hardware
-  Serial.println(F("[WIFI] Starting WiFiManager portal..."));
-  displayManager.showBootScreen("WiFi AP Portal");
+  // 3. Real Hardware: WiFiManager captive portal with NVS Persistence
+  Serial.println(F("[WIFI] Starting WiFiManager..."));
+
   WiFiManager wm;
-  wm.setConfigPortalTimeout(120);
 
+  char serverHostParam[128];
+  char serverPortParam[8];
+  char serverPathParam[64];
+
+  if (hasStored && !stored.serverHost.isEmpty()) {
+    strncpy(serverHostParam, stored.serverHost.c_str(), sizeof(serverHostParam) - 1);
+    snprintf(serverPortParam, sizeof(serverPortParam), "%u", stored.serverPort);
+    strncpy(serverPathParam, stored.serverPath.c_str(), sizeof(serverPathParam) - 1);
+  } else {
+    strncpy(serverHostParam, WOKWI_PRECONFIG_SERVER_HOST, sizeof(serverHostParam) - 1);
+    snprintf(serverPortParam, sizeof(serverPortParam), "%u", WOKWI_PRECONFIG_SERVER_PORT);
+    strncpy(serverPathParam, "/ws/devices", sizeof(serverPathParam) - 1);
+  }
+  serverHostParam[sizeof(serverHostParam) - 1] = '\0';
+  serverPortParam[sizeof(serverPortParam) - 1] = '\0';
+  serverPathParam[sizeof(serverPathParam) - 1] = '\0';
+
+  WiFiManagerParameter custom_server_host("host", "Server Host (Cloudflare)", serverHostParam, 128);
+  WiFiManagerParameter custom_server_port("port", "Server Port", serverPortParam, 8);
+  WiFiManagerParameter custom_server_path("path", "WebSocket Path", serverPathParam, 64);
+
+  wm.addParameter(&custom_server_host);
+  wm.addParameter(&custom_server_port);
+  wm.addParameter(&custom_server_path);
+
+  static bool shouldSaveCustomConfig = false;
+  wm.setSaveConfigCallback([]() {
+    shouldSaveCustomConfig = true;
+  });
+
+  wm.setAPCallback([](WiFiManager *myWiFiManager) {
+    Serial.printf("[WM] SoftAP Started: %s (IP: %s)\r\n",
+                  myWiFiManager->getConfigPortalSSID().c_str(),
+                  WiFi.softAPIP().toString().c_str());
+    displayManager.showBootScreen("WiFi AP Portal\nSSID: ESP32-Hub-Setup\nIP: 192.168.4.1");
+    // Turn ON Blue LED to visually indicate Portal / Setup mode is active!
+    digitalWrite(PIN_LED_CLOUD, HIGH);
+  });
+
+  // CRITICAL FIX: Set connectTimeout to 25s so ESP32 waits for DHCP & 4-way WPA2 handshake!
+  wm.setConnectTimeout(25);
+  wm.setConfigPortalTimeout(180); // 3 minutes timeout
+
+  // Attempt autoConnect or start Captive Portal
   if (wm.autoConnect("ESP32-Hub-Setup")) {
     systemState.wifiConnected = true;
     systemState.ipAddress = WiFi.localIP().toString();
-    deviceConfig.wifiSsid = WiFi.SSID();
-    deviceConfig.serverHost = WOKWI_PRECONFIG_SERVER_HOST;
-    deviceConfig.serverPort = WOKWI_PRECONFIG_SERVER_PORT;
-    deviceConfig.serverPath = "/ws/devices";
-    deviceConfig.valid = true;
-    Serial.printf("[WIFI] Connected! IP: %s\r\n", systemState.ipAddress.c_str());
+
+    if (shouldSaveCustomConfig) {
+      DeviceConfig toSave;
+      toSave.wifiSsid = WiFi.SSID();
+      toSave.wifiPassword = WiFi.psk();
+      toSave.serverHost = custom_server_host.getValue();
+      toSave.serverPort = static_cast<uint16_t>(atoi(custom_server_port.getValue()));
+      toSave.serverPath = custom_server_path.getValue();
+      toSave.valid = true;
+
+      configStore.save(toSave);
+      deviceConfig = toSave;
+      Serial.printf("[NVS] Saved configuration to Flash: %s:%u%s\r\n",
+                    deviceConfig.serverHost.c_str(), deviceConfig.serverPort, deviceConfig.serverPath.c_str());
+    } else {
+      deviceConfig.wifiSsid = WiFi.SSID();
+      deviceConfig.serverHost = serverHostParam;
+      deviceConfig.serverPort = static_cast<uint16_t>(atoi(serverPortParam));
+      deviceConfig.serverPath = serverPathParam;
+      deviceConfig.valid = true;
+    }
+
+    Serial.printf("[WIFI] Connected! IP: %s (RSSI: %d dBm)\r\n",
+                  systemState.ipAddress.c_str(), WiFi.RSSI());
   } else {
-    Serial.println(F("[WIFI] Portal timeout. Running offline."));
+    Serial.println(F("[WIFI] Portal timeout or connection failed. Running offline."));
+    digitalWrite(PIN_LED_CLOUD, LOW);
   }
 }
 
@@ -197,8 +311,11 @@ void setup() {
 }
 
 void handleButtons(uint32_t now) {
-  // 1. Button Mode (GPIO 4) -> Switch OLED Page
+  // 1. Button Mode (GPIO 4) -> Short Press: Switch OLED Page | Long Press (>5s): Factory Reset WiFi & NVS
   const int readBtnMode = digitalRead(PIN_BTN_MODE);
+  static uint32_t btnModePressStart = 0;
+  static bool btnModeHeld = false;
+
   if (readBtnMode != lastBtnModeState) {
     lastBtnModeDebounce = now;
   }
@@ -207,8 +324,30 @@ void handleButtons(uint32_t now) {
     if (readBtnMode != debouncedBtnMode) {
       debouncedBtnMode = readBtnMode;
       if (debouncedBtnMode == LOW) {
-        displayManager.nextPage();
+        btnModePressStart = now;
+        btnModeHeld = false;
+      } else {
+        // Released
+        if (!btnModeHeld && (now - btnModePressStart < 5000)) {
+          displayManager.nextPage();
+        }
       }
+    }
+
+    // Check if held for 5 seconds -> Factory Reset
+    if (debouncedBtnMode == LOW && !btnModeHeld && (now - btnModePressStart >= 5000)) {
+      btnModeHeld = true;
+      Serial.println(F("[FACTORY RESET] Button 1 held for 5s! Erasing WiFi & Server settings..."));
+      displayManager.showBootScreen("FACTORY RESET\nErasing Config...");
+      for (int i = 0; i < 5; i++) {
+        digitalWrite(PIN_LED_CLOUD, HIGH); delay(80);
+        digitalWrite(PIN_LED_CLOUD, LOW); delay(80);
+      }
+      WiFiManager wm;
+      wm.resetSettings();
+      configStore.clear();
+      delay(1000);
+      ESP.restart();
     }
   }
   lastBtnModeState = readBtnMode;
@@ -277,6 +416,7 @@ void loop() {
       lastPotRaw = raw;
       const uint8_t pct = map(raw, 0, 4095, 0, 100);
       setDimmerBrightness(pct);
+      cloudClient.reportRelayState(systemState.lampOn);
     }
   }
 
@@ -305,7 +445,14 @@ void loop() {
   }
 
   // 7. Update Status LEDs
-  digitalWrite(PIN_LED_CLOUD, systemState.cloudOnline ? HIGH : LOW);
+  if (systemState.cloudOnline) {
+    digitalWrite(PIN_LED_CLOUD, HIGH); // Solid ON: Fully connected to Cloud WebSocket
+  } else if (wifiOk) {
+    // Wi-Fi STA Connected, waiting/retrying Cloud WebSocket: gentle blink (500ms)
+    digitalWrite(PIN_LED_CLOUD, ((now / 500) % 2 == 0) ? HIGH : LOW);
+  } else {
+    digitalWrite(PIN_LED_CLOUD, LOW);
+  }
   if (!systemState.alarmActive) {
     const bool heatAlert = (!isnan(systemState.temperature) && systemState.temperature >= TEMP_ALERT_HOT);
     digitalWrite(PIN_LED_ALERT, heatAlert ? HIGH : LOW);

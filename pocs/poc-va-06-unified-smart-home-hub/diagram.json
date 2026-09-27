@@ -25,20 +25,6 @@
       "left": 280,
       "attrs": { "label": "RELAY LAMP (IN: GPIO5)" }
     },
-    {
-      "type": "wokwi-resistor",
-      "id": "r_lamp_load",
-      "top": 35,
-      "left": 370,
-      "attrs": { "value": "220" }
-    },
-    {
-      "type": "wokwi-led",
-      "id": "led_lamp_load",
-      "top": 15,
-      "left": 450,
-      "attrs": { "color": "white", "label": "MAIN LAMP (LOAD SIM)" }
-    },
 
     {
       "type": "wokwi-pushbutton",
@@ -108,7 +94,7 @@
       "id": "led_dimmer",
       "top": 310,
       "left": 240,
-      "attrs": { "color": "yellow", "label": "DIMMER LED (PWM: GPIO18)" }
+      "attrs": { "color": "yellow", "label": "SMART LAMP (PWM: GPIO18 + RELAY5)" }
     },
     {
       "type": "wokwi-resistor",
@@ -152,10 +138,8 @@
     [ "relay1:IN", "esp:D5", "blue", [ "h-60", "v50" ] ],
     [ "relay1:GND", "esp:GND.2", "black", [ "h-70", "v100" ] ],
     [ "relay1:VCC", "esp:VIN", "red", [ "h-50", "v120", "h-260" ] ],
-    [ "relay1:COM", "relay1:VCC", "red", [ "h15", "v-35", "h-100" ] ],
-    [ "relay1:NO", "r_lamp_load:1", "orange", [ "h20" ] ],
-    [ "r_lamp_load:2", "led_lamp_load:A", "orange", [ "h10" ] ],
-    [ "led_lamp_load:C", "relay1:GND", "black", [ "v45", "h-190" ] ],
+    [ "relay1:NO", "esp:GND.2", "black", [ "h-80", "v80" ] ],
+    [ "led_dimmer:C", "relay1:COM", "black", [ "h30", "v-280", "h40" ] ],
 
 
     [ "btn_mode:1.l", "esp:D4", "blue", [ "h-60" ] ],
@@ -185,7 +169,6 @@
 
     [ "esp:D18", "r_dimmer:1", "orange", [ "h35", "v190", "h65" ] ],
     [ "r_dimmer:2", "led_dimmer:A", "orange", [ "h10" ] ],
-    [ "led_dimmer:C", "esp:GND.2", "black", [ "h20", "v-130", "h-210" ] ],
 
     [ "esp:D15", "r_comfort:1", "green", [ "h30", "v205", "h70" ] ],
     [ "r_comfort:2", "led_comfort:A", "green", [ "h10" ] ],

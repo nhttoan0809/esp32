@@ -11,6 +11,7 @@ struct SystemState {
   float humidity = NAN;
   bool lampOn = false;
   uint8_t ledBrightness = 0;   // 0 - 100%
+  uint8_t memoryBrightness = 70; // Memory of last active brightness level
   bool ldrDark = false;
   bool motionDetected = false;
   bool guardMode = true;

@@ -61,4 +61,14 @@ constexpr uint16_t HTTP_PORT = 80;
 constexpr uint16_t HTTPS_PORT = 443;
 constexpr size_t MAX_WEBSOCKET_MESSAGE_BYTES = 2048;
 
+// NVS Storage Keys (Flash Persistence)
+constexpr char NVS_NAMESPACE[]       = "hub_cfg";
+constexpr char NVS_VALID_KEY[]       = "valid";
+constexpr char NVS_SSID_KEY[]        = "ssid";
+constexpr char NVS_PASSWORD_KEY[]    = "pass";
+constexpr char NVS_SERVER_HOST_KEY[] = "host";
+constexpr char NVS_SERVER_PORT_KEY[] = "port";
+constexpr char NVS_SERVER_PATH_KEY[] = "path";
+constexpr char DEFAULT_SERVER_PATH[] = "/ws/devices";
+
 }  // namespace app_config

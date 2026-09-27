@@ -31,13 +31,12 @@ Toàn bộ 14 chân GPIO đã được kiểm chứng không xung đột phần 
 
 | STT | Chân ESP32 (30-Pin) | Ký hiệu in trên Bo Mạch Module (Physical PCB Label) | Chân Wokwi (`diagram.json`) | Chức năng Kỹ thuật & Lưu ý An toàn |
 |:---:|:-------------------:|:--------------------------------------------------:|:---------------------------:|:-----------------------------------|
-| 1 | **GPIO 4** | Nút nhấn / Chân 1.L | `btn_mode:1.l` | **Nút nhấn Mode:** Chuyển đổi 4 trang màn hình OLED. Cấu hình `INPUT_PULLUP`. |
-| 2 | **GPIO 5** | `IN` / `IN1` (Relay Module) | `relay1:IN` | **Relay Đèn Chính:** Kích mở đèn 220V/tải lớn (Active LOW). Tiếp điểm `COM` nối nguồn, `NO` nối bóng đèn tải (trên Wokwi mô phỏng qua `MAIN LAMP LOAD`), `NC` để hở. |
-
+| 1 | **GPIO 4** | Nút nhấn / Chân 1.L | `btn_mode:1.l` | **Nút nhấn Mode:** Nhấn ngắn chuyển 4 trang OLED; Nhấn giữ 5s để **Factory Reset** xóa Wi-Fi/NVS. Cấu hình `INPUT_PULLUP`. |
+| 2 | **GPIO 5** | `IN` / `IN1` (Relay Module) | `relay1:IN` | **Relay Ngắt Nguồn Cực Âm (Ground Cutoff - Phương án A):** Tiếp điểm `COM` nối vào Cathode (-) của Đèn, tiếp điểm `NO` nối `GND`. Khi Relay TẮT, mạch hở hoàn toàn (0W standby, an toàn điện tuyệt đối). |
 | 3 | **GPIO 13** | Anode (`+`) LED Đỏ | `r_alert:2` ➔ `led_alert:A` | **LED Báo Động (Đỏ):** Sáng khi có cảnh báo/chuyển động. Nối tiếp điện trở 220Ω. |
-| 4 | **GPIO 14** | Nút nhấn / Chân 1.R | `btn_lamp:1.r` | **Nút nhấn Đèn:** Đảo trạng thái Bật/Tắt Relay tại chỗ. Cấu hình `INPUT_PULLUP`. |
+| 4 | **GPIO 14** | Nút nhấn / Chân 1.R | `btn_lamp:1.r` | **Nút nhấn Đèn:** Đảo trạng thái Bật/Tắt Đèn Thông Minh tại chỗ (khôi phục mức sáng đã nhớ). Cấu hình `INPUT_PULLUP`. |
 | 5 | **GPIO 15** | Anode (`+`) LED Xanh Lá | `r_comfort:2` ➔ `led_comfort:A` | **LED Trạng thái Khí hậu (Xanh lá):** Báo phòng mát mẻ, dễ chịu. Điện trở 220Ω. |
-| 6 | **GPIO 18** | Anode (`+`) LED Dimmer Vàng | `r_dimmer:2` ➔ `led_dimmer:A` | **LED Dimmer:** Điều chế độ sáng xung LEDC PWM (5kHz, 8-bit). Điện trở 220Ω. |
+| 6 | **GPIO 18** | Anode (`+`) Smart Lamp Vàng | `r_dimmer:2` ➔ `led_dimmer:A` | **Đèn Thông Minh (PWM 0-100%):** Xuất xung Active-HIGH qua trở 220Ω vào Anode (+), cực Cathode (-) đi qua tiếp điểm Relay về GND. |
 | 7 | **GPIO 19** | `DAT` / `OUT` / `S` (Module DHT11) | `dht1:SDA` (Wokwi DHT22) | **Cảm biến Nhiệt Ẩm DHT11:** Giao tiếp 1-Wire. Mạch đã có sẵn trở kéo 10kΩ trên PCB. |
 | 8 | **GPIO 21** | `SDA` (OLED SSD1306) | `oled1:SDA` | **Dữ liệu I2C SDA:** Hiển thị màn hình OLED 128x64. |
 | 9 | **GPIO 22** | `SCL` (OLED SSD1306) | `oled1:SCL` | **Xung nhịp I2C SCL:** Tần số chuẩn 400kHz. |
@@ -49,6 +48,21 @@ Toàn bộ 14 chân GPIO đã được kiểm chứng không xung đột phần 
 | 15 | **3V3** | `VCC` / `+` | `3V3` rail | **Nguồn cấp 3.3V:** Cấp cho DHT11, OLED, PIR, LDR, Potentiometer. |
 | 16 | **VIN (5V)** | `VCC` (Relay, Buzzer) | `5V` rail | **Nguồn cấp 5V:** Cấp cho cuộn hút Relay và Còi buzzer. |
 | 17 | **GND** | `GND` / `-` | `GND` rail | **Điểm nối đất chung (Common Ground).** |
+
+### 2.1 Kiến trúc Đèn Thông Minh Hợp Nhất (Phương Án A: Relay Ground Cutoff + PWM)
+
+Phương án A giải quyết bài toán: **Vừa đóng/ngắt nguồn an toàn tuyệt đối bằng Relay, vừa tinh chỉnh độ sáng 0% – 100% bằng PWM và Chiết áp**:
+
+```text
+  [ESP32: GPIO 18 (PWM)] ──► [Trở 220Ω] ──► [Anode (+)] LED [Cathode (-)] ──► [Relay: COM]
+     (Xung PWM Active-HIGH                                                          │
+      LEDC 5kHz 0-100%)                                  [Relay: NO] ───────────────┴──► [ESP32: GND]
+```
+
+- **Khi Đèn TẮT (OFF):** Tiếp điểm `COM` hở mạch với `NO` $\to$ Cực Cathode bị ngắt hoàn toàn khỏi GND $\to$ Dòng điện qua đèn bằng 0 tuyệt đối (**0W standby, an toàn điện chuẩn công nghiệp**).
+- **Khi Đèn BẬT (ON):** Relay đóng tiếp điểm `COM` thông sang `NO` $\to$ Cực Cathode được nối đất (GND), xung PWM từ GPIO 18 điều chế độ sáng mượt mà.
+- **Bộ nhớ độ sáng (Memory Brightness):** Khi bật lại bằng nút bấm, giọng nói AI hoặc Web, đèn tự động khôi phục mức sáng gần nhất (mặc định 70%).
+- **Xoay Chiết áp (Potentiometer):** Xoay từ 0% lên >0% tự động đóng Relay và xuất độ sáng tương ứng; vặn về 0% tự động ngắt tiếp điểm Relay.
 
 ---
 

@@ -108,27 +108,38 @@ void DisplayManager::renderClimatePage(const SystemState &state) {
 void DisplayManager::renderLightingPage(const SystemState &state) {
   drawHeader("[2/4] LIGHTING", state.wifiConnected, state.cloudOnline);
 
-  // Relay Lamp state
   display_.setTextSize(1);
   display_.setCursor(4, 16);
-  display_.print(F("Lamp Relay: "));
-  display_.print(state.lampOn ? F("[ON]") : F("[OFF]"));
+  display_.print(F("Smart Lamp: "));
+  if (state.lampOn) {
+    display_.printf("[ON] %3d%%", state.ledBrightness);
+  } else {
+    display_.print(F("[OFF]"));
+  }
 
-  // Dimmer Brightness
   display_.setCursor(4, 28);
-  display_.printf("Dimmer PWM: %3d%%", state.ledBrightness);
+  display_.print(F("RelayGND: "));
+  display_.print(state.lampOn ? F("CLOS(Act)") : F("OPEN(Safe)"));
 
-  // Small progress bar for brightness
-  display_.drawRect(4, 40, 120, 7, SSD1306_WHITE);
-  const int barWidth = (state.ledBrightness * 116) / 100;
-  if (barWidth > 0) {
-    display_.fillRect(6, 42, barWidth, 3, SSD1306_WHITE);
+  // Progress bar
+  display_.drawRect(4, 39, 120, 7, SSD1306_WHITE);
+  if (state.lampOn) {
+    const int barWidth = (state.ledBrightness * 116) / 100;
+    if (barWidth > 0) {
+      display_.fillRect(6, 41, barWidth, 3, SSD1306_WHITE);
+    }
+  } else {
+    // Show vertical tick marker indicating remembered brightness
+    const int memPos = (state.memoryBrightness * 116) / 100;
+    if (memPos > 0) {
+      display_.drawFastVLine(6 + memPos, 40, 5, SSD1306_WHITE);
+    }
   }
 
   // LDR Status
-  display_.drawLine(0, 50, 127, 50, SSD1306_WHITE);
-  display_.setCursor(4, 54);
-  display_.print(F("LDR Ambient: "));
+  display_.drawLine(0, 49, 127, 49, SSD1306_WHITE);
+  display_.setCursor(4, 53);
+  display_.print(F("Light Sensor: "));
   display_.print(state.ldrDark ? F("DARK (Night)") : F("BRIGHT (Day)"));
 }
 
