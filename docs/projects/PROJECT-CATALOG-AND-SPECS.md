@@ -25,27 +25,27 @@
 
 | Mã Đề Tài | Tên Đề Tài | Nhóm Chủ Đề | Tên Branch Đề Xuất (Git Worktree) | Mức Độ Sẵn Sàng Phần Cứng | Chi Phí Bổ Sung (Ước tính) | Độ Phức Tạp |
 |:---:|:---|:---:|:---|:---:|:---:|:---:|
-| **MOB-01** | Robot Car Tự Hành Né Vật Cản Đa Hướng | Di chuyển | `feat/mob-01-range-scanning-rover` | 🟡 Thiếu Chassis & Pin | ~140.000 đ | ⭐⭐⭐ |
-| **MOB-02** | Xe Thám Hiểm Điều Khiển Qua Web/BLE & Phanh An Toàn | Di chuyển | `feat/mob-02-telemetry-rover` | 🟡 Thiếu Chassis & Pin | ~140.000 đ | ⭐⭐⭐ |
-| **MOB-03** | Bàn Xoay Quét 3D & Chụp Ảnh Sản Phẩm Chính Xác | Di chuyển | `feat/mob-03-precision-stepper-turntable` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐ |
-| **MOB-04** | Xe AGV Dẫn Hướng & Giao Hàng Điểm Trạm RFID | Di chuyển | `feat/mob-04-rfid-guided-agv` | 🟡 Thiếu Chassis & Pin | ~160.000 đ | ⭐⭐⭐⭐ |
-| **VOI-01** | Trạm Điều Khiển Giọng Nói Hai Chiều (Voice Smart Hub) | Giọng nói | `feat/voi-01-voice-smart-hub` | 🟡 Cần Mic/Amp I2S | ~95.000 đ | ⭐⭐⭐⭐ |
-| **VOI-02** | Công Tắc Bật Tắt Bằng Nhịp Vỗ Tay Đa Kênh (Clap Switch) | Giọng nói | `feat/voi-02-acoustic-clap-switch` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐ |
-| **VOI-03** | Máy Phát Nhạc & Tổng Hợp Âm Thanh TTS (Synthesizer/Talkie) | Giọng nói | `feat/voi-03-synth-tts-talkie` | 🟢 **Sẵn sàng 100%** (Passive Buzzer) / 🟡 Cần Loa | ~45.000 đ | ⭐⭐⭐ |
-| **AI-01** | Thiết Bị Nhận Diện & Phân Loại Tiếng Động Bất Thường (Edge AI) | AI | `feat/ai-01-edge-sound-anomaly-detector` | 🟡 Cần Mic I2S | ~35.000 đ | ⭐⭐⭐⭐ |
-| **AI-02** | Hệ Thống Dự Báo & Tối Ưu Môi Trường Bằng Mô Hình AI Riêng | AI | `feat/ai-02-predictive-climate-optimizer` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
-| **AI-03** | Trợ Lý Ảo Vật Lý AI Đa Phương Thức (Physical LLM Agent) | AI & Giọng nói | `feat/ai-03-physical-llm-agent` | 🟡 Cần Mic & Loa | ~95.000 đ | ⭐⭐⭐⭐⭐ |
-| **AI-04** | Bàn Di Cảm Ứng Nhận Diện Cử Chỉ Bằng Machine Learning | AI | `feat/ai-04-capacitive-touch-ml` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
-| **ROB-01** | Cánh Tay Robot 4 Bậc Tự Do (4-DOF Robotic Arm) | Robotics | `feat/rob-01-4dof-robotic-arm` | 🟡 Cần 3 Servo & Khung | ~170.000 đ | ⭐⭐⭐⭐ |
-| **ROB-02** | Dây Chuyền Phân Loại & Gắp Vật Thể Tự Động RFID | Robotics | `feat/rob-02-rfid-sorting-mechanism` | 🟡 Cần Khung Arm & Servo | ~200.000 đ | ⭐⭐⭐⭐⭐ |
-| **ROB-03** | Tháp Camera Pan-Tilt Tự Động Bám Đuổi Đối Tượng | Robotics | `feat/rob-03-sentry-pan-tilt-cam` | 🟡 Cần ESP32-CAM & Khung | ~110.000 đ | ⭐⭐⭐⭐ |
-| **SMH-01** | Hệ Thống An Ninh Giám Sát Đa Vùng Cảnh Báo Tức Thời | Smart Home | `feat/smh-01-multizone-defense-system` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐⭐ |
-| **SMH-02** | Khóa Cửa Điện Tử Thông Minh 3 Lớp Bảo Mật | Smart Home | `feat/smh-02-trifactor-smart-lock` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
-| **SMH-03** | Thiết Bị Đo Điện Năng & Tự Ngắt Bảo Vệ Quá Tải | Smart Home | `feat/smh-03-smart-energy-meter` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
-| **SMH-04** | Trạm Giám Sát & Điều Hòa Nhà Kính Mini Tự Động | Smart Home | `feat/smh-04-micro-greenhouse` | 🟡 Cần Cảm biến độ ẩm đất & Bơm | ~45.000 đ | ⭐⭐⭐ |
-| **EXP-01** | Trạm Điểm Danh Không Chạm RFID & Hiển Thị Đồ Họa Matrix | Mở rộng | `feat/exp-01-rfid-matrix-attendance` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
-| **EXP-02** | Hộp Câu Đố Tương Tác Thông Minh (Escape Room Puzzle Box) | Mở rộng | `feat/exp-02-escape-room-puzzle-box` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
-| **EXP-03** | Hệ Thống Phân Tán Đa Vi Điều Khiển (ESP32 + STM32 + Nano) | Mở rộng | `feat/exp-03-multi-mcu-communication` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐⭐ |
+| **MOB-01** | Robot Car Tự Hành Né Vật Cản Đa Hướng | Di chuyển | `wt/poc/mob-01-range-scanning-rover` | 🟡 Thiếu Chassis & Pin | ~140.000 đ | ⭐⭐⭐ |
+| **MOB-02** | Xe Thám Hiểm Điều Khiển Qua Web/BLE & Phanh An Toàn | Di chuyển | `wt/poc/mob-02-telemetry-rover` | 🟡 Thiếu Chassis & Pin | ~140.000 đ | ⭐⭐⭐ |
+| **MOB-03** | Bàn Xoay Quét 3D & Chụp Ảnh Sản Phẩm Chính Xác | Di chuyển | `wt/poc/mob-03-precision-stepper-turntable` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐ |
+| **MOB-04** | Xe AGV Dẫn Hướng & Giao Hàng Điểm Trạm RFID | Di chuyển | `wt/poc/mob-04-rfid-guided-agv` | 🟡 Thiếu Chassis & Pin | ~160.000 đ | ⭐⭐⭐⭐ |
+| **VOI-01** | Trạm Điều Khiển Giọng Nói Hai Chiều (Voice Smart Hub) | Giọng nói | `wt/poc/voi-01-voice-smart-hub` | 🟡 Cần Mic/Amp I2S | ~95.000 đ | ⭐⭐⭐⭐ |
+| **VOI-02** | Công Tắc Bật Tắt Bằng Nhịp Vỗ Tay Đa Kênh (Clap Switch) | Giọng nói | `wt/poc/voi-02-acoustic-clap-switch` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐ |
+| **VOI-03** | Máy Phát Nhạc & Tổng Hợp Âm Thanh TTS (Synthesizer/Talkie) | Giọng nói | `wt/poc/voi-03-synth-tts-talkie` | 🟢 **Sẵn sàng 100%** (Passive Buzzer) / 🟡 Cần Loa | ~45.000 đ | ⭐⭐⭐ |
+| **AI-01** | Thiết Bị Nhận Diện & Phân Loại Tiếng Động Bất Thường (Edge AI) | AI | `wt/poc/ai-01-edge-sound-anomaly-detector` | 🟡 Cần Mic I2S | ~35.000 đ | ⭐⭐⭐⭐ |
+| **AI-02** | Hệ Thống Dự Báo & Tối Ưu Môi Trường Bằng Mô Hình AI Riêng | AI | `wt/poc/ai-02-predictive-climate-optimizer` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
+| **AI-03** | Trợ Lý Ảo Vật Lý AI Đa Phương Thức (Physical LLM Agent) | AI & Giọng nói | `wt/poc/ai-03-physical-llm-agent` | 🟡 Cần Mic & Loa | ~95.000 đ | ⭐⭐⭐⭐⭐ |
+| **AI-04** | Bàn Di Cảm Ứng Nhận Diện Cử Chỉ Bằng Machine Learning | AI | `wt/poc/ai-04-capacitive-touch-ml` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
+| **ROB-01** | Cánh Tay Robot 4 Bậc Tự Do (4-DOF Robotic Arm) | Robotics | `wt/poc/rob-01-4dof-robotic-arm` | 🟡 Cần 3 Servo & Khung | ~170.000 đ | ⭐⭐⭐⭐ |
+| **ROB-02** | Dây Chuyền Phân Loại & Gắp Vật Thể Tự Động RFID | Robotics | `wt/poc/rob-02-rfid-sorting-mechanism` | 🟡 Cần Khung Arm & Servo | ~200.000 đ | ⭐⭐⭐⭐⭐ |
+| **ROB-03** | Tháp Camera Pan-Tilt Tự Động Bám Đuổi Đối Tượng | Robotics | `wt/poc/rob-03-sentry-pan-tilt-cam` | 🟡 Cần ESP32-CAM & Khung | ~110.000 đ | ⭐⭐⭐⭐ |
+| **SMH-01** | Hệ Thống An Ninh Giám Sát Đa Vùng Cảnh Báo Tức Thời | Smart Home | `wt/poc/smh-01-multizone-defense-system` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐⭐ |
+| **SMH-02** | Khóa Cửa Điện Tử Thông Minh 3 Lớp Bảo Mật | Smart Home | `wt/poc/smh-02-trifactor-smart-lock` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
+| **SMH-03** | Thiết Bị Đo Điện Năng & Tự Ngắt Bảo Vệ Quá Tải | Smart Home | `wt/poc/smh-03-smart-energy-meter` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
+| **SMH-04** | Trạm Giám Sát & Điều Hòa Nhà Kính Mini Tự Động | Smart Home | `wt/poc/smh-04-micro-greenhouse` | 🟡 Cần Cảm biến độ ẩm đất & Bơm | ~45.000 đ | ⭐⭐⭐ |
+| **EXP-01** | Trạm Điểm Danh Không Chạm RFID & Hiển Thị Đồ Họa Matrix | Mở rộng | `wt/poc/exp-01-rfid-matrix-attendance` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
+| **EXP-02** | Hộp Câu Đố Tương Tác Thông Minh (Escape Room Puzzle Box) | Mở rộng | `wt/poc/exp-02-escape-room-puzzle-box` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
+| **EXP-03** | Hệ Thống Phân Tán Đa Vi Điều Khiển (ESP32 + STM32 + Nano) | Mở rộng | `wt/poc/exp-03-multi-mcu-communication` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐⭐ |
 
 ---
 
@@ -55,11 +55,11 @@ Nhằm phục vụ phát triển độc lập, không làm ảnh hưởng đến
 
 #### a. Quy tắc định danh Branch
 ```text
-feat/<mã_đề_tài_chữ_thường>-<tên_tiếng_anh_viết_tắt>
+wt/poc/<mã_đề_tài_chữ_thường>-<tên_tiếng_anh_viết_tắt>
 ```
 *Ví dụ:*
-- Đề tài `MOB-03` $\rightarrow$ `feat/mob-03-precision-stepper-turntable`
-- Đề tài `SMH-02` $\rightarrow$ `feat/smh-02-trifactor-smart-lock`
+- Đề tài `MOB-03` $\rightarrow$ `wt/poc/mob-03-precision-stepper-turntable`
+- Đề tài `SMH-02` $\rightarrow$ `wt/poc/smh-02-trifactor-smart-lock`
 
 #### b. Lệnh CLI tạo nhanh một Worktree độc lập
 Từ thư mục gốc của repository, bạn chỉ cần chạy lệnh sau để tạo một worktree riêng biệt nằm ngoài thư mục làm việc hiện tại:
@@ -68,7 +68,7 @@ Từ thư mục gốc của repository, bạn chỉ cần chạy lệnh sau đ�
 git worktree add -b <tên_branch> <đường_dẫn_thư_mục_worktree> main
 
 # Ví dụ triển khai ngay Đề tài MOB-03 (Bàn xoay Stepper):
-git worktree add -b feat/mob-03-precision-stepper-turntable ../worktrees/mob-03-precision-stepper-turntable main
+git worktree add -b wt/poc/mob-03-precision-stepper-turntable ../worktrees/mob-03-precision-stepper-turntable main
 ```
 
 #### c. Dọn dẹp Worktree sau khi hoàn thành & merge
@@ -86,10 +86,10 @@ git worktree prune
 ### 2.1 Đề Tài MOB-01: Robot Car Tự Hành Né Vật Cản Đa Hướng (Autonomous Range-Scanning Rover)
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/mob-01-range-scanning-rover`
+> - **Tên Branch chỉ định:** `wt/poc/mob-01-range-scanning-rover`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/mob-01-range-scanning-rover ../worktrees/mob-01-range-scanning-rover main
+>   git worktree add -b wt/poc/mob-01-range-scanning-rover ../worktrees/mob-01-range-scanning-rover main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -135,10 +135,10 @@ git worktree prune
 ### 2.2 Đề Tài MOB-02: Xe Thám Hiểm Điều Khiển Qua Web/BLE & Phanh An Toàn (Web/BLE Telemetry Rover)
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/mob-02-telemetry-rover`
+> - **Tên Branch chỉ định:** `wt/poc/mob-02-telemetry-rover`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/mob-02-telemetry-rover ../worktrees/mob-02-telemetry-rover main
+>   git worktree add -b wt/poc/mob-02-telemetry-rover ../worktrees/mob-02-telemetry-rover main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -164,10 +164,10 @@ git worktree prune
 ### 2.3 Đề Tài MOB-03: Bàn Xoay Quét 3D & Chụp Ảnh Sản Phẩm Chính Xác (Precision Stepper Turntable)
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/mob-03-precision-stepper-turntable`
+> - **Tên Branch chỉ định:** `wt/poc/mob-03-precision-stepper-turntable`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/mob-03-precision-stepper-turntable ../worktrees/mob-03-precision-stepper-turntable main
+>   git worktree add -b wt/poc/mob-03-precision-stepper-turntable ../worktrees/mob-03-precision-stepper-turntable main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -189,10 +189,10 @@ git worktree prune
 ### 2.4 Đề Tài MOB-04: Xe AGV Tự Động Định Tuyến & Giao Hàng Điểm Trạm RFID (Automated Guided Vehicle)
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/mob-04-rfid-guided-agv`
+> - **Tên Branch chỉ định:** `wt/poc/mob-04-rfid-guided-agv`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/mob-04-rfid-guided-agv ../worktrees/mob-04-rfid-guided-agv main
+>   git worktree add -b wt/poc/mob-04-rfid-guided-agv ../worktrees/mob-04-rfid-guided-agv main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -217,10 +217,10 @@ git worktree prune
 ### 3.1 Đề Tài VOI-01: Trạm Điều Khiển Giọng Nói Hai Chiều (Voice Smart Hub)
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/voi-01-voice-smart-hub`
+> - **Tên Branch chỉ định:** `wt/poc/voi-01-voice-smart-hub`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/voi-01-voice-smart-hub ../worktrees/voi-01-voice-smart-hub main
+>   git worktree add -b wt/poc/voi-01-voice-smart-hub ../worktrees/voi-01-voice-smart-hub main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -264,10 +264,10 @@ git worktree prune
 ### 3.2 Đề Tài VOI-02: Công Tắc Kích Hoạt Bằng Nhịp Vỗ Tay Đa Kênh (Clap Switch)
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/voi-02-acoustic-clap-switch`
+> - **Tên Branch chỉ định:** `wt/poc/voi-02-acoustic-clap-switch`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/voi-02-acoustic-clap-switch ../worktrees/voi-02-acoustic-clap-switch main
+>   git worktree add -b wt/poc/voi-02-acoustic-clap-switch ../worktrees/voi-02-acoustic-clap-switch main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -293,10 +293,10 @@ git worktree prune
 ### 3.3 Đề Tài VOI-03: Máy Phát Nhạc Điện Tử & Bộ Đọc Giọng Nói Tổng Hợp (Synthesizer & TTS Talkie)
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/voi-03-synth-tts-talkie`
+> - **Tên Branch chỉ định:** `wt/poc/voi-03-synth-tts-talkie`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/voi-03-synth-tts-talkie ../worktrees/voi-03-synth-tts-talkie main
+>   git worktree add -b wt/poc/voi-03-synth-tts-talkie ../worktrees/voi-03-synth-tts-talkie main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -316,10 +316,10 @@ git worktree prune
 ### 4.1 Đề Tài AI-01: Thiết Bị Nhận Diện & Phân Loại Tiếng Động Bất Thường (Edge AI Sound Anomaly Detector)
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/ai-01-edge-sound-anomaly-detector`
+> - **Tên Branch chỉ định:** `wt/poc/ai-01-edge-sound-anomaly-detector`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/ai-01-edge-sound-anomaly-detector ../worktrees/ai-01-edge-sound-anomaly-detector main
+>   git worktree add -b wt/poc/ai-01-edge-sound-anomaly-detector ../worktrees/ai-01-edge-sound-anomaly-detector main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -348,10 +348,10 @@ git worktree prune
 ### 4.2 Đề Tài AI-02: Hệ Thống Dự Báo & Tối Ưu Môi Trường Bằng Mô Hình AI Riêng (Predictive Climate Optimization)
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/ai-02-predictive-climate-optimizer`
+> - **Tên Branch chỉ định:** `wt/poc/ai-02-predictive-climate-optimizer`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/ai-02-predictive-climate-optimizer ../worktrees/ai-02-predictive-climate-optimizer main
+>   git worktree add -b wt/poc/ai-02-predictive-climate-optimizer ../worktrees/ai-02-predictive-climate-optimizer main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -392,10 +392,10 @@ git worktree prune
 ### 4.3 Đề Tài AI-03: Trợ Lý Ảo Vật Lý AI Đa Phương Thức (Physical LLM Agent)
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/ai-03-physical-llm-agent`
+> - **Tên Branch chỉ định:** `wt/poc/ai-03-physical-llm-agent`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/ai-03-physical-llm-agent ../worktrees/ai-03-physical-llm-agent main
+>   git worktree add -b wt/poc/ai-03-physical-llm-agent ../worktrees/ai-03-physical-llm-agent main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -416,10 +416,10 @@ git worktree prune
 ### 4.4 Đề Tài AI-04: Bàn Cảm Ứng Nhận Diện Cử Chỉ Cào / Vuốt Bằng Machine Learning
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/ai-04-capacitive-touch-ml`
+> - **Tên Branch chỉ định:** `wt/poc/ai-04-capacitive-touch-ml`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/ai-04-capacitive-touch-ml ../worktrees/ai-04-capacitive-touch-ml main
+>   git worktree add -b wt/poc/ai-04-capacitive-touch-ml ../worktrees/ai-04-capacitive-touch-ml main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -439,10 +439,10 @@ git worktree prune
 ### 5.1 Đề Tài ROB-01: Cánh Tay Robot 4 Bậc Tự Do (4-DOF Robotic Arm)
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/rob-01-4dof-robotic-arm`
+> - **Tên Branch chỉ định:** `wt/poc/rob-01-4dof-robotic-arm`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/rob-01-4dof-robotic-arm ../worktrees/rob-01-4dof-robotic-arm main
+>   git worktree add -b wt/poc/rob-01-4dof-robotic-arm ../worktrees/rob-01-4dof-robotic-arm main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -467,10 +467,10 @@ git worktree prune
 ### 5.2 Đề Tài ROB-02: Dây Chuyền Phân Loại & Gắp Vật Thể Tự Động RFID (Automated RFID Sorting Mechanism)
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/rob-02-rfid-sorting-mechanism`
+> - **Tên Branch chỉ định:** `wt/poc/rob-02-rfid-sorting-mechanism`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/rob-02-rfid-sorting-mechanism ../worktrees/rob-02-rfid-sorting-mechanism main
+>   git worktree add -b wt/poc/rob-02-rfid-sorting-mechanism ../worktrees/rob-02-rfid-sorting-mechanism main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -492,10 +492,10 @@ git worktree prune
 ### 5.3 Đề Tài ROB-03: Tháp Camera Pan-Tilt Tự Động Bám Đuổi Đối Tượng (Intelligent Sentry Camera)
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/rob-03-sentry-pan-tilt-cam`
+> - **Tên Branch chỉ định:** `wt/poc/rob-03-sentry-pan-tilt-cam`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/rob-03-sentry-pan-tilt-cam ../worktrees/rob-03-sentry-pan-tilt-cam main
+>   git worktree add -b wt/poc/rob-03-sentry-pan-tilt-cam ../worktrees/rob-03-sentry-pan-tilt-cam main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -520,10 +520,10 @@ git worktree prune
 ### 6.1 Đề Tài SMH-01: Hệ Thống An Ninh Giám Sát Đa Vùng Cảnh Báo Tức Thời (Multi-Zone Defense System)
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/smh-01-multizone-defense-system`
+> - **Tên Branch chỉ định:** `wt/poc/smh-01-multizone-defense-system`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/smh-01-multizone-defense-system ../worktrees/smh-01-multizone-defense-system main
+>   git worktree add -b wt/poc/smh-01-multizone-defense-system ../worktrees/smh-01-multizone-defense-system main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -551,10 +551,10 @@ git worktree prune
 ### 6.2 Đề Tài SMH-02: Khóa Cửa Điện Tử Thông Minh 3 Lớp Bảo Mật (Tri-Factor Smart Access Lock)
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/smh-02-trifactor-smart-lock`
+> - **Tên Branch chỉ định:** `wt/poc/smh-02-trifactor-smart-lock`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/smh-02-trifactor-smart-lock ../worktrees/smh-02-trifactor-smart-lock main
+>   git worktree add -b wt/poc/smh-02-trifactor-smart-lock ../worktrees/smh-02-trifactor-smart-lock main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -572,10 +572,10 @@ git worktree prune
 ### 6.3 Đề Tài SMH-03: Thiết Bị Đo Điện Năng & Tự Ngắt Bảo Vệ Quá Tải (Smart Energy Meter)
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/smh-03-smart-energy-meter`
+> - **Tên Branch chỉ định:** `wt/poc/smh-03-smart-energy-meter`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/smh-03-smart-energy-meter ../worktrees/smh-03-smart-energy-meter main
+>   git worktree add -b wt/poc/smh-03-smart-energy-meter ../worktrees/smh-03-smart-energy-meter main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -595,10 +595,10 @@ git worktree prune
 ### 6.4 Đề Tài SMH-04: Trạm Giám Sát & Điều Hòa Nhà Kính Mini Tự Động (Automated Micro-Greenhouse)
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/smh-04-micro-greenhouse`
+> - **Tên Branch chỉ định:** `wt/poc/smh-04-micro-greenhouse`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/smh-04-micro-greenhouse ../worktrees/smh-04-micro-greenhouse main
+>   git worktree add -b wt/poc/smh-04-micro-greenhouse ../worktrees/smh-04-micro-greenhouse main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -617,10 +617,10 @@ git worktree prune
 ### 7.1 Đề Tài EXP-01: Trạm Điểm Danh Không Chạm RFID & Hiển Thị Đồ Họa Matrix
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/exp-01-rfid-matrix-attendance`
+> - **Tên Branch chỉ định:** `wt/poc/exp-01-rfid-matrix-attendance`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/exp-01-rfid-matrix-attendance ../worktrees/exp-01-rfid-matrix-attendance main
+>   git worktree add -b wt/poc/exp-01-rfid-matrix-attendance ../worktrees/exp-01-rfid-matrix-attendance main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -634,10 +634,10 @@ git worktree prune
 ### 7.2 Đề Tài EXP-02: Hộp Câu Đố Tương Tác Điện Tử (Interactive Escape Room Puzzle Box)
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/exp-02-escape-room-puzzle-box`
+> - **Tên Branch chỉ định:** `wt/poc/exp-02-escape-room-puzzle-box`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/exp-02-escape-room-puzzle-box ../worktrees/exp-02-escape-room-puzzle-box main
+>   git worktree add -b wt/poc/exp-02-escape-room-puzzle-box ../worktrees/exp-02-escape-room-puzzle-box main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
@@ -656,10 +656,10 @@ git worktree prune
 ### 7.3 Đề Tài EXP-03: Hệ Thống Phân Tán Đa Vi Điều Khiển (Distributed Multi-MCU Communication Lab)
 
 > 🌿 **Đặc tả Git Worktree:**
-> - **Tên Branch chỉ định:** `feat/exp-03-multi-mcu-communication`
+> - **Tên Branch chỉ định:** `wt/poc/exp-03-multi-mcu-communication`
 > - **Lệnh khởi tạo Worktree:**
 >   ```bash
->   git worktree add -b feat/exp-03-multi-mcu-communication ../worktrees/exp-03-multi-mcu-communication main
+>   git worktree add -b wt/poc/exp-03-multi-mcu-communication ../worktrees/exp-03-multi-mcu-communication main
 >   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
