@@ -6,6 +6,8 @@
 
 ## 📑 Mục Lục
 1. [Ma Trận Đánh Giá & Phân Loại Đề Tài](#1-ma-trận-đánh-giá--phân-loại-đề-tài)
+   - [1.1 Bảng Tổng Hợp Đề Tài & Chỉ Định Branch Git Worktree](#11-bảng-tổng-hợp-đề-tài--chỉ-định-branch-git-worktree)
+   - [1.2 Quy Chuẩn Đặt Tên Branch & Hướng Dẫn Khởi Tạo Git Worktree](#12-quy-chuẩn-đặt-tên-branch--hướng-dẫn-khởi-tạo-git-worktree)
 2. [Nhóm 1: Thiết Bị Di Chuyển & Xe Robot (Mobile Vehicles & Motion)](#2-nhóm-1-thiết-bị-di-chuyển--xe-robot)
 3. [Nhóm 2: Điều Khiển Bằng Giọng Nói & Xử Lý Âm Thanh (Voice & Audio)](#3-nhóm-2-điều-khiển-bằng-giọng-nói--xử-lý-âm-thanh)
 4. [Nhóm 3: Ứng Dụng Trí Tuệ Nhân Tạo (Edge AI & Cloud-Connected AI)](#4-nhóm-3-ứng-dụng-trí-tuệ-nhân-tạo)
@@ -19,35 +21,76 @@
 
 ## 1. Ma Trận Đánh Giá & Phân Loại Đề Tài
 
-| Mã Đề Tài | Tên Đề Tài | Nhóm Chủ Đề | Mức Độ Sẵn Sàng Phần Cứng | Chi Phí Bổ Sung (Ước tính) | Độ Phức Tạp |
-|:---:|:---|:---:|:---:|:---:|:---:|
-| **MOB-01** | Robot Car Tự Hành Né Vật Cản Đa Hướng | Di chuyển | 🟡 Thiếu Chassis & Pin | ~140.000 đ | ⭐⭐⭐ |
-| **MOB-02** | Xe Thám Hiểm Điều Khiển Qua Web/BLE & Phanh An Toàn | Di chuyển | 🟡 Thiếu Chassis & Pin | ~140.000 đ | ⭐⭐⭐ |
-| **MOB-03** | Bàn Xoay Quét 3D & Chụp Ảnh Sản Phẩm Chính Xác | Di chuyển | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐ |
-| **MOB-04** | Xe AGV Dẫn Hướng & Giao Hàng Điểm Trạm RFID | Di chuyển | 🟡 Thiếu Chassis & Pin | ~160.000 đ | ⭐⭐⭐⭐ |
-| **VOI-01** | Trạm Điều Khiển Giọng Nói Hai Chiều (Voice Smart Hub) | Giọng nói | 🟡 Cần Mic/Amp I2S | ~95.000 đ | ⭐⭐⭐⭐ |
-| **VOI-02** | Công Tắc Bật Tắt Bằng Nhịp Vỗ Tay Đa Kênh (Clap Switch) | Giọng nói | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐ |
-| **VOI-03** | Máy Phát Nhạc & Tổng Hợp Âm Thanh TTS (Synthesizer/Talkie) | Giọng nói | 🟢 **Sẵn sàng 100%** (Passive Buzzer) / 🟡 Cần Loa | ~45.000 đ | ⭐⭐⭐ |
-| **AI-01** | Thiết Bị Nhận Diện & Phân Loại Tiếng Động Bất Thường (Edge AI) | AI | 🟡 Cần Mic I2S | ~35.000 đ | ⭐⭐⭐⭐ |
-| **AI-02** | Hệ Thống Dự Báo & Tối Ưu Môi Trường Bằng Mô Hình AI Riêng | AI | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
-| **AI-03** | Trợ Lý Ảo Vật Lý AI Đa Phương Thức (Physical LLM Agent) | AI & Giọng nói | 🟡 Cần Mic & Loa | ~95.000 đ | ⭐⭐⭐⭐⭐ |
-| **AI-04** | Bàn Di Cảm Ứng Nhận Diện Cử Chỉ Bằng Machine Learning | AI | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
-| **ROB-01** | Cánh Tay Robot 4 Bậc Tự Do (4-DOF Robotic Arm) | Robotics | 🟡 Cần 3 Servo & Khung | ~170.000 đ | ⭐⭐⭐⭐ |
-| **ROB-02** | Dây Chuyền Phân Loại & Gắp Vật Thể Tự Động RFID | Robotics | 🟡 Cần Khung Arm & Servo | ~200.000 đ | ⭐⭐⭐⭐⭐ |
-| **ROB-03** | Tháp Camera Pan-Tilt Tự Động Bám Đuổi Đối Tượng | Robotics | 🟡 Cần ESP32-CAM & Khung | ~110.000 đ | ⭐⭐⭐⭐ |
-| **SMH-01** | Hệ Thống An Ninh Giám Sát Đa Vùng Cảnh Báo Tức Thời | Smart Home | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐⭐ |
-| **SMH-02** | Khóa Cửa Điện Tử Thông Minh 3 Lớp Bảo Mật | Smart Home | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
-| **SMH-03** | Thiết Bị Đo Điện Năng & Tự Ngắt Bảo Vệ Quá Tải | Smart Home | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
-| **SMH-04** | Trạm Giám Sát & Điều Hòa Nhà Kính Mini Tự Động | Smart Home | 🟡 Cần Cảm biến độ ẩm đất & Bơm | ~45.000 đ | ⭐⭐⭐ |
-| **EXP-01** | Trạm Điểm Danh Không Chạm RFID & Hiển Thị Đồ Họa Matrix | Mở rộng | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
-| **EXP-02** | Hộp Câu Đố Tương Tác Thông Minh (Escape Room Puzzle Box) | Mở rộng | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
-| **EXP-03** | Hệ Thống Phân Tán Đa Vi Điều Khiển (ESP32 + STM32 + Nano) | Mở rộng | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐⭐ |
+### 1.1 Bảng Tổng Hợp Đề Tài & Chỉ Định Branch Git Worktree
+
+| Mã Đề Tài | Tên Đề Tài | Nhóm Chủ Đề | Tên Branch Đề Xuất (Git Worktree) | Mức Độ Sẵn Sàng Phần Cứng | Chi Phí Bổ Sung (Ước tính) | Độ Phức Tạp |
+|:---:|:---|:---:|:---|:---:|:---:|:---:|
+| **MOB-01** | Robot Car Tự Hành Né Vật Cản Đa Hướng | Di chuyển | `feat/mob-01-range-scanning-rover` | 🟡 Thiếu Chassis & Pin | ~140.000 đ | ⭐⭐⭐ |
+| **MOB-02** | Xe Thám Hiểm Điều Khiển Qua Web/BLE & Phanh An Toàn | Di chuyển | `feat/mob-02-telemetry-rover` | 🟡 Thiếu Chassis & Pin | ~140.000 đ | ⭐⭐⭐ |
+| **MOB-03** | Bàn Xoay Quét 3D & Chụp Ảnh Sản Phẩm Chính Xác | Di chuyển | `feat/mob-03-precision-stepper-turntable` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐ |
+| **MOB-04** | Xe AGV Dẫn Hướng & Giao Hàng Điểm Trạm RFID | Di chuyển | `feat/mob-04-rfid-guided-agv` | 🟡 Thiếu Chassis & Pin | ~160.000 đ | ⭐⭐⭐⭐ |
+| **VOI-01** | Trạm Điều Khiển Giọng Nói Hai Chiều (Voice Smart Hub) | Giọng nói | `feat/voi-01-voice-smart-hub` | 🟡 Cần Mic/Amp I2S | ~95.000 đ | ⭐⭐⭐⭐ |
+| **VOI-02** | Công Tắc Bật Tắt Bằng Nhịp Vỗ Tay Đa Kênh (Clap Switch) | Giọng nói | `feat/voi-02-acoustic-clap-switch` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐ |
+| **VOI-03** | Máy Phát Nhạc & Tổng Hợp Âm Thanh TTS (Synthesizer/Talkie) | Giọng nói | `feat/voi-03-synth-tts-talkie` | 🟢 **Sẵn sàng 100%** (Passive Buzzer) / 🟡 Cần Loa | ~45.000 đ | ⭐⭐⭐ |
+| **AI-01** | Thiết Bị Nhận Diện & Phân Loại Tiếng Động Bất Thường (Edge AI) | AI | `feat/ai-01-edge-sound-anomaly-detector` | 🟡 Cần Mic I2S | ~35.000 đ | ⭐⭐⭐⭐ |
+| **AI-02** | Hệ Thống Dự Báo & Tối Ưu Môi Trường Bằng Mô Hình AI Riêng | AI | `feat/ai-02-predictive-climate-optimizer` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
+| **AI-03** | Trợ Lý Ảo Vật Lý AI Đa Phương Thức (Physical LLM Agent) | AI & Giọng nói | `feat/ai-03-physical-llm-agent` | 🟡 Cần Mic & Loa | ~95.000 đ | ⭐⭐⭐⭐⭐ |
+| **AI-04** | Bàn Di Cảm Ứng Nhận Diện Cử Chỉ Bằng Machine Learning | AI | `feat/ai-04-capacitive-touch-ml` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
+| **ROB-01** | Cánh Tay Robot 4 Bậc Tự Do (4-DOF Robotic Arm) | Robotics | `feat/rob-01-4dof-robotic-arm` | 🟡 Cần 3 Servo & Khung | ~170.000 đ | ⭐⭐⭐⭐ |
+| **ROB-02** | Dây Chuyền Phân Loại & Gắp Vật Thể Tự Động RFID | Robotics | `feat/rob-02-rfid-sorting-mechanism` | 🟡 Cần Khung Arm & Servo | ~200.000 đ | ⭐⭐⭐⭐⭐ |
+| **ROB-03** | Tháp Camera Pan-Tilt Tự Động Bám Đuổi Đối Tượng | Robotics | `feat/rob-03-sentry-pan-tilt-cam` | 🟡 Cần ESP32-CAM & Khung | ~110.000 đ | ⭐⭐⭐⭐ |
+| **SMH-01** | Hệ Thống An Ninh Giám Sát Đa Vùng Cảnh Báo Tức Thời | Smart Home | `feat/smh-01-multizone-defense-system` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐⭐ |
+| **SMH-02** | Khóa Cửa Điện Tử Thông Minh 3 Lớp Bảo Mật | Smart Home | `feat/smh-02-trifactor-smart-lock` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
+| **SMH-03** | Thiết Bị Đo Điện Năng & Tự Ngắt Bảo Vệ Quá Tải | Smart Home | `feat/smh-03-smart-energy-meter` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
+| **SMH-04** | Trạm Giám Sát & Điều Hòa Nhà Kính Mini Tự Động | Smart Home | `feat/smh-04-micro-greenhouse` | 🟡 Cần Cảm biến độ ẩm đất & Bơm | ~45.000 đ | ⭐⭐⭐ |
+| **EXP-01** | Trạm Điểm Danh Không Chạm RFID & Hiển Thị Đồ Họa Matrix | Mở rộng | `feat/exp-01-rfid-matrix-attendance` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
+| **EXP-02** | Hộp Câu Đố Tương Tác Thông Minh (Escape Room Puzzle Box) | Mở rộng | `feat/exp-02-escape-room-puzzle-box` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐ |
+| **EXP-03** | Hệ Thống Phân Tán Đa Vi Điều Khiển (ESP32 + STM32 + Nano) | Mở rộng | `feat/exp-03-multi-mcu-communication` | 🟢 **Sẵn sàng 100%** | 0 đ | ⭐⭐⭐⭐ |
+
+---
+
+### 1.2 Quy Chuẩn Đặt Tên Branch & Hướng Dẫn Khởi Tạo Git Worktree
+
+Nhằm phục vụ phát triển độc lập, không làm ảnh hưởng đến nhánh chính (`main`) và cho phép nhiều AI Agent / lập trình viên làm việc song song trên cùng repository, mỗi đề tài được gán cố định một nhánh Git chuẩn hóa.
+
+#### a. Quy tắc định danh Branch
+```text
+feat/<mã_đề_tài_chữ_thường>-<tên_tiếng_anh_viết_tắt>
+```
+*Ví dụ:*
+- Đề tài `MOB-03` $\rightarrow$ `feat/mob-03-precision-stepper-turntable`
+- Đề tài `SMH-02` $\rightarrow$ `feat/smh-02-trifactor-smart-lock`
+
+#### b. Lệnh CLI tạo nhanh một Worktree độc lập
+Từ thư mục gốc của repository, bạn chỉ cần chạy lệnh sau để tạo một worktree riêng biệt nằm ngoài thư mục làm việc hiện tại:
+```bash
+# Cú pháp tổng quát:
+git worktree add -b <tên_branch> <đường_dẫn_thư_mục_worktree> main
+
+# Ví dụ triển khai ngay Đề tài MOB-03 (Bàn xoay Stepper):
+git worktree add -b feat/mob-03-precision-stepper-turntable ../worktrees/mob-03-precision-stepper-turntable main
+```
+
+#### c. Dọn dẹp Worktree sau khi hoàn thành & merge
+```bash
+# Xóa worktree sau khi hoàn thành
+git worktree remove ../worktrees/mob-03-precision-stepper-turntable
+# Dọn dẹp chỉ mục worktree đã xoá
+git worktree prune
+```
 
 ---
 
 ## 2. Nhóm 1: Thiết Bị Di Chuyển & Xe Robot
 
 ### 2.1 Đề Tài MOB-01: Robot Car Tự Hành Né Vật Cản Đa Hướng (Autonomous Range-Scanning Rover)
+
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/mob-01-range-scanning-rover`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/mob-01-range-scanning-rover ../worktrees/mob-01-range-scanning-rover main
+>   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
 - Ứng dụng trong việc nghiên cứu thuật toán tránh vật cản tự động cho robot dọn dẹp vệ sinh trong nhà (Robot hút bụi), xe tự hành chở hàng trong hành lang hẹp hoặc robot thăm dò môi trường nguy hiểm.
@@ -91,6 +134,13 @@
 
 ### 2.2 Đề Tài MOB-02: Xe Thám Hiểm Điều Khiển Qua Web/BLE & Phanh An Toàn (Web/BLE Telemetry Rover)
 
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/mob-02-telemetry-rover`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/mob-02-telemetry-rover ../worktrees/mob-02-telemetry-rover main
+>   ```
+
 #### a. Tính Ứng Dụng Thực Tiễn
 - Thiết bị giám sát kho bãi, xe vận chuyển cỡ nhỏ điều khiển tầm xa qua mạng Wi-Fi nội bộ hoặc kết nối Bluetooth năng lượng thấp (BLE) từ smartphone/máy tính.
 - Tích hợp lớp bảo vệ phản xạ tự động: khi người điều khiển cố tình bấm ga lao vào vật cản, cảm biến hồng ngoại trên xe sẽ can thiệp cưỡng bức ngắt động cơ để chống va chạm.
@@ -113,6 +163,13 @@
 
 ### 2.3 Đề Tài MOB-03: Bàn Xoay Quét 3D & Chụp Ảnh Sản Phẩm Chính Xác (Precision Stepper Turntable)
 
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/mob-03-precision-stepper-turntable`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/mob-03-precision-stepper-turntable ../worktrees/mob-03-precision-stepper-turntable main
+>   ```
+
 #### a. Tính Ứng Dụng Thực Tiễn
 - Thiết bị phòng lab hỗ trợ chụp ảnh sản phẩm xoay 360° tự động để dựng mô hình 3D (Photogrammetry), làm catalogue thương mại điện tử, hoặc xoay mẫu vật quét cảm biến góc tròn.
 - Độ chính xác cực cao nhờ động cơ bước kết hợp hộp giảm tốc 1:64 (sai số góc $< 0.1^\circ$).
@@ -130,6 +187,13 @@
 ---
 
 ### 2.4 Đề Tài MOB-04: Xe AGV Tự Động Định Tuyến & Giao Hàng Điểm Trạm RFID (Automated Guided Vehicle)
+
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/mob-04-rfid-guided-agv`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/mob-04-rfid-guided-agv ../worktrees/mob-04-rfid-guided-agv main
+>   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
 - Mô phỏng mô hình xe tự hành dẫn đường tự động (AGV - Automated Guided Vehicle) phổ biến trong các nhà máy thông minh (Smart Factory/Amazon Robotics). Xe chạy tuần tra dọc hành lang hoặc line định sẵn, khi chạy qua thẻ RFID dán dưới sàn (đóng vai trò điểm dừng Station), xe tự dừng lại bốc dỡ hàng, kích hoạt servo mở chốt hàng hóa và gửi thông báo về máy chủ quản lý kho.
@@ -151,6 +215,13 @@
 ## 3. Nhóm 2: Điều Khiển Bằng Giọng Nói & Xử Lý Âm Thanh
 
 ### 3.1 Đề Tài VOI-01: Trạm Điều Khiển Giọng Nói Hai Chiều (Voice Smart Hub)
+
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/voi-01-voice-smart-hub`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/voi-01-voice-smart-hub ../worktrees/voi-01-voice-smart-hub main
+>   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
 - Trở thành "Loa thông minh gia đình" (tương tự Google Home / Amazon Echo thu nhỏ) điều khiển các thiết bị điện trong nhà hoàn toàn bằng khẩu lệnh Tiếng Việt hoặc Tiếng Anh: bật/tắt quạt (Relay), mở/đóng rèm cửa (Servo), hỏi nhiệt độ độ ẩm trong phòng (DHT11).
@@ -192,6 +263,13 @@
 
 ### 3.2 Đề Tài VOI-02: Công Tắc Kích Hoạt Bằng Nhịp Vỗ Tay Đa Kênh (Clap Switch)
 
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/voi-02-acoustic-clap-switch`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/voi-02-acoustic-clap-switch ../worktrees/voi-02-acoustic-clap-switch main
+>   ```
+
 #### a. Tính Ứng Dụng Thực Tiễn
 - Thiết bị gia dụng tiện ích cho phòng ngủ, phòng khách hoặc người già/người hạn chế vận động: vỗ tay 1 tiếng để bật/tắt đèn ngủ, vỗ tay 2 tiếng nhịp nhanh để bật quạt, vỗ tay 3 tiếng để tắt toàn bộ thiết bị.
 - Dự án khai thác **trực tiếp 100% linh kiện sẵn có** mà không cần mua thêm bất kỳ phụ kiện âm thanh nào.
@@ -214,6 +292,13 @@
 
 ### 3.3 Đề Tài VOI-03: Máy Phát Nhạc Điện Tử & Bộ Đọc Giọng Nói Tổng Hợp (Synthesizer & TTS Talkie)
 
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/voi-03-synth-tts-talkie`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/voi-03-synth-tts-talkie ../worktrees/voi-03-synth-tts-talkie main
+>   ```
+
 #### a. Tính Ứng Dụng Thực Tiễn
 - Tạo hệ thống chuông báo đa âm điệu, máy phát thông báo bằng giọng nói ngoại tuyến không cần internet cho thiết bị IoT (ví dụ: máy đọc "Nhiệt độ hiện tại ba mươi độ C", "Cảnh báo mở cửa", "Đã xác thực thẻ thành công").
 
@@ -229,6 +314,13 @@
 ## 4. Nhóm 3: Ứng Dụng Trí Tuệ Nhân Tạo (Edge AI & Cloud-Connected AI)
 
 ### 4.1 Đề Tài AI-01: Thiết Bị Nhận Diện & Phân Loại Tiếng Động Bất Thường (Edge AI Sound Anomaly Detector)
+
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/ai-01-edge-sound-anomaly-detector`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/ai-01-edge-sound-anomaly-detector ../worktrees/ai-01-edge-sound-anomaly-detector main
+>   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
 - Thiết bị an ninh cao cấp lắp đặt tại gia đình hoặc xưởng máy: Tự động lắng nghe và phân loại tiếng động môi trường 24/7 trực tiếp trên vi điều khiển mà không cần gửi âm thanh ra ngoài internet, đảm bảo tính riêng tư tuyệt đối (Privacy-First).
@@ -254,6 +346,13 @@
 ---
 
 ### 4.2 Đề Tài AI-02: Hệ Thống Dự Báo & Tối Ưu Môi Trường Bằng Mô Hình AI Riêng (Predictive Climate Optimization)
+
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/ai-02-predictive-climate-optimizer`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/ai-02-predictive-climate-optimizer ../worktrees/ai-02-predictive-climate-optimizer main
+>   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
 - Phù hợp trực tiếp với nhu cầu: **"Tôi có sẵn model AI"**.
@@ -292,6 +391,13 @@
 
 ### 4.3 Đề Tài AI-03: Trợ Lý Ảo Vật Lý AI Đa Phương Thức (Physical LLM Agent)
 
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/ai-03-physical-llm-agent`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/ai-03-physical-llm-agent ../worktrees/ai-03-physical-llm-agent main
+>   ```
+
 #### a. Tính Ứng Dụng Thực Tiễn
 - Đây là đề tài tích hợp đỉnh cao: Kết hợp một mô hình ngôn ngữ lớn (LLM như GPT-4o, Claude 3.5, Gemini 1.5 Flash hoặc mô hình Local LLM Llama-3 qua Ollama) với thực thể phần cứng vật lý qua cơ chế **Tool Calling / Function Calling**.
 - Người dùng trò chuyện tự nhiên: *"Chào bạn, phòng tôi đang hơi tối và bí bách, bạn kiểm tra giúp tôi nhé"*.
@@ -309,6 +415,13 @@
 
 ### 4.4 Đề Tài AI-04: Bàn Cảm Ứng Nhận Diện Cử Chỉ Cào / Vuốt Bằng Machine Learning
 
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/ai-04-capacitive-touch-ml`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/ai-04-capacitive-touch-ml ../worktrees/ai-04-capacitive-touch-ml main
+>   ```
+
 #### a. Tính Ứng Dụng Thực Tiễn
 - Thiết kế bàn phím điều khiển ẩn vô hình dưới mặt bàn gỗ hoặc bề mặt kính mica: Người dùng vuốt ngón tay từ trái sang phải để chuyển bài hát, gõ 2 nhịp để bật đèn, vuốt vòng tròn để tăng giảm âm lượng.
 - Ứng dụng công nghệ **Capacitive Touch Pins** có sẵn trong chip ESP32 (không cần module cảm biến ngoài).
@@ -324,6 +437,13 @@
 ## 5. Nhóm 4: Cơ Điện Tử & Robotics
 
 ### 5.1 Đề Tài ROB-01: Cánh Tay Robot 4 Bậc Tự Do (4-DOF Robotic Arm)
+
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/rob-01-4dof-robotic-arm`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/rob-01-4dof-robotic-arm ../worktrees/rob-01-4dof-robotic-arm main
+>   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
 - Mô phỏng cánh tay robot công nghiệp gắp phôi tự động trong dây chuyền sản xuất cơ khí.
@@ -346,6 +466,13 @@
 
 ### 5.2 Đề Tài ROB-02: Dây Chuyền Phân Loại & Gắp Vật Thể Tự Động RFID (Automated RFID Sorting Mechanism)
 
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/rob-02-rfid-sorting-mechanism`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/rob-02-rfid-sorting-mechanism ../worktrees/rob-02-rfid-sorting-mechanism main
+>   ```
+
 #### a. Tính Ứng Dụng Thực Tiễn
 - Hệ thống tự động hóa nhà kho thông minh: Vật thể đi qua bàn kiểm tra, đầu đọc RFID quét mã định danh loại hàng (ví dụ: Hàng loại A, Loại B, Hàng hỏng). Động cơ bước xoay bàn phân loại đến đúng ô chứa, sau đó cánh tay servo gắp vật thể thả vào khay tương ứng.
 
@@ -363,6 +490,13 @@
 ---
 
 ### 5.3 Đề Tài ROB-03: Tháp Camera Pan-Tilt Tự Động Bám Đuổi Đối Tượng (Intelligent Sentry Camera)
+
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/rob-03-sentry-pan-tilt-cam`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/rob-03-sentry-pan-tilt-cam ../worktrees/rob-03-sentry-pan-tilt-cam main
+>   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
 - Tháp canh an ninh thông minh: Sử dụng động cơ bước quét 360° theo phương ngang (Pan) và servo gật gù góc lên xuống (Tilt). Khi cảm biến chuyển động PIR phát hiện có người xâm nhập ở một hướng, tháp tự quay súng camera về hướng đó, bật đèn pha chiếu rọi (LED công suất qua Relay) và stream video trực tiếp về điện thoại.
@@ -384,6 +518,13 @@
 ## 6. Nhóm 5: Nhà Thông Minh & An Ninh Tự Động
 
 ### 6.1 Đề Tài SMH-01: Hệ Thống An Ninh Giám Sát Đa Vùng Cảnh Báo Tức Thời (Multi-Zone Defense System)
+
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/smh-01-multizone-defense-system`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/smh-01-multizone-defense-system ../worktrees/smh-01-multizone-defense-system main
+>   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
 - Dự án an ninh toàn diện bảo vệ ngôi nhà với 3 vùng giám sát:
@@ -409,6 +550,13 @@
 
 ### 6.2 Đề Tài SMH-02: Khóa Cửa Điện Tử Thông Minh 3 Lớp Bảo Mật (Tri-Factor Smart Access Lock)
 
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/smh-02-trifactor-smart-lock`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/smh-02-trifactor-smart-lock ../worktrees/smh-02-trifactor-smart-lock main
+>   ```
+
 #### a. Tính Ứng Dụng Thực Tiễn
 - Thiết kế bộ khóa cửa điện tử tích hợp vào cửa phòng riêng hoặc tủ đồ cá nhân an toàn cao:
   - Phương thức 1: Quẹt thẻ từ **RFID Mifare 13.56MHz**.
@@ -422,6 +570,13 @@
 ---
 
 ### 6.3 Đề Tài SMH-03: Thiết Bị Đo Điện Năng & Tự Ngắt Bảo Vệ Quá Tải (Smart Energy Meter)
+
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/smh-03-smart-energy-meter`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/smh-03-smart-energy-meter ../worktrees/smh-03-smart-energy-meter main
+>   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
 - Đo lường công suất tiêu thụ điện của các thiết bị trong phòng (quạt, đèn, máy tính, tủ lạnh mini), tính toán chỉ số tiêu thụ điện (kWh) và ước tính tiền điện hàng tháng.
@@ -439,6 +594,13 @@
 
 ### 6.4 Đề Tài SMH-04: Trạm Giám Sát & Điều Hòa Nhà Kính Mini Tự Động (Automated Micro-Greenhouse)
 
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/smh-04-micro-greenhouse`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/smh-04-micro-greenhouse ../worktrees/smh-04-micro-greenhouse main
+>   ```
+
 #### a. Tính Ứng Dụng Thực Tiễn
 - Trạm điều dưỡng cây cảnh thông minh tự động hoàn toàn: Theo dõi nhiệt độ & độ ẩm không khí (DHT11), độ ẩm của đất, cường độ ánh sáng mặt trời (LDR). Tự động bật máy bơm tưới nước khi đất khô và kéo servo mở rèm che khi nắng gắt.
 
@@ -454,6 +616,13 @@
 
 ### 7.1 Đề Tài EXP-01: Trạm Điểm Danh Không Chạm RFID & Hiển Thị Đồ Họa Matrix
 
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/exp-01-rfid-matrix-attendance`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/exp-01-rfid-matrix-attendance ../worktrees/exp-01-rfid-matrix-attendance main
+>   ```
+
 #### a. Tính Ứng Dụng Thực Tiễn
 - Ứng dụng làm máy chấm công/điểm danh học sinh sinh viên tại cửa lớp học: Quét thẻ học sinh $\rightarrow$ LED ma trận MAX7219 chạy chữ chào mừng hoặc biểu tượng mặt cười $\rightarrow$ Màn hình OLED hiển thị Mã Sinh Viên, Họ Tên và giờ vào lớp lấy từ RTC DS3231 $\rightarrow$ ESP32 đẩy bản ghi về Google Sheets / Database qua Wi-Fi.
 
@@ -463,6 +632,13 @@
 ---
 
 ### 7.2 Đề Tài EXP-02: Hộp Câu Đố Tương Tác Điện Tử (Interactive Escape Room Puzzle Box)
+
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/exp-02-escape-room-puzzle-box`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/exp-02-escape-room-puzzle-box ../worktrees/exp-02-escape-room-puzzle-box main
+>   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
 - Trò chơi trí tuệ giải đố tương tác vật lý (Phòng thoát hiểm Escape Room hoặc hộp quà tặng công nghệ): Người chơi muốn mở được nắp hộp (do servo SG90 chốt giữ) phải giải lần lượt chuỗi nhiệm vụ:
@@ -478,6 +654,13 @@
 ---
 
 ### 7.3 Đề Tài EXP-03: Hệ Thống Phân Tán Đa Vi Điều Khiển (Distributed Multi-MCU Communication Lab)
+
+> 🌿 **Đặc tả Git Worktree:**
+> - **Tên Branch chỉ định:** `feat/exp-03-multi-mcu-communication`
+> - **Lệnh khởi tạo Worktree:**
+>   ```bash
+>   git worktree add -b feat/exp-03-multi-mcu-communication ../worktrees/exp-03-multi-mcu-communication main
+>   ```
 
 #### a. Tính Ứng Dụng Thực Tiễn
 - Tận dụng trọn vẹn cả 3 bo mạch vi điều khiển bạn đang sở hữu (**ESP32**, **STM32F4 Black Pill**, **Arduino Nano**) để xây dựng mô hình mạng nhúng phân tán chuyên nghiệp (tương tự kiến trúc mạng ECU trên xe hơi ô tô):

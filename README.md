@@ -113,3 +113,4 @@ Nếu bạn muốn sử dụng giao diện đồ họa trên VS Code:
 - 🔬 [**Mô phỏng Wokwi & Giới hạn Kỹ thuật**](docs/reference/WOKWI-SIMULATION-AND-LIMITS.md): So sánh Public vs Private Gateway, TLS outbound issue #721.
 - 💡 [**Sổ tay Kinh nghiệm & Xử lý sự cố**](docs/reference/TROUBLESHOOTING-AND-LESSONS.md): Bài học thực tế về RF Lock, WebSockets Header, NVS safe commit, Desired state pattern.
 - 🚀 [**Kiến trúc Mẫu POC 5: Cloud WebSocket**](docs/examples/POC-05-CLOUD-WEBSOCKET.md): Tài liệu thiết kế hệ thống IoT đầy đủ.
+- 📑 [**Danh Mục & Đặc Tả Kỹ Thuật Đề Tài Dự Án (21 Đề Tài & Git Worktree)**](docs/projects/PROJECT-CATALOG-AND-SPECS.md): Tổng hợp 21 đề tài tiềm năng, ma trận linh kiện và quy chuẩn tên branch khởi tạo Git Worktree.
