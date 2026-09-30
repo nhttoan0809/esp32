@@ -1,0 +1,130 @@
+{
+  "version": 1,
+  "author": "toannguyen",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-v1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "board-mfrc522",
+      "id": "rfid",
+      "top": -170,
+      "left": 230,
+      "attrs": {
+        "label": "RFID RC522 (VSPI: 23,19,18,5,4)",
+        "uid": "DE:AD:BE:EF"
+      }
+    },
+    {
+      "type": "wokwi-membrane-keypad",
+      "id": "keypad",
+      "top": -40,
+      "left": -280,
+      "attrs": {
+        "label": "KEYPAD 4x4 (R:14,27,16,17 | C:26,25,33,32)"
+      }
+    },
+    {
+      "type": "wokwi-ssd1306",
+      "id": "oled",
+      "top": -170,
+      "left": -70,
+      "attrs": {
+        "label": "OLED SSD1306 (I2C: SDA=21, SCL=22)"
+      }
+    },
+    {
+      "type": "wokwi-ds1307",
+      "id": "rtc",
+      "top": -170,
+      "left": 80,
+      "attrs": {
+        "label": "RTC DS1307 (I2C: SDA=21, SCL=22)"
+      }
+    },
+    {
+      "type": "wokwi-servo",
+      "id": "servo",
+      "top": 210,
+      "left": -160,
+      "attrs": {
+        "label": "SERVO CHỐT KHÓA (PWM: GPIO13)"
+      }
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "buzzer",
+      "top": 210,
+      "left": 160,
+      "attrs": {
+        "label": "ACTIVE BUZZER (GPIO15)"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 110,
+      "left": 130,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_unlock",
+      "top": 90,
+      "left": 210,
+      "attrs": {
+        "color": "green",
+        "label": "UNLOCK LED (GPIO2)"
+      }
+    }
+  ],
+  "connections": [
+    ["esp:TX0", "$serialMonitor:RX", "", []],
+    ["esp:RX0", "$serialMonitor:TX", "", []],
+
+    ["rfid:3.3V", "esp:3V3", "red", ["h-10", "v120"]],
+    ["rfid:GND", "esp:GND.1", "black", ["h-20", "v110"]],
+    ["rfid:RST", "esp:D4", "orange", ["h-30", "v80"]],
+    ["rfid:SDA", "esp:D5", "yellow", ["h-40", "v70"]],
+    ["rfid:SCK", "esp:D18", "blue", ["h-50", "v60"]],
+    ["rfid:MISO", "esp:D19", "purple", ["h-60", "v50"]],
+    ["rfid:MOSI", "esp:D23", "cyan", ["h-70", "v40"]],
+
+    ["oled:GND", "esp:GND.1", "black", ["v20", "h40"]],
+    ["oled:3V3", "esp:3V3", "red", ["v30", "h30"]],
+    ["oled:DATA", "esp:D21", "green", ["v40", "h20"]],
+    ["oled:CLK", "esp:D22", "blue", ["v50", "h10"]],
+
+    ["rtc:GND", "esp:GND.1", "black", ["v20", "h-40"]],
+    ["rtc:5V", "esp:3V3", "red", ["v30", "h-30"]],
+    ["rtc:SDA", "esp:D21", "green", ["v40", "h-20"]],
+    ["rtc:SCL", "esp:D22", "blue", ["v50", "h-10"]],
+
+    ["keypad:R1", "esp:D14", "gray", ["h20", "v50"]],
+    ["keypad:R2", "esp:D27", "purple", ["h30", "v40"]],
+    ["keypad:R3", "esp:RX2", "orange", ["h40", "v-10"]],
+    ["keypad:R4", "esp:TX2", "brown", ["h50", "v-20"]],
+    ["keypad:C1", "esp:D26", "yellow", ["h60", "v20"]],
+    ["keypad:C2", "esp:D25", "cyan", ["h70", "v10"]],
+    ["keypad:C3", "esp:D33", "green", ["h80", "v0"]],
+    ["keypad:C4", "esp:D32", "blue", ["h90", "v-10"]],
+
+    ["servo:GND", "esp:GND.2", "black", ["h20", "v-80"]],
+    ["servo:V+", "esp:VIN", "red", ["h30", "v-90"]],
+    ["servo:PWM", "esp:D13", "orange", ["h40", "v-100"]],
+
+    ["buzzer:2", "esp:D15", "magenta", ["h-40", "v-80"]],
+    ["buzzer:1", "esp:GND.2", "black", ["h-20", "v-60"]],
+
+    ["esp:D2", "r1:1", "green", ["h0"]],
+    ["r1:2", "led_unlock:A", "green", ["h0"]],
+    ["led_unlock:C", "esp:GND.2", "black", ["v30", "h-120"]]
+  ]
+}
