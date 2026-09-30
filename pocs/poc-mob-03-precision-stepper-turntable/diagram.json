@@ -1,0 +1,105 @@
+{
+  "version": 1,
+  "author": "Antigravity",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-v1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-stepper-motor",
+      "id": "stepper",
+      "top": 120,
+      "left": 250,
+      "attrs": {
+        "label": "28BYJ-48 STEPPER (GPIO 19, 18, 5, 17)",
+        "display": "steps",
+        "size": "17"
+      }
+    },
+    {
+      "type": "wokwi-membrane-keypad",
+      "id": "keypad",
+      "top": 0,
+      "left": -260,
+      "attrs": {
+        "label": "4x4 MATRIX KEYPAD (ROWS: 13,14,27,4 | COLS: 26,25,33,32)"
+      }
+    },
+    {
+      "type": "board-ssd1306",
+      "id": "oled",
+      "top": -200,
+      "left": 240,
+      "attrs": {
+        "i2cAddress": "0x3c",
+        "label": "OLED SSD1306 0.96\" (SDA: GPIO21, SCL: GPIO22)"
+      }
+    },
+    {
+      "type": "wokwi-ds1307",
+      "id": "rtc",
+      "top": -200,
+      "left": -160,
+      "attrs": {
+        "label": "RTC DS1307 (SDA: GPIO21, SCL: GPIO22)"
+      }
+    },
+    {
+      "type": "wokwi-relay-module",
+      "id": "relay",
+      "top": -30,
+      "left": 250,
+      "attrs": {
+        "transistor": "pnp",
+        "label": "SHUTTER RELAY (IN: GPIO23)"
+      }
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "buzzer",
+      "top": -100,
+      "left": 60,
+      "attrs": {
+        "label": "SHUTTER BEEP BUZZER (GPIO2)"
+      }
+    }
+  ],
+  "connections": [
+    [ "esp:21", "oled:SDA", "green", [ "h0" ] ],
+    [ "esp:22", "oled:SCL", "yellow", [ "h0" ] ],
+    [ "esp:3V3", "oled:VCC", "red", [ "h0" ] ],
+    [ "esp:GND.1", "oled:GND", "black", [ "h0" ] ],
+
+    [ "esp:21", "rtc:SDA", "green", [ "v-20", "h-200" ] ],
+    [ "esp:22", "rtc:SCL", "yellow", [ "v-30", "h-210" ] ],
+    [ "esp:VIN", "rtc:5V", "red", [ "v-40", "h-220" ] ],
+    [ "esp:GND.1", "rtc:GND", "black", [ "v-50", "h-230" ] ],
+
+    [ "esp:19", "stepper:A+", "blue", [ "h20" ] ],
+    [ "esp:18", "stepper:A-", "purple", [ "h25" ] ],
+    [ "esp:5", "stepper:B+", "orange", [ "h30" ] ],
+    [ "esp:17", "stepper:B-", "gray", [ "h35" ] ],
+
+    [ "esp:23", "relay:IN", "magenta", [ "h40" ] ],
+    [ "esp:VIN", "relay:VCC", "red", [ "h50" ] ],
+    [ "esp:GND.2", "relay:GND", "black", [ "h55" ] ],
+
+    [ "esp:2", "buzzer:2", "red", [ "v-20" ] ],
+    [ "esp:GND.2", "buzzer:1", "black", [ "v-15" ] ],
+
+    [ "esp:13", "keypad:R1", "brown", [ "v20", "h-80" ] ],
+    [ "esp:14", "keypad:R2", "red", [ "v30", "h-85" ] ],
+    [ "esp:27", "keypad:R3", "orange", [ "v40", "h-90" ] ],
+    [ "esp:4", "keypad:R4", "yellow", [ "v50", "h-95" ] ],
+    [ "esp:26", "keypad:C1", "green", [ "v60", "h-100" ] ],
+    [ "esp:25", "keypad:C2", "blue", [ "v70", "h-105" ] ],
+    [ "esp:33", "keypad:C3", "violet", [ "v80", "h-110" ] ],
+    [ "esp:32", "keypad:C4", "gray", [ "v90", "h-115" ] ]
+  ],
+  "dependencies": {}
+}
