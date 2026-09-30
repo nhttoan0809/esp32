@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "author": "Antigravity Agent",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-v1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_i2c",
+      "top": 70,
+      "left": 160,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_i2c",
+      "top": 70,
+      "left": 240,
+      "attrs": {
+        "color": "green",
+        "label": "I2C ACTIVITY LED (GPIO25)"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_uart",
+      "top": 120,
+      "left": 160,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_uart",
+      "top": 120,
+      "left": 240,
+      "attrs": {
+        "color": "yellow",
+        "label": "UART ACTIVITY LED (GPIO26)"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r_sys",
+      "top": 170,
+      "left": 160,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led_sys",
+      "top": 170,
+      "left": 240,
+      "attrs": {
+        "color": "blue",
+        "label": "SYSTEM WIFI LED (GPIO27)"
+      }
+    }
+  ],
+  "connections": [
+    [ "esp:D25", "r_i2c:1", "green", [ "h20", "v0" ] ],
+    [ "r_i2c:2", "led_i2c:A", "green", [ "h10", "v0" ] ],
+    [ "led_i2c:C", "esp:GND.1", "black", [ "h10", "v120", "h-260" ] ],
+    [ "esp:D26", "r_uart:1", "gold", [ "h20", "v0" ] ],
+    [ "r_uart:2", "led_uart:A", "gold", [ "h10", "v0" ] ],
+    [ "led_uart:C", "esp:GND.1", "black", [ "h10", "v80", "h-260" ] ],
+    [ "esp:D27", "r_sys:1", "blue", [ "h20", "v0" ] ],
+    [ "r_sys:2", "led_sys:A", "blue", [ "h10", "v0" ] ],
+    [ "led_sys:C", "esp:GND.1", "black", [ "h10", "v40", "h-260" ] ]
+  ],
+  "dependencies": {}
+}
