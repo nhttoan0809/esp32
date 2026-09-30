@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "author": "toannguyen",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-v1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "bz1",
+      "top": -140,
+      "left": 230,
+      "attrs": {
+        "label": "PASSIVE BUZZER (GPIO25)"
+      }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot1",
+      "top": -30,
+      "left": 230,
+      "attrs": {
+        "label": "POTENTIOMETER 10K (PITCH/TEMPO: GPIO34)",
+        "value": "0"
+      }
+    },
+    {
+      "type": "wokwi-tm1637-7segment",
+      "id": "tm1",
+      "top": 80,
+      "left": 230,
+      "attrs": {
+        "label": "TM1637 DISPLAY (CLK: GPIO4, DIO: GPIO23)"
+      }
+    },
+    {
+      "type": "wokwi-membrane-keypad",
+      "id": "kp1",
+      "top": -80,
+      "left": -280,
+      "attrs": {
+        "label": "4x4 MATRIX KEYPAD (R:13,14,27,26 C:18,19,21,22)"
+      }
+    }
+  ],
+  "connections": [
+    [ "esp:D25", "bz1:2", "orange", [ "h20", "v-80" ] ],
+    [ "bz1:1", "esp:GND.1", "black", [ "h-30", "v120" ] ],
+
+    [ "pot1:VCC", "esp:3V3", "red", [ "h-20", "v140" ] ],
+    [ "pot1:GND", "esp:GND.2", "black", [ "h-30", "v120" ] ],
+    [ "pot1:SIG", "esp:D34", "gold", [ "h-50", "v60" ] ],
+
+    [ "tm1:VCC", "esp:3V3", "red", [ "h-20", "v30" ] ],
+    [ "tm1:GND", "esp:GND.2", "black", [ "h-30", "v10" ] ],
+    [ "tm1:CLK", "esp:D4", "green", [ "h-40", "v-10" ] ],
+    [ "tm1:DIO", "esp:D23", "blue", [ "h-50", "v-110" ] ],
+
+    [ "kp1:R1", "esp:D13", "purple", [ "v20", "h120" ] ],
+    [ "kp1:R2", "esp:D14", "purple", [ "v30", "h130" ] ],
+    [ "kp1:R3", "esp:D27", "purple", [ "v40", "h140" ] ],
+    [ "kp1:R4", "esp:D26", "purple", [ "v50", "h150" ] ],
+    [ "kp1:C1", "esp:D18", "cyan", [ "v60", "h360" ] ],
+    [ "kp1:C2", "esp:D19", "cyan", [ "v70", "h370" ] ],
+    [ "kp1:C3", "esp:D21", "cyan", [ "v80", "h380" ] ],
+    [ "kp1:C4", "esp:D22", "cyan", [ "v90", "h390" ] ],
+
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ]
+  ]
+}
