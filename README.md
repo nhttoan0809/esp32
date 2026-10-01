@@ -52,7 +52,8 @@ esp32-learning/
     ├── poc-dht11-climate-monitor/ # POC Giám sát tiểu khí hậu & Cảnh báo nồm ẩm DHT11
     ├── poc-ir-obstacle-barrier/   # POC Cảm biến tiệm cận không chạm & Đếm sản phẩm IR LM393
     ├── poc-pir-motion-alarm/      # POC Đèn an ninh tự tắt & Báo động chuyển động PIR HC-SR501
-    └── poc5-cloud-device/         # Dự án mẫu hoàn chỉnh (Firmware ESP32 + FastAPI Backend)
+    ├── poc5-cloud-device/         # Dự án mẫu hoàn chỉnh (Firmware ESP32 + FastAPI Backend)
+    └── poc-ai-04-capacitive-touch-ml/ # POC Bàn cảm ứng nhận diện cử chỉ bằng Machine Learning (TinyML)
 ```
 
 ---

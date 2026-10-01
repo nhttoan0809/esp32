@@ -1,0 +1,166 @@
+{
+  "version": 1,
+  "author": "Antigravity",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-v1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-max7219-matrix",
+      "id": "matrix1",
+      "top": -140,
+      "left": 200,
+      "attrs": {
+        "chain": "1",
+        "layout": "fc16",
+        "color": "red",
+        "label": "MAX7219 MATRIX 8x8 (SPI: D23/D18/D5)"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn0",
+      "top": 240,
+      "left": -180,
+      "attrs": {
+        "color": "blue",
+        "label": "TOUCH PAD 0 - LEFT (GPIO4)",
+        "key": "1"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn1",
+      "top": 240,
+      "left": -60,
+      "attrs": {
+        "color": "green",
+        "label": "TOUCH PAD 1 - MID-L (GPIO13)",
+        "key": "2"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn2",
+      "top": 240,
+      "left": 60,
+      "attrs": {
+        "color": "yellow",
+        "label": "TOUCH PAD 2 - MID-R (GPIO14)",
+        "key": "3"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn3",
+      "top": 240,
+      "left": 180,
+      "attrs": {
+        "color": "red",
+        "label": "TOUCH PAD 3 - RIGHT (GPIO27)",
+        "key": "4"
+      }
+    },
+    {
+      "type": "wokwi-relay-module",
+      "id": "relay1",
+      "top": 50,
+      "left": 280,
+      "attrs": {
+        "transistor": "pnp",
+        "label": "RELAY CH1 - LAMP (IN: GPIO25)"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "rLamp",
+      "top": 50,
+      "left": 460,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledLamp",
+      "top": 30,
+      "left": 530,
+      "attrs": {
+        "color": "yellow",
+        "label": "LAMP LOAD (CH1: GPIO25)"
+      }
+    },
+    {
+      "type": "wokwi-relay-module",
+      "id": "relay2",
+      "top": 170,
+      "left": 280,
+      "attrs": {
+        "transistor": "pnp",
+        "label": "RELAY CH2 - FAN (IN: GPIO26)"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "rFan",
+      "top": 170,
+      "left": 460,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledFan",
+      "top": 150,
+      "left": 530,
+      "attrs": {
+        "color": "blue",
+        "label": "FAN LOAD (CH2: GPIO26)"
+      }
+    }
+  ],
+  "connections": [
+    ["esp:TX0", "$serialMonitor:RX", "", []],
+    ["esp:RX0", "$serialMonitor:TX", "", []],
+
+    ["esp:D23", "matrix1:DIN", "green", ["v0"]],
+    ["esp:D18", "matrix1:CLK", "orange", ["v0"]],
+    ["esp:D5", "matrix1:CS", "blue", ["v0"]],
+    ["esp:VIN", "matrix1:V+", "red", ["v-20", "h0"]],
+    ["esp:GND.1", "matrix1:GND", "black", ["v-30", "h0"]],
+
+    ["esp:D4", "btn0:1.r", "blue", ["h0"]],
+    ["btn0:2.r", "esp:GND.1", "black", ["h0"]],
+
+    ["esp:D13", "btn1:1.r", "green", ["h0"]],
+    ["btn1:2.r", "esp:GND.1", "black", ["h0"]],
+
+    ["esp:D14", "btn2:1.r", "gold", ["h0"]],
+    ["btn2:2.r", "esp:GND.1", "black", ["h0"]],
+
+    ["esp:D27", "btn3:1.r", "red", ["h0"]],
+    ["btn3:2.r", "esp:GND.1", "black", ["h0"]],
+
+    ["esp:D25", "relay1:IN", "purple", ["h0"]],
+    ["esp:VIN", "relay1:VCC", "red", ["v20", "h0"]],
+    ["esp:GND.1", "relay1:GND", "black", ["v30", "h0"]],
+    ["relay1:COM", "esp:VIN", "red", ["v10", "h0"]],
+    ["relay1:NO", "rLamp:1", "yellow", ["h0"]],
+    ["rLamp:2", "ledLamp:A", "yellow", ["h0"]],
+    ["ledLamp:C", "esp:GND.1", "black", ["v50", "h0"]],
+
+    ["esp:D26", "relay2:IN", "cyan", ["h0"]],
+    ["esp:VIN", "relay2:VCC", "red", ["v20", "h0"]],
+    ["esp:GND.1", "relay2:GND", "black", ["v30", "h0"]],
+    ["relay2:COM", "esp:VIN", "red", ["v10", "h0"]],
+    ["relay2:NO", "rFan:1", "blue", ["h0"]],
+    ["rFan:2", "ledFan:A", "blue", ["h0"]],
+    ["ledFan:C", "esp:GND.1", "black", ["v60", "h0"]]
+  ]
+}
