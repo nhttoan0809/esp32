@@ -1,0 +1,148 @@
+{
+  "version": 1,
+  "author": "Antigravity",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-v1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btn_clap",
+      "top": -90,
+      "left": -140,
+      "attrs": {
+        "color": "red",
+        "label": "CLAP TRIGGER BUTTON (DO: GPIO17)",
+        "key": "c"
+      }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot_sound",
+      "top": -140,
+      "left": 20,
+      "attrs": {
+        "label": "SOUND LEVEL SIMULATOR (AO: GPIO34)"
+      }
+    },
+    {
+      "type": "board-ssd1306",
+      "id": "oled",
+      "top": -170,
+      "left": 260,
+      "attrs": {
+        "i2cAddress": "0x3c",
+        "label": "OLED SSD1306 (SDA: GPIO21, SCL: GPIO22)"
+      }
+    },
+    {
+      "type": "wokwi-relay-module",
+      "id": "relay1",
+      "top": 30,
+      "left": 280,
+      "attrs": {
+        "transistor": "pnp",
+        "label": "RELAY 1 - LIGHT (IN: GPIO26)"
+      }
+    },
+    {
+      "type": "wokwi-relay-module",
+      "id": "relay2",
+      "top": 210,
+      "left": 280,
+      "attrs": {
+        "transistor": "pnp",
+        "label": "RELAY 2 - FAN (IN: GPIO25)"
+      }
+    },
+    {
+      "type": "wokwi-buzzer",
+      "id": "bz1",
+      "top": 120,
+      "left": -160,
+      "attrs": {
+        "label": "PASSIVE BUZZER (PWM: GPIO19)"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r1",
+      "top": 390,
+      "left": 150,
+      "attrs": {
+        "value": "220",
+        "label": "RESISTOR 220 OHM (CH1 LED)"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led1",
+      "top": 370,
+      "left": 240,
+      "attrs": {
+        "color": "green",
+        "label": "STATUS LED CH1 (GPIO13)"
+      }
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "r2",
+      "top": 460,
+      "left": 150,
+      "attrs": {
+        "value": "220",
+        "label": "RESISTOR 220 OHM (CH2 LED)"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "led2",
+      "top": 440,
+      "left": 240,
+      "attrs": {
+        "color": "blue",
+        "label": "STATUS LED CH2 (GPIO14)"
+      }
+    }
+  ],
+  "connections": [
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+
+    [ "btn_clap:1.r", "esp:TX2", "orange", [ "h-20", "v110" ] ],
+    [ "btn_clap:2.r", "esp:GND.1", "black", [ "h-30", "v150" ] ],
+
+    [ "pot_sound:VCC", "esp:3V3", "red", [ "v40", "h120" ] ],
+    [ "pot_sound:GND", "esp:GND.1", "black", [ "v60", "h-60" ] ],
+    [ "pot_sound:SIG", "esp:D34", "green", [ "v70", "h-50" ] ],
+
+    [ "oled:VCC", "esp:3V3", "red", [ "v20", "h-110" ] ],
+    [ "oled:GND", "esp:GND.2", "black", [ "v30", "h-120" ] ],
+    [ "oled:SDA", "esp:D21", "blue", [ "v40", "h-90" ] ],
+    [ "oled:SCL", "esp:D22", "yellow", [ "v50", "h-70" ] ],
+
+    [ "relay1:VCC", "esp:VIN", "red", [ "v40", "h-310" ] ],
+    [ "relay1:GND", "esp:GND.2", "black", [ "v50", "h-140" ] ],
+    [ "relay1:IN", "esp:D26", "blue", [ "h-40", "v-30" ] ],
+
+    [ "relay2:VCC", "esp:VIN", "red", [ "v40", "h-310" ] ],
+    [ "relay2:GND", "esp:GND.2", "black", [ "v50", "h-140" ] ],
+    [ "relay2:IN", "esp:D25", "cyan", [ "h-50", "v-80" ] ],
+
+    [ "bz1:2", "esp:D19", "purple", [ "h40", "v-40" ] ],
+    [ "bz1:1", "esp:GND.1", "black", [ "h20", "v-30" ] ],
+
+    [ "esp:D13", "r1:1", "green", [ "h20" ] ],
+    [ "r1:2", "led1:A", "green", [ "h20" ] ],
+    [ "led1:C", "esp:GND.1", "black", [ "v40", "h-260" ] ],
+
+    [ "esp:D14", "r2:1", "blue", [ "h20" ] ],
+    [ "r2:2", "led2:A", "blue", [ "h20" ] ],
+    [ "led2:C", "esp:GND.1", "black", [ "v50", "h-260" ] ]
+  ]
+}
