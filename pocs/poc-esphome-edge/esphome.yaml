@@ -1,0 +1,104 @@
+# ==============================================================================
+# POC-A: ESPHome Edge Device Configuration
+# Triết lý: Compile-Time Configuration as Code (CaC)
+# Độc lập 100% với Home Assistant: Sử dụng Native MQTT Client kết nối Self-Hosted Server
+# ==============================================================================
+
+esphome:
+  name: poc-esphome-edge
+  friendly_name: "POC ESPHome Edge Device"
+  comment: "Compile-Time Tailored Edge IoT Device with Edge Autonomy"
+
+esp32:
+  board: esp32dev
+  framework:
+    type: esp-idf  # Sử dụng trực tiếp ESP-IDF native để tối ưu Flash/RAM và FreeRTOS tasks
+
+# Kết nối mạng Wi-Fi
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+  fast_connect: true
+  reboot_timeout: 0s  # Không tự động reboot khi mất mạng (giữ Edge Autonomy)
+
+# ------------------------------------------------------------------------------
+# Self-Hosted MQTT Client Integration (Thay thế Native API của Home Assistant)
+# ------------------------------------------------------------------------------
+mqtt:
+  broker: !secret mqtt_broker_ip
+  port: 1883
+  topic_prefix: edge/esphome
+  discovery: false     # Tắt HA MQTT Auto-Discovery để chứng minh tính độc lập
+  birth_message:
+    topic: edge/esphome/status
+    payload: "online"
+  will_message:
+    topic: edge/esphome/status
+    payload: "offline"
+
+# ------------------------------------------------------------------------------
+# 1. Tải Chấp Hành (Actuator Load: LED / Relay tại GPIO23)
+# ------------------------------------------------------------------------------
+switch:
+  - platform: gpio
+    pin: GPIO23
+    id: relay_actuator
+    name: "Living Fan Relay"
+    icon: "mdi:fan"
+    restore_mode: RESTORE_DEFAULT_OFF
+
+# ------------------------------------------------------------------------------
+# 2. Nút Bấm Điều Khiển Tại Chỗ (Edge Autonomy tại GPIO18)
+# Chứng minh: Logic tự động hóa chạy trực tiếp on-chip (< 5ms), không phụ thuộc mạng
+# ------------------------------------------------------------------------------
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: GPIO18
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "Physical Button"
+    filters:
+      - delayed_on: 20ms   # Khử rung phím (Debounce) tại biên
+      - delayed_off: 20ms
+    on_press:
+      then:
+        - switch.toggle: relay_actuator  # Đảo trạng thái tải lập tức trên chip
+
+# ------------------------------------------------------------------------------
+# 3. Cảm Biến Môi Trường (DHT11 tại GPIO19)
+# ------------------------------------------------------------------------------
+sensor:
+  - platform: dht
+    pin: GPIO19
+    model: DHT11
+    temperature:
+      name: "Ambient Temperature"
+      id: room_temp
+      filters:
+        - median:
+            window_size: 5  # Lọc trung vị biên dịch tại chỗ, loại bỏ nhiễu ADC/sensor
+            send_every: 2
+    humidity:
+      name: "Ambient Humidity"
+      id: room_hum
+    update_interval: 10s
+
+  # Cảm biến Analog ngõ vào (Chiết áp / LDR trên ADC1 - GPIO32)
+  - platform: adc
+    pin: GPIO32
+    name: "Analog Input"
+    id: analog_val
+    update_interval: 5s
+    attenuation: 11db
+
+# ------------------------------------------------------------------------------
+# 4. Cơ chế Cập nhật & Cứu Hộ Không Dây (OTA & Safe Mode)
+# ------------------------------------------------------------------------------
+ota:
+  platform: esphome
+  safe_mode: true
+
+logger:
+  level: INFO
+  baud_rate: 115200

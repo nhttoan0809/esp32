@@ -1,0 +1,39 @@
+# ==============================================================================
+# POC-B: Tasmota Runtime Rules & Console Commands
+# Triết lý: Runtime On-Device Autonomy without Recompilation
+# Nạp trực tiếp qua Web Console hoặc MQTT cmnd/edge_tasmota/Backlog
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# 1. Cấu hình Tham số Mạng & MQTT
+# ------------------------------------------------------------------------------
+# Đặt tên Topic của thiết bị
+Topic edge_tasmota
+
+# Chu kỳ gửi Telemetry Sensor (10 giây)
+TelePeriod 10
+
+# Bật phản hồi nút bấm tức thời (< 30ms, bỏ qua chế độ double-click / multipress)
+SetOption13 1
+
+# Ngăn thiết bị tự tạo SoftAP lạ khi mất Wi-Fi (Thử kết nối lại liên tục)
+WifiConfig 4
+
+# ------------------------------------------------------------------------------
+# 2. Rule 1: Edge Autonomy (Nút nhấn đảo trạng thái Relay tại chỗ)
+# Đảm bảo quạt/đèn bật tắt được ngay cả khi mất kết nối mạng hoặc sập Server
+# ------------------------------------------------------------------------------
+Rule1 ON Button1#State DO Power1 2 ENDON
+Rule1 1
+
+# ------------------------------------------------------------------------------
+# 3. Rule 2: Cảnh báo Nhiệt độ Cục bộ (Overheat Protection tại Biên)
+# Nếu nhiệt độ phòng vượt 32°C, cưỡng bức kích hoạt Relay 1 độc lập với Server
+# ------------------------------------------------------------------------------
+Rule2 ON DHT11#Temperature>32.0 DO Backlog Power1 ON; WebLog 2; Logging Overheat detected ENDON
+Rule2 1
+
+# ------------------------------------------------------------------------------
+# 4. Kích hoạt Lệnh Tổng hợp (One-Shot Backlog Script)
+# ------------------------------------------------------------------------------
+# Backlog SetOption13 1; TelePeriod 10; Rule1 1; Rule2 1

@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "author": "Antigravity",
+  "editor": "wokwi",
+  "parts": [
+    {
+      "type": "board-esp32-devkit-v1",
+      "id": "esp",
+      "top": 0,
+      "left": 0,
+      "attrs": {}
+    },
+    {
+      "type": "wokwi-resistor",
+      "id": "rLed",
+      "top": 30,
+      "left": 230,
+      "attrs": {
+        "value": "220"
+      }
+    },
+    {
+      "type": "wokwi-led",
+      "id": "ledActuator",
+      "top": 10,
+      "left": 310,
+      "attrs": {
+        "color": "red",
+        "label": "ACTUATOR RELAY/LED (GPIO23)"
+      }
+    },
+    {
+      "type": "wokwi-pushbutton",
+      "id": "btnToggle",
+      "top": -90,
+      "left": -120,
+      "attrs": {
+        "color": "blue",
+        "label": "LOCAL TOGGLE (GPIO18)",
+        "key": "t"
+      }
+    },
+    {
+      "type": "wokwi-dht22",
+      "id": "dht1",
+      "top": 150,
+      "left": 230,
+      "attrs": {
+        "label": "CLIMATE SENSOR (DATA: GPIO19)"
+      }
+    },
+    {
+      "type": "wokwi-potentiometer",
+      "id": "pot1",
+      "top": -120,
+      "left": 150,
+      "attrs": {
+        "label": "ANALOG SENSOR (ADC1: GPIO32)"
+      }
+    }
+  ],
+  "connections": [
+    [ "esp:TX0", "$serialMonitor:RX", "", [] ],
+    [ "esp:RX0", "$serialMonitor:TX", "", [] ],
+    
+    [ "esp:D23", "rLed:1", "red", [ "h20", "v0" ] ],
+    [ "rLed:2", "ledActuator:A", "red", [ "h10", "v0" ] ],
+    [ "ledActuator:C", "esp:GND.2", "black", [ "h20", "v120", "h-250", "v-80" ] ],
+
+    [ "esp:D18", "btnToggle:1.l", "blue", [ "h-40", "v-80" ] ],
+    [ "btnToggle:2.l", "esp:GND.1", "black", [ "h-20", "v120" ] ],
+
+    [ "esp:D19", "dht1:SDA", "green", [ "h40", "v60" ] ],
+    [ "dht1:VCC", "esp:3V3", "red", [ "v-30", "h-140" ] ],
+    [ "dht1:GND", "esp:GND.2", "black", [ "v20", "h-150" ] ],
+
+    [ "esp:D32", "pot1:SIG", "orange", [ "v-80", "h120" ] ],
+    [ "pot1:VCC", "esp:3V3", "red", [ "h-20", "v140" ] ],
+    [ "pot1:GND", "esp:GND.1", "black", [ "h-60", "v160" ] ]
+  ],
+  "dependencies": {}
+}
